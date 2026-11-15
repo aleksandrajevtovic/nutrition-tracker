@@ -8,7 +8,7 @@ type PeriodData = Awaited<ReturnType<typeof getPeriodData>>;
 
 export function useWeekData(date: string) {
   const {start, end} = calendarWeek(date);
-  const [data, setData] = useState<PeriodData>({entries: [], weights: [], goals: {}, drinks: []});
+  const [data, setData] = useState<PeriodData>({entries: [], weights: [], goals: {}, drinks: [], dailyNotes: []});
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -28,7 +28,8 @@ export function useWeekData(date: string) {
     }
     void load();
     window.addEventListener('nutrition-data-changed', load);
-    return () => {active = false; window.removeEventListener('nutrition-data-changed', load);};
+    window.addEventListener('nutrition-notes-changed', load);
+    return () => {active = false; window.removeEventListener('nutrition-data-changed', load); window.removeEventListener('nutrition-notes-changed', load);};
   }, [start, end, retry, notify]);
   return {...data, loading, failed, reload: () => setRetry(value => value + 1)};
 }

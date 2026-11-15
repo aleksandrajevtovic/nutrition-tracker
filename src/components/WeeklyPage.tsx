@@ -2,11 +2,12 @@ import {useState} from 'react';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {fmt, today} from '../nutrition';
 import {goalFields} from '../goals';
-import {calendarWeek, shiftDate, summarizeWeek, weekDay} from '../week';
+import {calendarWeek, shiftDate, summarizeWeek} from '../week';
 import {validDate, weightDate} from '../weight';
 import {useWeekData} from '../hooks/useWeekData';
 import WeeklyNutritionChart from './WeeklyNutritionChart';
 import WeightChart from './WeightChart';
+import WeeklyDayCard from './WeeklyDayCard';
 import './WeightTracker.css';
 import './WeeklyPage.css';
 
@@ -45,14 +46,7 @@ export default function WeeklyPage({date, onOpenDay}: {date: string; onOpenDay: 
           {week.weightChange !== undefined && <p className="hint">Änderung zwischen erster und letzter Messung dieser Woche: <strong>{change(week.weightChange, 'kg')}</strong></p>}
         </section></div>
       <section className="weekly-days" aria-labelledby="weekly-days-title"><div className="section-head"><h2 id="weekly-days-title">Tageswerte</h2></div>
-        <div className="weekly-days__grid">{week.days.map(day => <article className="panel weekly-day" key={day.date}>
-          <div className="weekly-day__heading"><button type="button" onClick={() => onOpenDay(day.date)} aria-label={`${weightDate(day.date)} im Tagebuch öffnen`}>
-            <strong>{weekDay(day.date, true)}</strong><span>{weightDate(day.date)}{day.date === today() ? ' · Heute' : ''}</span></button>
-            <small>{day.count ? `${day.count} ${day.count === 1 ? 'Eintrag' : 'Einträge'}` : 'Keine Lebensmittel'}{day.drinkCount ? ` · ${day.drinkCount} ${day.drinkCount === 1 ? 'Getränk' : 'Getränke'}` : ''}</small></div>
-          <dl>{goalFields.map(({key, label, unit}) => <div key={key}><dt>{label}</dt><dd>{day.count ? `${fmt(day.totals[key])} ${unit}` : '—'}</dd></div>)}
-            <div><dt>Gewicht</dt><dd>{day.weight === undefined ? '—' : `${fmt(day.weight, 2)} kg`}</dd></div>
-            <div><dt>Trinkmenge</dt><dd>{day.drinkMl === undefined ? '—' : `${fmt(day.drinkMl / 1000, 3)} l`}</dd></div></dl>
-        </article>)}</div>
+        <div className="weekly-days__grid">{week.days.map(day => <WeeklyDayCard key={day.date} day={day} note={data.dailyNotes.find(note => note.date === day.date)} onOpenDay={onOpenDay}/>)}</div>
       </section>
     </>}
   </>;

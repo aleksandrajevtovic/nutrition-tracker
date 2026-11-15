@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {mkdir} from 'node:fs/promises';
+import {chromium} from 'playwright-core';
+const origin = 'http://127.0.0.1:4187/nutrition-tracker/';
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '4187', '--strictPort'], {windowsHide: true, stdio: 'pipe'});
+let browser;
+try {
+  for (let i=0;i<100;i++) {try {if ((await fetch(origin)).ok) break;} catch {} await new Promise(r=>setTimeout(r,100));}
+  browser = await chromium.launch({channel:'msedge',headless:true});
+  await mkdir('.tmp/weekly-notes',{recursive:true});
+  for (const viewport of [{width:320,height:740},{width:375,height:812},{width:768,height:1024},{width:1024,height:800},{width:1440,height:900},{width:568,height:320}]) {
+    const context = await browser.newContext({viewport,locale:'de-DE',reducedMotion:'reduce'});
+    const page = await context.newPage(); const errors=[];
+    page.on('pageerror',e=>errors.push(e.message)); page.on('dialog',d=>d.accept());
+    const tab = name=>page.locator('nav').getByRole('button',{name,exact:true});
+    const dismiss = async()=>{while(await page.getByRole('button',{name:'Benachrichtigung schließen'}).count()) await page.getByRole('button',{name:'Benachrichtigung schließen'}).first().click();};
+    const note=(date,fields)=>({date,updatedAt:'2026-11-15T00:00:00Z',hunger:'',energy:'',training:'',observations:'',...fields});
+    const backup={version:6,exportedAt:new Date().toISOString(),foods:[],entries:[],weights:[],goals:{},templates:[],plans:[],shoppingList:{items:[],updatedAt:null},drinks:[],dailyNotes:[note('2026-11-09',{hunger:'Gut gesättigt',energy:'Viel Energie',training:'Krafttraining',observations:'Erste Zeile\n<b>Nur Text</b> '+ 'LangeBeobachtung'.repeat(20)}),note('2026-11-11',{observations:'Ruhetag'}),note('2026-11-02',{energy:'Vorwoche'}),note('2026-11-16',{energy:'Nächste Woche'})]};
+    await page.goto(origin); await page.getByRole('heading',{name:'Mein Ernährungstagebuch'}).waitFor();
+    await tab('Datensicherung').click();
+    await page.locator('input[type="file"]').setInputFiles({name:'notizen.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(backup))});
+    await page.locator('.toast').filter({hasText:'Datensicherung erfolgreich importiert.'}).waitFor(); await dismiss();
+    await tab('Wochenübersicht').click(); await page.getByLabel('Datum in der Woche',{exact:true}).fill('2026-11-15');
+    const icons=page.locator('.weekly-note-toggle'); await icons.nth(1).waitFor();
+    assert.equal(await page.locator('.weekly-day').count(),7); assert.equal(await icons.count(),2);
+    assert.equal(await page.locator('.weekly-day-note:visible').count(),0);
+    await icons.first().click(); const panel=page.locator('.weekly-day-note').first(); await panel.waitFor({state:'visible'});
+    for(const text of ['Hunger','Energie','Training','Eigene Beobachtungen','Gut gesättigt','Viel Energie','Krafttraining','<b>Nur Text</b>']) assert.ok((await panel.innerText()).includes(text));
+    assert.equal(await panel.locator('b').count(),0);
+    assert.equal(await icons.first().getAttribute('aria-expanded'),'true');
+    await panel.getByRole('button',{name:'Tagesnotiz schließen',exact:true}).click();
+    assert.equal(await icons.first().evaluate(el=>el===document.activeElement),true);
+    await icons.first().click(); await icons.nth(1).click();
+    assert.equal(await page.locator('.weekly-day-note:visible').count(),2);
+    assert.equal(await page.locator('.weekly-day-note').nth(1).getByText('Nicht notiert',{exact:true}).count(),3);
+    const overflow=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:document.documentElement.scrollWidth}));
+    assert.ok(overflow.scroll<=overflow.width+1,JSON.stringify(overflow));
+    await page.screenshot({path:`.tmp/weekly-notes/${viewport.width}.png`});
+    await page.getByRole('button',{name:'Vorherige Woche',exact:true}).click();
+    await page.getByRole('button',{name:'Tagesnotiz vom 02.11.2026 anzeigen',exact:true}).waitFor(); assert.equal(await icons.count(),1);
+    await page.getByRole('button',{name:'Nächste Woche',exact:true}).click(); await icons.nth(1).waitFor();
+    assert.equal(await page.locator('.weekly-day-note:visible').count(),0);
+    await page.getByRole('button',{name:'09.11.2026 im Tagebuch öffnen',exact:true}).click();
+    assert.equal(await page.getByLabel('Datum',{exact:true}).inputValue(),'2026-11-09');
+    await page.getByRole('button',{name:/^Weitere Tagesdaten/}).click();
+    await page.getByRole('button',{name:'Tagesnotizen bearbeiten',exact:true}).click();
+    await page.getByLabel('Energie',{exact:true}).fill('Neue Energie');
+    await page.getByRole('button',{name:'Notiz speichern',exact:true}).click();
+    await page.locator('.toast').filter({hasText:'Tagesnotiz gespeichert.'}).waitFor(); await dismiss();
+    await tab('Wochenübersicht').click(); await icons.nth(1).waitFor(); await icons.first().click();
+    await page.locator('.weekly-day-note').first().getByText('Neue Energie',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'09.11.2026 im Tagebuch öffnen',exact:true}).click();
+    await page.getByRole('button',{name:/^Weitere Tagesdaten/}).click(); await page.getByRole('button',{name:'Tagesnotizen bearbeiten',exact:true}).click();
+    await page.getByRole('button',{name:'Notiz löschen',exact:true}).click();
+    const deleted=page.locator('.toast').filter({hasText:'Tagesnotiz gelöscht.'}); await deleted.waitFor();
+    await tab('Wochenübersicht').click(); await page.getByRole('button',{name:'Tagesnotiz vom 11.11.2026 anzeigen',exact:true}).waitFor(); assert.equal(await icons.count(),1);
+    await deleted.getByRole('button',{name:'Rückgängig',exact:true}).click(); await page.getByRole('button',{name:'Tagesnotiz vom 09.11.2026 anzeigen',exact:true}).waitFor(); assert.equal(await icons.count(),2);
+    assert.deepEqual(errors,[]); console.log(`PASS ${viewport.width}x${viewport.height}: notes, empty fields, safe multiline text, toggle/focus, week navigation, edit/delete/undo refresh, no overflow/errors`);
+    await context.close();
+  }
+} finally {await browser?.close();server.kill();}

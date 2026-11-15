@@ -114,6 +114,8 @@ Neue Datensicherungen (Version 3) enthalten auch Tagesziele. Beim Import der Ver
 
 Über „Woche“ öffnest du eine Übersicht von Montag bis Sonntag. Die Pfeile wechseln die Woche; über ein Datum kannst du direkt zu einer anderen Kalenderwoche springen. Tagesbalken und Datumsüberschriften öffnen den jeweiligen Tag im Tagebuch.
 
+Bei Tagen mit gespeicherter Tagesnotiz erscheint neben dem Datum ein Notizsymbol. Es klappt Hunger, Energie, Training und eigene Beobachtungen direkt in der Tageskarte auf und scrollt zur Notiz. Leere Felder zeigen „Nicht notiert“. Die Ansicht startet eingeklappt und funktioniert auch für Tage ohne Lebensmittel, Gewicht oder Getränke. Bearbeitet werden Notizen weiterhin im Tagebuch; Änderungen, Löschen und Rückgängig werden in der Wochenübersicht berücksichtigt. Notizen verändern keine Nährwert-Durchschnitte.
+
 Die Übersicht zeigt tägliche Kalorien und Nährwerte, Gewichtsmessungen, Trinkmengen, Durchschnittswerte sowie den Unterschied zur Vorwoche. Nährwert-Durchschnitte verwenden nur Tage mit Lebensmitteln, Gewichtsdurchschnitte nur tatsächliche Messungen und Trinkmengen-Durchschnitte nur Tage mit mindestens einem Getränk. Mehrere Getränke desselben Tages werden zuerst summiert. Fehlende Daten erscheinen als „—“; teilweise erfasste Tage zählen mit.
 
 Für Getränke stehen Tageswerte, Wochensumme und Tagesdurchschnitt in Litern zur Verfügung, einschließlich Vorwochenvergleich. Auch Tage mit ausschließlich Getränken werden berücksichtigt. Der Tagesvergleich lässt sich zwischen Kalorien, Eiweiß, Kohlenhydraten, Fett, Ballaststoffen und Trinkmenge umschalten. Eingestellte Nährwertziele erscheinen als gestrichelte Linie; für Trinkmengen wird kein Ziel vorgegeben. Änderungen und Rückgängig aktualisieren die Auswertung.
@@ -189,7 +191,7 @@ Beim Bearbeiten eines Tagebucheintrags wird der Editor automatisch ins Sichtfeld
 - `src/week.ts`: Kalenderwochen, Tages- und Wochensummen sowie Durchschnittswerte.
 - `src/recipes.ts`: Rezeptdaten, Zutatenvalidierung und Nährwert-/Portionsberechnung.
 - `src/components/RecipeEditor.tsx` und `RecipeIngredients.tsx`: Rezepte und Zutaten bearbeiten.
-- `src/components/WeeklyPage.tsx` und `WeeklyNutritionChart.tsx`: Wochenübersicht und Tagesvergleich.
+- `src/components/WeeklyPage.tsx`, `WeeklyDayCard.tsx` und `WeeklyNutritionChart.tsx`: Wochenübersicht, Tageskarten mit aufklappbaren Tagesnotizen und Tagesvergleich.
 - `src/hooks/useWeekData.ts`: Zeitraumabfragen und Aktualisierung der Wochenansicht.
 - `src/weight.ts`: Gewichtsdaten, Datumsprüfung, Vergleich und Zeiträume.
 - `src/components/WeightTracker.tsx`, `WeightEntryForm.tsx` und `WeightChart.tsx`: kompakte Gewichtskarte, direkte Gewichtseingabe und separater Verlauf.

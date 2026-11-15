@@ -7,6 +7,7 @@ import {loadTypeScript} from './helpers/typescript.mjs';
 
 const {calendarWeek, summarizeWeek, shiftDate} = await loadTypeScript(new URL('../src/week.ts', import.meta.url));
 const {default: WeeklyNutritionChart} = await loadTypeScript(new URL('../src/components/WeeklyNutritionChart.tsx', import.meta.url));
+const {default: WeeklyDayCard} = await loadTypeScript(new URL('../src/components/WeeklyDayCard.tsx', import.meta.url));
 const db = await loadTypeScript(new URL('../src/db.ts', import.meta.url));
 const food = {id: 'food', name: 'Lachs', brand: '', kcal: 200, protein: 20, carbs: 0, fat: 12,
   fiber: 0, sugar: 0, portionName: '1 Portion', portionGrams: 100, createdAt: '2026-11-15T00:00:00Z'};
@@ -79,4 +80,31 @@ test('the period query loads inclusive boundaries, goal settings and updates aft
   await db.restoreDeletedEntry(deleted, revision);
   assert.equal((await db.getPeriodData('2026-11-09', '2026-11-15')).entries.length, 2);
   await assert.rejects(db.getPeriodData('2026-11-15', '2026-11-09'), /gültiges Datum/);
+});
+
+test('note-only days offer a collapsed note with all fields while plain days do not show a note icon', () => {
+  const day = summarizeWeek([], [], '2026-12-07').days[0];
+  const note = {date: day.date, hunger: 'Nachmittags hungrig', energy: '', training: 'Spaziergang', observations: 'Erste Zeile\n<b>Nur Text</b>', updatedAt: food.createdAt};
+  const html = renderToStaticMarkup(createElement(WeeklyDayCard, {day, note, onOpenDay() {}}));
+  assert.match(html, /Tagesnotiz vom 07\.12\.2026 anzeigen/);
+  assert.match(html, /aria-expanded="false"/);
+  for (const label of ['Hunger', 'Energie', 'Training', 'Eigene Beobachtungen', 'Nicht notiert']) assert.ok(html.includes(label));
+  assert.ok(html.includes('&lt;b&gt;Nur Text&lt;/b&gt;'));
+  const empty = renderToStaticMarkup(createElement(WeeklyDayCard, {day, onOpenDay() {}}));
+  assert.doesNotMatch(empty, /weekly-note-toggle|weekly-day-note/);
+});
+
+test('period notes use inclusive dates and update after save, delete and undo without inventing nutrition data', async () => {
+  const note = date => ({date, hunger: '', energy: 'Fit', training: '', observations: 'Eigene Beobachtung', updatedAt: food.createdAt});
+  for (const date of ['2026-12-06', '2026-12-07', '2026-12-13', '2026-12-14']) await db.saveDayNote(note(date));
+  const data = await db.getPeriodData('2026-12-07', '2026-12-13');
+  assert.deepEqual(data.dailyNotes.map(note => note.date), ['2026-12-07', '2026-12-13']);
+  assert.equal(data.entries.length, 0);
+  assert.equal(summarizeWeek(data.entries, data.weights, '2026-12-07', data.drinks).recordedDays, 0);
+  await db.saveDayNote({...note('2026-12-07'), energy: 'Müde'});
+  assert.equal((await db.getPeriodData('2026-12-07', '2026-12-13')).dailyNotes[0].energy, 'Müde');
+  const revision = db.getDataRevision(); const removed = await db.removeDayNote('2026-12-13');
+  assert.equal((await db.getPeriodData('2026-12-07', '2026-12-13')).dailyNotes.length, 1);
+  await db.restoreDeletedDayNote(removed, revision);
+  assert.equal((await db.getPeriodData('2026-12-07', '2026-12-13')).dailyNotes.length, 2);
 });

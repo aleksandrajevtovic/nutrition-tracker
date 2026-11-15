@@ -184,18 +184,19 @@ export async function saveDailyGoals(goals: DailyGoals) {
   await (await dbPromise).put('settings', goals, 'dailyGoals');
   announceDataChange();
 }
-export async function getPeriodData(start: string, end: string): Promise<{entries: Entry[]; weights: WeightRecord[]; goals: DailyGoals; drinks: Drink[]}> {
+export async function getPeriodData(start: string, end: string): Promise<{entries: Entry[]; weights: WeightRecord[]; goals: DailyGoals; drinks: Drink[]; dailyNotes: DailyNote[]}> {
   if (!validDate(start) || !validDate(end) || start > end) throw Error('Bitte ein gültiges Datum für die Wochenübersicht wählen.');
-  const tx = (await dbPromise).transaction(['entries', 'weights', 'settings', 'drinks'], 'readonly');
+  const tx = (await dbPromise).transaction(['entries', 'weights', 'settings', 'drinks', 'notes'], 'readonly');
   const range = IDBKeyRange.bound(start, end);
-  const [entries, weights, goals, drinks] = await Promise.all([
+  const [entries, weights, goals, drinks, dailyNotes] = await Promise.all([
     tx.objectStore('entries').index('by-date').getAll(range),
     tx.objectStore('weights').getAll(range),
     tx.objectStore('settings').get('dailyGoals'),
     tx.objectStore('drinks').index('by-date').getAll(range),
+    tx.objectStore('notes').getAll(range),
   ]);
   await tx.done;
-  return {entries, weights, goals: goals ?? {}, drinks};
+  return {entries, weights, goals: goals ?? {}, drinks, dailyNotes};
 }
 export async function getBackup(): Promise<Backup> {
   const tx = (await dbPromise).transaction(['foods', 'entries', 'weights', 'settings', 'templates', 'plans', 'shopping', 'notes', 'drinks'], 'readonly');
