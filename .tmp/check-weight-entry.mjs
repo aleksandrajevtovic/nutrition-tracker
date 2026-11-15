@@ -1,0 +1,112 @@
+import assert from 'node:assert/strict';
+import {mkdir} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+import {chromium} from 'playwright-core';
+const origin = 'http://127.0.0.1:4182/nutrition-tracker/';
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '4182', '--strictPort'], {windowsHide: true, stdio: 'pipe'});
+let browser;
+try {
+  for (let i = 0; i < 100; i++) {try {if ((await fetch(origin)).ok) break;} catch {} await new Promise(resolve => setTimeout(resolve, 100));}
+  browser = await chromium.launch({channel: 'msedge', headless: true});
+  await mkdir('.tmp/weight-entry', {recursive: true});
+  for (const viewport of [{width: 320, height: 740}, {width: 375, height: 812}, {width: 768, height: 1024}, {width: 1024, height: 800}, {width: 1440, height: 900}, {width: 568, height: 320}].filter(value => !process.argv[2] || value.width === Number(process.argv[2]))) {
+    const context = await browser.newContext({viewport, locale: 'de-DE', reducedMotion: 'reduce'});
+    const page = await context.newPage();
+    const errors = [], dialogs = [];
+    let accept = false;
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('dialog', async dialog => {dialogs.push(dialog.message()); if (accept) await dialog.accept(); else await dialog.dismiss();});
+    async function dismiss() {while (await page.getByRole('button', {name: 'Benachrichtigung schließen'}).count()) await page.getByRole('button', {name: 'Benachrichtigung schließen'}).first().click();}
+    async function layout() {
+      const result = await page.evaluate(() => ({width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth,
+        overflow: [...document.querySelectorAll('main *, nav')].filter(el => {const box = el.getBoundingClientRect(); return box.width > 0 && (box.right > innerWidth + 1 || box.left < -1) && getComputedStyle(el).position !== 'absolute';}).slice(0, 5).map(el => el.className)}));
+      assert.ok(result.scroll <= result.width + 1, JSON.stringify(result)); assert.deepEqual(result.overflow, [], JSON.stringify(result));
+    }
+    const records = () => page.evaluate(() => new Promise((resolve, reject) => {
+      const request = indexedDB.open('nutrition-tracker');
+      request.onsuccess = () => {const db = request.result; const read = db.transaction('weights', 'readonly').objectStore('weights').getAll(); read.onsuccess = () => {resolve(read.result); db.close();}; read.onerror = () => reject(read.error);};
+      request.onerror = () => reject(request.error);
+    }));
+    const input = page.locator('.weight-entry-form input');
+    const save = page.locator('.weight-entry-form').getByRole('button', {name: 'Speichern', exact: true});
+    await page.goto(origin);
+    await page.getByRole('heading', {name: 'Mein Ernährungstagebuch'}).waitFor();
+    const date = await page.getByLabel('Datum', {exact: true}).inputValue();
+    const shift = n => {const day = new Date(date + 'T00:00:00Z'); day.setUTCDate(day.getUTCDate() + n); return day.toISOString().slice(0, 10);};
+    assert.equal(await page.locator('.weight-entry-form').count(), 0);
+    assert.equal(await page.getByRole('button', {name: 'Verlauf anzeigen', exact: true}).getAttribute('aria-expanded'), 'false');
+    await page.getByRole('button', {name: 'Gewicht eintragen', exact: true}).click();
+    assert.equal(await input.inputValue(), '');
+    assert.equal(await input.evaluate(el => document.activeElement === el), true);
+    assert.equal(await input.getAttribute('inputmode'), 'decimal');
+    await input.fill('72,5'); await save.click();
+    await page.locator('.weight-entry-form').waitFor({state: 'hidden'});
+    assert.equal((await records()).length, 1);
+    assert.equal((await records())[0].kg, 72.5);
+    const current = page.locator('.weight-tracker__entry');
+    assert.match(await current.innerText(), /72,5 kg/);
+    assert.equal(await current.evaluate(el => document.activeElement === el), true);
+    await dismiss();
+    await layout(); await page.locator('.weight-tracker').screenshot({path: `.tmp/weight-entry/compact-${viewport.width}.png`});
+    await current.click(); assert.equal(await input.inputValue(), '72,5');
+    await input.fill('73,0');
+    const before = dialogs.length;
+    await page.getByRole('button', {name: 'Verlauf anzeigen', exact: true}).click();
+    assert.equal(dialogs.length, before);
+    assert.equal(await input.inputValue(), '73,0');
+    await page.getByRole('button', {name: 'Verlauf ausblenden', exact: true}).click();
+    await page.getByRole('button', {name: 'Gewichtseingabe schließen', exact: true}).click();
+    assert.equal(dialogs.length, before + 1);
+    assert.match(dialogs.at(-1), /Gewichtseintrag/);
+    assert.equal(await input.inputValue(), '73,0');
+    await page.locator('.weight-entry-form').getByRole('button', {name: 'Aktualisieren', exact: true}).click();
+    await page.locator('.weight-entry-form').waitFor({state: 'hidden'}); await dismiss();
+    assert.equal((await records()).length, 1); assert.equal((await records())[0].kg, 73);
+    await page.getByLabel('Datum', {exact: true}).fill(shift(1));
+    await page.getByRole('button', {name: 'Gewicht eintragen', exact: true}).click();
+    assert.equal(await input.inputValue(), '73');
+    assert.equal(await input.evaluate(el => el.selectionStart === 0 && el.selectionEnd === el.value.length), true);
+    assert.match(await page.locator('.weight-entry-form .hint').innerText(), /Vorschlag: 73 kg/);
+    assert.equal((await records()).length, 1);
+    const cleanDialogs = dialogs.length;
+    await page.getByRole('button', {name: 'Gewichtseingabe schließen', exact: true}).click();
+    assert.equal(dialogs.length, cleanDialogs);
+    assert.equal((await records()).length, 1);
+    await page.getByRole('button', {name: 'Gewicht eintragen', exact: true}).click();
+    await input.fill('0'); await save.click();
+    await page.locator('.toast--error').filter({hasText: 'über 0 kg'}).waitFor(); await dismiss();
+    assert.equal((await records()).length, 1);
+    await input.fill('73'); await layout();
+    await page.locator('.weight-tracker').screenshot({path: `.tmp/weight-entry/suggestion-${viewport.width}.png`});
+    await save.click(); await page.locator('.weight-entry-form').waitFor({state: 'hidden'}); await dismiss();
+    assert.equal((await records()).length, 2);
+    await page.getByLabel('Datum', {exact: true}).fill(shift(-1));
+    await page.getByRole('button', {name: 'Gewicht eintragen', exact: true}).click();
+    assert.equal(await input.inputValue(), '');
+    await page.getByRole('button', {name: 'Gewichtseingabe schließen', exact: true}).click();
+    await page.getByLabel('Datum', {exact: true}).fill(date);
+    await current.click(); await input.fill('74');
+    const cancelDate = dialogs.length;
+    await page.getByLabel('Datum', {exact: true}).fill(shift(1));
+    assert.equal(dialogs.length, cancelDate + 1);
+    assert.equal(await page.getByLabel('Datum', {exact: true}).inputValue(), date);
+    assert.equal(await input.inputValue(), '74');
+    await input.fill('73');
+    accept = true;
+    await page.getByRole('button', {name: 'Gewichtseintrag löschen', exact: true}).click();
+    await page.locator('.toast').filter({hasText: 'Gewichtseintrag erfolgreich gelöscht.'}).waitFor();
+    accept = false;
+    assert.equal(await page.getByRole('button', {name: 'Gewicht eintragen', exact: true}).count(), 1);
+    await page.locator('.toast').getByRole('button', {name: 'Rückgängig', exact: true}).click();
+    await page.locator('.toast').filter({hasText: 'Gewichtseintrag wiederhergestellt.'}).waitFor(); await dismiss();
+    await page.waitForFunction(() => document.querySelector('.weight-tracker__entry')?.textContent.includes('73 kg'));
+    await page.reload(); await page.getByRole('heading', {name: 'Mein Ernährungstagebuch'}).waitFor();
+    await page.waitForFunction(() => document.querySelector('.weight-tracker__entry')?.textContent.includes('73 kg'));
+    assert.equal(await page.locator('.weight-entry-form').count(), 0);
+    await page.getByRole('button', {name: 'Verlauf anzeigen', exact: true}).click();
+    assert.equal(await page.locator('.weight-stats').isVisible(), true);
+    await layout(); assert.deepEqual(errors, []);
+    console.log(`PASS ${viewport.width} × ${viewport.height}: direct entry/edit/focus; separate history; suggestion only on confirmation; no future suggestions; one measurement per day; validation/unsaved guard/delete/undo/reload; no overflow`);
+    await context.close();
+  }
+} finally {if (browser) await browser.close(); server.kill();}

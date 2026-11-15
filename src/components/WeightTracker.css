@@ -10,6 +10,14 @@
 .weight-tracker__toggle:hover { background: #e0ecdf; }
 .weight-tracker__toggle:focus-visible { outline: 2px solid #315c46; outline-offset: 3px; }
 .weight-tracker__toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.weight-tracker__entry { display: inline-flex; align-items: center; justify-content: center; gap: 6px; max-width: 150px; min-height: 44px; padding: 9px 12px; border: 1px solid #d6e3d2; border-radius: 10px; background: #edf4ed; color: #315c46; font-size: 12px; font-weight: 700; }
+.weight-tracker__entry--recorded { background: white; }
+.weight-tracker__entry strong { font-size: 19px; font-variant-numeric: tabular-nums; }
+.weight-tracker__history-toggle { background: transparent; padding: 7px 0; margin-top: 8px; min-height: 44px; }
+.weight-entry-form { padding-top: 14px; margin-top: 14px; border-top: 1px solid #e7ebe4; }
+.weight-entry-form__heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.weight-entry-form__heading h3 { font-size: 14px; }
+.weight-tracker__content { padding-top: 0; }
 .weight-form > label { display: block; font-size: 13px; color: #617368; font-weight: 700; margin-bottom: 8px; }
 .weight-form__fields { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
 .weight-form__fields .primary { flex: 1; }

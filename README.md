@@ -68,6 +68,10 @@ Im aufgeklappten kompakten Eintrag kann die Menge direkt geändert werden; in de
 
 Im Tagebuch kannst du für das gewählte Datum dein Körpergewicht in kg speichern, aktualisieren oder löschen. Komma und Punkt sind als Dezimaltrennzeichen möglich. Pro Tag gibt es eine Messung.
 
+Die kompakte Karte zeigt nur den Messwert des gewählten Tages. Antippen öffnet direkt das Eingabefeld; ohne Messung gibt es den Button „Gewicht eintragen“. Das Feld erhält automatisch den Fokus. Die letzte frühere Messung wird als ausdrücklich gekennzeichneter Vorschlag vorausgefüllt und erst durch „Speichern“ als Messung für diesen Tag übernommen. Spätere Messungen werden nicht vorgeschlagen. Nach dem Speichern schließt sich die Eingabe wieder. Ungespeicherte Änderungen bleiben durch die Wechsel- und Schließen-Rückfrage geschützt.
+
+„Verlauf anzeigen“ öffnet Diagramm und Vergleichswerte unabhängig von der Eingabe. Der Verlauf bleibt standardmäßig eingeklappt. Ein Wechsel seiner Sichtbarkeit verwirft keine Eingaben.
+
 Die Vergleiche zeigen die Änderung zur vorherigen Messung und seit der ersten Messung bis zum gewählten Datum. Das Diagramm zeigt 30 Tage, 90 Tage oder den gesamten bisherigen Verlauf. Messpunkte lassen sich per Maus, Berührung und Tastatur auswählen; alle Werte stehen zusätzlich in einer Tabelle. Tage ohne Messung werden übersprungen.
 
 Datensicherungen ab Version 2 enthalten auch Gewichtsmessungen. Beim Import alter Sicherungen (Version 1) bleiben vorhandene Gewichtsmessungen erhalten.
@@ -166,7 +170,7 @@ Beim Bearbeiten eines Tagebucheintrags wird der Editor automatisch ins Sichtfeld
 - `src/components/WeeklyPage.tsx` und `WeeklyNutritionChart.tsx`: Wochenübersicht und Tagesvergleich.
 - `src/hooks/useWeekData.ts`: Zeitraumabfragen und Aktualisierung der Wochenansicht.
 - `src/weight.ts`: Gewichtsdaten, Datumsprüfung, Vergleich und Zeiträume.
-- `src/components/WeightTracker.tsx` und `WeightChart.tsx`: Gewichtseingabe und Verlaufsdiagramm.
+- `src/components/WeightTracker.tsx`, `WeightEntryForm.tsx` und `WeightChart.tsx`: kompakte Gewichtskarte, direkte Gewichtseingabe und separater Verlauf.
 - `src/hooks/useWeightData.ts`: Laden und Speichern der Gewichtsmessungen.
 - `src/db.ts`: Datenmodelle, IndexedDB und Backup-Import/Export.
 
