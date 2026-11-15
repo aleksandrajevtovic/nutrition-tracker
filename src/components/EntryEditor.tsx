@@ -15,14 +15,15 @@ type Props = {
   foods: Food[];
   date: string;
   entry: Entry | null;
+  initialMeal?: string;
   onSave: (entry: Entry, conversions: Partial<Food>) => Promise<void>;
   onClose: () => void;
 };
 
-export default function EntryEditor({foods, date, entry, onSave, onClose}: Props) {
+export default function EntryEditor({foods, date, entry, initialMeal = 'Frühstück', onSave, onClose}: Props) {
   const notify = useToast();
   const [selected, setSelected] = useState<Food | undefined>(entry?.foodSnapshot);
-  const [meal, setMeal] = useState(entry?.meal ?? 'Frühstück');
+  const [meal, setMeal] = useState(entry?.meal ?? initialMeal);
   const [amount, setAmount] = useState(String(entry?.amount ?? entry?.grams ?? 1));
   const [unit, setUnit] = useState<Unit>(entry?.unit ?? (entry ? 'g' : 'portion'));
   const [conversions, setConversions] = useState<Partial<Food>>({});

@@ -5,6 +5,7 @@ import {parseWeight, weightDate, type WeightRecord} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
 import {useDraftGuard} from './UnsavedChangesProvider';
+import {useScrollReveal} from '../hooks/useScrollReveal';
 
 export default function WeightEntryForm({date, record, suggestion, onSave, onRemove, onClose}: {
   date: string; record?: WeightRecord; suggestion?: WeightRecord;
@@ -15,12 +16,12 @@ export default function WeightEntryForm({date, record, suggestion, onSave, onRem
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const input = useRef<HTMLInputElement>(null);
+  const formRef = useScrollReveal<HTMLFormElement>(true);
   const id = useId();
   const notify = useToast();
   const parsed = parseWeight(value);
   const guard = useDraftGuard('Gewichtseintrag', Number.isFinite(parsed) ? parsed : value, busy, 'weight');
   useEffect(() => {
-    input.current?.scrollIntoView({block: 'nearest'});
     input.current?.focus({preventScroll: true}); input.current?.select();
   }, []);
 
@@ -32,7 +33,7 @@ export default function WeightEntryForm({date, record, suggestion, onSave, onRem
     finally {saving.current = false; setBusy(false);}
   }
 
-  return <form className="weight-form weight-entry-form" onSubmit={event => {
+  return <form ref={formRef} className="weight-form weight-entry-form" onSubmit={event => {
     event.preventDefault();
     if (!Number.isFinite(parsed) || parsed <= 0) {notify('Bitte ein gültiges Gewicht über 0 kg eingeben.', 'error'); return;}
     void run(() => onSave(date, parsed));

@@ -9,11 +9,13 @@ import {useToast} from './ToastProvider';
 import DrinkForm from './DrinkForm';
 import DrinkTimeline from './DrinkTimeline';
 import {useNavigationGuard} from './UnsavedChangesProvider';
+import {scrollToRevealed, useScrollReveal} from '../hooks/useScrollReveal';
 import './HydrationTracker.css';
 
 export default function HydrationTracker({date}: {date: string}) {
   const data = useHydration(date);
   const [expanded, setExpanded] = useState(false);
+  const contentRef = useScrollReveal<HTMLDivElement>(expanded);
   const [editing, setEditing] = useState<Drink>();
   const [busy, setBusy] = useState(false);
   const running = useRef(false);
@@ -25,7 +27,7 @@ export default function HydrationTracker({date}: {date: string}) {
   const disabled = busy || data.loading || data.failed;
   useEffect(() => {
     if (!editing) return;
-    formRef.current?.scrollIntoView({block: 'start', behavior: 'instant'});
+    scrollToRevealed(formRef.current);
     formRef.current?.querySelector<HTMLElement>('h3')?.focus({preventScroll: true});
   }, [editing]);
 
@@ -50,7 +52,7 @@ export default function HydrationTracker({date}: {date: string}) {
       <p className="hydration__quick-label">Wasser schnell hinzufügen</p><div className="hydration__quick">{[150, 250, 500].map(ml => <button type="button" className="secondary" key={ml} disabled={disabled} aria-label={`${ml} ml Wasser hinzufügen`}
         onClick={() => save(() => createDrink(date, 'Wasser', String(ml), 'ml', drinkTimeNow()))}><Plus size={14}/>{ml} ml</button>)}</div>
     </>}
-    <div id={contentId} hidden={!expanded}>
+    <div ref={contentRef} id={contentId} hidden={!expanded}>
       <div ref={formRef}><DrinkForm key={editing?.id ?? 'new'} date={date} drink={editing} busy={disabled} pending={busy} onSave={save} onCancel={() => setEditing(undefined)}/></div>
       <DrinkTimeline drinks={data.drinks} busy={disabled} onEdit={drink => {if (drink.id === editing?.id || confirmNavigation(['drink-form'])) setEditing(drink);}} onDelete={drink => void run(async () => {
         if (!confirm(`${drink.name} um ${drink.time} löschen?`)) return;

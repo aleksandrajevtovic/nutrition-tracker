@@ -6,12 +6,14 @@ import {weightComparison, weightDate} from '../weight';
 import {useNavigationGuard} from './UnsavedChangesProvider';
 import WeightEntryForm from './WeightEntryForm';
 import WeightChart from './WeightChart';
+import {useScrollReveal} from '../hooks/useScrollReveal';
 import './WeightTracker.css';
 
 const delta = (value: number | undefined) => value === undefined ? '—' : `${value > 0 ? '+' : ''}${fmt(value, 3)} kg`;
 
 export default function WeightTracker({date}: {date: string}) {
   const [expanded, setExpanded] = useState(false);
+  const historyRef = useScrollReveal<HTMLDivElement>(expanded);
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const contentId = useId();
   const formId = useId();
@@ -45,7 +47,7 @@ export default function WeightTracker({date}: {date: string}) {
       onClick={() => setExpanded(value => !value)}>
       <span>{expanded ? 'Verlauf ausblenden' : 'Verlauf anzeigen'}</span><ChevronDown size={16} aria-hidden="true"/>
     </button>
-    <div id={contentId} className="weight-tracker__content" hidden={!expanded}>
+    <div ref={historyRef} id={contentId} className="weight-tracker__content" hidden={!expanded}>
       {comparison.latest && <div className="weight-stats">
         <div><span>{comparison.latest.date === date ? 'Gewicht am gewählten Tag' : 'Letzte Messung'}</span><strong>{fmt(comparison.latest.kg, 3)} <small>kg</small></strong><small>{weightDate(comparison.latest.date)}</small></div>
         <div><span>Zur vorherigen Messung</span><strong>{delta(comparison.previousChange)}</strong><small>{comparison.previous ? `Vergleich mit ${weightDate(comparison.previous.date)}` : 'Ab der zweiten Messung'}</small></div>

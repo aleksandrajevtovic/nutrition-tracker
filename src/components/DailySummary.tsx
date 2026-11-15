@@ -5,6 +5,7 @@ import {goalFields, goalProgress} from '../goals';
 import {useDailyGoals} from '../hooks/useDailyGoals';
 import GoalEditor from './GoalEditor';
 import {useNavigationGuard} from './UnsavedChangesProvider';
+import {useScrollReveal} from '../hooks/useScrollReveal';
 import './DailySummary.css';
 
 export function GoalProgress({current, target, label, unit}: {current: number; target: number; label: string; unit: string}) {
@@ -25,6 +26,7 @@ export default function DailySummary({totals}: {totals: ReturnType<typeof stats>
   const data = useDailyGoals();
   const [editing, setEditing] = useState(false);
   const confirmNavigation = useNavigationGuard();
+  const editorRef = useScrollReveal<HTMLDivElement>(editing);
   const hasGoals = Object.keys(data.goals).length > 0;
   return <section className="summary daily-summary" aria-label="Tagesbilanz und Tagesziele">
     <div className="daily-summary__heading"><h2>Tagesbilanz</h2>
@@ -40,6 +42,6 @@ export default function DailySummary({totals}: {totals: ReturnType<typeof stats>
     </div>)}</div></div>
     {data.loading && <p className="daily-summary__notice" role="status">Tagesziele werden geladen…</p>}
     {data.failed && <p className="daily-summary__notice">Tagesziele konnten nicht geladen werden. <button type="button" onClick={data.reload}>Erneut versuchen</button></p>}
-    {editing && <GoalEditor goals={data.goals} onSave={data.save} onClose={() => setEditing(false)}/>}
+    {editing && <div ref={editorRef}><GoalEditor goals={data.goals} onSave={data.save} onClose={() => setEditing(false)}/></div>}
   </section>;
 }

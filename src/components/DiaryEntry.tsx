@@ -4,6 +4,7 @@ import type {Entry} from '../db';
 import {fmt, stats, unitLabels} from '../nutrition';
 import QuickQuantity, {type SaveQuantity} from './QuickQuantity';
 import {useNavigationGuard} from './UnsavedChangesProvider';
+import {useScrollReveal} from '../hooks/useScrollReveal';
 import './DiaryEntry.css';
 
 export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantityChange}: {
@@ -11,6 +12,7 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
 }) {
   const [expanded, setExpanded] = useState(false);
   const [quantityEditing, setQuantityEditing] = useState(false);
+  const entryRef = useScrollReveal<HTMLDivElement>(compact ? expanded : quantityEditing);
   const confirmNavigation = useNavigationGuard();
   const detailsId = useId();
   const values = stats(entry.foodSnapshot, entry.grams);
@@ -22,13 +24,13 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
     <button type="button" title="Löschen" aria-label={`${entry.foodSnapshot.name} löschen`} onClick={() => {if (confirmNavigation([`quantity:${entry.id}`])) void onDelete(entry.id);}}><Trash2 size={16}/></button>
   </div>;
 
-  if (!compact) return <div className="entry"><div><strong>{entry.foodSnapshot.name}</strong>
+  if (!compact) return <div ref={entryRef} className="entry"><div><strong>{entry.foodSnapshot.name}</strong>
     <button type="button" className="diary-entry__quantity-toggle" aria-label={`Menge für ${entry.foodSnapshot.name} ändern`} aria-expanded={quantityEditing} aria-controls={detailsId} onClick={() => {if (!quantityEditing || confirmNavigation([`quantity:${entry.id}`])) setQuantityEditing(value => !value);}}>
       <small>{quantity} · {Math.round(values.kcal)} kcal · Eiweiß {fmt(values.protein)} g</small><span><Pencil size={11} aria-hidden="true"/>Menge ändern</span></button>
     <div id={detailsId} hidden={!quantityEditing}>{quantityEditing && <QuickQuantity entry={entry} onSave={onQuantityChange}/>}</div>
     {entry.note?.trim() && <p className="diary-entry__note"><span>Notiz</span>{entry.note}</p>}</div>{actions}</div>;
 
-  return <div className="entry diary-entry--compact">
+  return <div ref={entryRef} className="entry diary-entry--compact">
     <button type="button" className="diary-entry__toggle" aria-label={`${entry.foodSnapshot.name}: Details ${expanded ? 'einklappen' : 'aufklappen'}`}
       aria-expanded={expanded} aria-controls={detailsId} onClick={() => setExpanded(value => !value)}>
       <span className="diary-entry__name" title={entry.foodSnapshot.name}>{entry.foodSnapshot.name}</span>

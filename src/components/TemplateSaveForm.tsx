@@ -4,14 +4,16 @@ import {createTemplate} from '../planningDb';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
 import {useDraftGuard} from './UnsavedChangesProvider';
+import {useScrollReveal} from '../hooks/useScrollReveal';
 
 export default function TemplateSaveForm({date, meal, onClose}: {date: string; meal: string; onClose: () => void}) {
   const [name, setName] = useState(`Mein ${meal}`);
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const notify = useToast();
+  const formRef = useScrollReveal<HTMLFormElement>(true);
   const guard = useDraftGuard('Mahlzeiten-Vorlage', name, busy, 'template-save');
-  return <form className="meal-copy editor" onSubmit={async event => {
+  return <form ref={formRef} className="meal-copy editor" onSubmit={async event => {
     event.preventDefault(); if (saving.current) return;
     saving.current = true; setBusy(true);
     try {await createTemplate(date, meal, name); guard.markSaved(); notify('Mahlzeiten-Vorlage gespeichert. Du findest sie unter „Planen → Vorlagen“.', 'success'); onClose();}

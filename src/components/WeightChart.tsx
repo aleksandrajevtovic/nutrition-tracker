@@ -1,6 +1,7 @@
 import {useEffect, useId, useRef, useState} from 'react';
 import {fmt} from '../nutrition';
 import {weightDate, weightsInRange, type WeightRange, type WeightRecord} from '../weight';
+import {revealOpeningDetails} from '../hooks/useScrollReveal';
 
 export default function WeightChart({records, date, showRanges = true}: {records: WeightRecord[]; date: string; showRanges?: boolean}) {
   const id = useId();
@@ -70,7 +71,7 @@ export default function WeightChart({records, date, showRanges = true}: {records
         </>}
       </svg>
       <p className="hint">{visible.length === 1 ? 'Mit einer weiteren Messung wird dein Verlauf sichtbar. ' : ''}Die Skala passt sich deinen Messwerten an. Tage ohne Messung werden nicht als 0 kg dargestellt.</p>
-      <details className="weight-chart__table"><summary>Messwerte anzeigen ({visible.length})</summary>
+      <details className="weight-chart__table"><summary onClick={revealOpeningDetails}>Messwerte anzeigen ({visible.length})</summary>
         <table><caption>Gewichtsmessungen im gewählten Zeitraum</caption><thead><tr><th scope="col">Datum</th><th scope="col">Gewicht</th></tr></thead>
           <tbody>{[...visible].reverse().map(record => <tr key={record.date}><td>{weightDate(record.date)}</td><td>{fmt(record.kg, 3)} kg</td></tr>)}</tbody></table>
       </details>

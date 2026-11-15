@@ -1,0 +1,8 @@
+.diary-extras { margin: 0 0 18px; }
+.diary-extras__toggle { display: flex; width: 100%; align-items: center; gap: 12px; min-height: 52px; padding: 12px 14px; border: 1px solid #e0e7db; border-radius: 12px; background: white; color: #315c46; text-align: left; }
+.diary-extras__toggle > span { flex: 1; min-width: 0; }
+.diary-extras__toggle strong { display: block; font-size: 13px; }
+.diary-extras__toggle small { display: block; margin-top: 4px; font-size: 11px; color: #617368; }
+.diary-extras__toggle[aria-expanded="true"] > svg { transform: rotate(180deg); }
+.diary-extras__content { margin-top: 12px; }
+.diary-extras__content > .panel { margin-bottom: 12px; }

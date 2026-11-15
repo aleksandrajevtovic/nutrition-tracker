@@ -7,6 +7,7 @@ import {weightDate} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
 import {useDraftGuard} from './UnsavedChangesProvider';
+import {useScrollReveal} from '../hooks/useScrollReveal';
 import './DailyNotes.css';
 
 function NoteEditor({date, note, onDeleted}: {date: string; note?: DailyNote; onDeleted: () => void}) {
@@ -50,6 +51,7 @@ function NoteEditor({date, note, onDeleted}: {date: string; note?: DailyNote; on
 
 export default function DailyNotes({date}: {date: string}) {
   const [expanded, setExpanded] = useState(false);
+  const contentRef = useScrollReveal<HTMLDivElement>(expanded);
   const contentId = useId();
   const data = useDayNote(date);
   const preview = data.note ? noteFields.map(key => data.note![key]).filter(Boolean).join(' · ') : '';
@@ -59,7 +61,7 @@ export default function DailyNotes({date}: {date: string}) {
         {expanded ? 'Einklappen' : data.note ? 'Bearbeiten' : 'Hinzufügen'}<ChevronDown size={16} aria-hidden="true"/>
       </button></div>
     {!expanded && <p className="day-notes__preview">{data.loading ? 'Notiz wird geladen…' : data.failed ? 'Notiz konnte nicht geladen werden.' : preview || 'Hunger, Energie, Training oder eigene Beobachtungen festhalten.'}</p>}
-    <div id={contentId} hidden={!expanded}>{data.loading ? <p className="hint" role="status">Notiz wird geladen…</p> : data.failed ? <button type="button" className="secondary" onClick={data.reload}>Erneut versuchen</button>
+    <div ref={contentRef} id={contentId} hidden={!expanded}>{data.loading ? <p className="hint" role="status">Notiz wird geladen…</p> : data.failed ? <button type="button" className="secondary" onClick={data.reload}>Erneut versuchen</button>
       : <NoteEditor key={`${date}-${data.note?.updatedAt ?? 'empty'}`} date={date} note={data.note} onDeleted={() => setExpanded(false)}/>}</div>
   </section>;
 }

@@ -29,6 +29,10 @@ Geschützt werden Tagebucheinträge samt Notizen, Lebensmittel, Rezepte einschli
 
 Beim Neuladen oder Schließen einer Seite mit offenen Änderungen wird die native Browserwarnung angefordert. Deren Darstellung und Verfügbarkeit hängen vom Browser ab. Entwürfe werden nicht automatisch gespeichert; ausdrücklich bestätigtes Verwerfen entfernt sie. Bei einem Speicherfehler bleibt der Schutz aktiv.
 
+## Geöffnete Bereiche direkt im Blick
+
+Beim Öffnen von Tageszielen, Tagesnotizen, Getränke- und Gewichtsbereichen, Eintragsdetails, Mengenformularen, Kopier- und Vorlagenformularen sowie der Tagebuchsuche scrollt die App zum geöffneten Bereich. Auch erneut geöffnete Abschnitte und die Messwerttabelle werden sichtbar gemacht. Die Bewegung berücksichtigt die Systemeinstellung für reduzierte Animationen. Tippen, Speichern und Einklappen lösen keinen erneuten automatischen Sprung aus.
+
 ## Mengen und Einheiten
 
 - Im Tagebuch Menge und Einheit wählen: g, mg, kg, ml, l, Portion, Stück oder Scheibe. Dezimalmengen sind möglich.
@@ -37,6 +41,14 @@ Beim Neuladen oder Schließen einer Seite mit offenen Änderungen wird die nativ
 - Im Produkteditor die Bezugsmenge wählen: 100 g, 100 ml, 1 Portion oder eine eigene Grammmenge. Beispiel: Portionsname „Mittel“, 150 g pro Portion, Bezug „1 Portion“ und 116 kcal eingeben. Die App rechnet für ihre Berechnungen automatisch auf 100 g um und zeigt beim erneuten Bearbeiten wieder die gewählte Bezugsmenge. Für 100 ml ist eine Dichte erforderlich.
 - Weitere Portionsgrößen können eigene Namen und Gewichte erhalten, etwa „Klein“ mit 80 g und „Groß“ mit 250 g. Bei der Einheit „Portion“ steht die Größenwahl im Tagebuch, in Rezeptzutaten und in neuen Wochenplanungen zur Verfügung. Alle Größen werden aus denselben Nährwerten berechnet; gerundete Quellenwerte können leicht abweichen.
 - Gespeicherte Einträge behalten ihre Menge, Einheit, gewählte Portionsgröße und ihren Nährwert-Snapshot. Eine andere Größenwahl verändert den Tagebucheintrag, ohne die Standardportion im Produkt zu überschreiben. Ältere Einträge und Backups funktionieren weiterhin; neue Bezugsangaben und Portionsgrößen sind im JSON-Backup enthalten.
+
+## Mahlzeiten schneller finden
+
+Direkt unter dem Datum gibt es eine beim Scrollen oben erreichbare Mahlzeitenleiste. „Alle“ zeigt den ganzen Tag, ein Mahlzeitenfilter nur die zugehörigen Einträge. Die Zahl am Button gibt die Anzahl der Einträge dieser Mahlzeit an; eigene Mahlzeitennamen werden ebenfalls angeboten. Auf schmalen Bildschirmen lässt sich die Leiste horizontal verschieben. Ein Klick führt direkt zum Mahlzeitenbereich. Die Tagesbilanz berechnet weiterhin den gesamten Tag.
+
+„Lebensmittel hinzufügen“ übernimmt die ausgewählte Mahlzeit, auch bei „Zuletzt verwendet“. Bei „Alle“ bleibt Frühstück die Vorauswahl. Wird ein Eintrag in eine andere Mahlzeit verschoben, folgt der aktive Filter nach dem Speichern dieser Mahlzeit. Ein Suchtreffer öffnet Datum und Mahlzeit des gefundenen Eintrags. Leere Mahlzeiten bleiben auswählbar, damit dort direkt etwas ergänzt werden kann.
+
+Gewicht, Trinkmenge und Tagesnotizen liegen im standardmäßig geschlossenen Bereich „Weitere Tagesdaten“. Einklappen erhält die Formulare und ihre Entwürfe. Der Schutz ungespeicherter Eingaben bleibt aktiv. Beim Filtern fragt die App vor dem Verwerfen offener Formulare oder dem Ausblenden geänderter Mengen nach; weiterhin sichtbare Mengenentwürfe bleiben erhalten.
 
 ## Kompakter Tagebuchmodus
 
@@ -51,6 +63,8 @@ Beim Hinzufügen oder Bearbeiten eines Lebensmittels im Tagebuch gibt es das opt
 Notizen bleiben nach Neuladen, Kopieren, Löschen/Rückgängig und JSON-Export/Import erhalten. Auch Mahlzeiten-Vorlagen behalten die Notizen der gespeicherten Einträge. Sie ändern weder die Produktdaten noch die Tageswerte und werden nicht in der CSV-Tagesauswertung ausgegeben. Alte Einträge und Sicherungen ohne Notiz bleiben kompatibel.
 
 ## Zuletzt verwendet, Tagebuchsuche und schnelle Mengenkorrektur
+
+„Zuletzt verwendet“ ist standardmäßig geschlossen und lässt sich bei Bedarf über die Überschrift öffnen.
 
 Beim Hinzufügen eines Lebensmittels zeigt „Zuletzt verwendet“ bis zu sechs zuletzt eingetragene Produkte, je Produkt mit der zuletzt erfassten Menge und Einheit. Die Reihenfolge richtet sich nach dem Erfassungszeitpunkt. Ein Klick auf den Namen übernimmt die Menge ins Formular; mit + entsteht direkt ein neuer Eintrag am gewählten Datum in der oben ausgewählten Mahlzeit. Verwendet werden die aktuellen Produktwerte und, sofern vorhanden, die passende Portionsgröße. Fehlt die frühere Größe oder eine Umrechnung, wird das gespeicherte Grammgewicht übernommen. Gelöschte Produkte werden nicht angeboten. Alte Eintragsnotizen werden nicht übernommen; eine im neuen Formular eingegebene Notiz wird gespeichert.
 
@@ -145,6 +159,8 @@ Beim Bearbeiten eines Tagebucheintrags wird der Editor automatisch ins Sichtfeld
 ## Code finden
 
 - `src/main.tsx`: React-Einstiegspunkt.
+- `src/components/MealFilter.tsx` und `DailyExtras.tsx`: feste Mahlzeitenleiste mit Eintragszahlen und einklappbare weitere Tagesdaten.
+- `src/hooks/useScrollReveal.ts`: gemeinsames Scrollverhalten beim Öffnen von React-Abschnitten und nativen Detailbereichen.
 - `src/unsaved.ts` und `src/components/UnsavedChangesProvider.tsx`: zentrale Entwurfsregistrierung, gezielte Wechselprüfung und Browserwarnung; `useDraftGuard` markiert gespeicherte Formulare wieder als unverändert.
 - `src/hydration.ts`, `src/hooks/useHydration.ts`, `src/components/HydrationTracker.tsx`, `DrinkForm.tsx` und `DrinkTimeline.tsx`: Trinkmengen, Einheiten, Tagesverlauf und Eingabe.
 - `src/diaryHistory.ts`, `src/hooks/useDiaryHistory.ts`, `RecentFoods.tsx` und `DiarySearch.tsx`: letzte Produkte, Verlaufssuche und Aktualisierung nach Datenänderungen.

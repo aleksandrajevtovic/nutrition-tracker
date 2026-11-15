@@ -19,6 +19,7 @@ h1, h2, h3, p { overflow-wrap: anywhere; }
 h1 { font-size: clamp(23px, 4vw, 32px); letter-spacing: -.8px; margin: 7px 0 0; }
 h2 { font-size: 19px; margin: 0; }
 h3 { font-size: 16px; margin: 0; }
+.scroll-reveal { scroll-margin-block-start: var(--reveal-top-offset, 16px); }
 
 /* Phone layout is the baseline; larger screens add space and columns below. */
 .app { max-width: var(--app-width); margin: auto; min-height: 100dvh; padding-bottom: calc(100px + env(safe-area-inset-bottom)); }

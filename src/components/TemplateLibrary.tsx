@@ -8,6 +8,7 @@ import {parseWeight} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
 import {useDraftGuard, useNavigationGuard} from './UnsavedChangesProvider';
+import {useScrollReveal} from '../hooks/useScrollReveal';
 
 function TemplateApply({template, date, onClose, onOpenDay}: {template: MealTemplate; date: string; onClose: () => void; onOpenDay: (date: string) => void}) {
   const [target, setTarget] = useState(date);
@@ -17,7 +18,8 @@ function TemplateApply({template, date, onClose, onOpenDay}: {template: MealTemp
   const saving = useRef(false);
   const notify = useToast();
   const guard = useDraftGuard('Vorlage eintragen', {target, meal, factor}, busy, 'template-apply');
-  return <form className="editor planning-inline-form" onSubmit={async event => {
+  const formRef = useScrollReveal<HTMLFormElement>(true);
+  return <form ref={formRef} className="editor planning-inline-form" onSubmit={async event => {
     event.preventDefault(); if (saving.current) return;
     saving.current = true; setBusy(true);
     try {

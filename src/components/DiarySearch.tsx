@@ -5,6 +5,7 @@ import {searchDiary, validDiaryRange} from '../diaryHistory';
 import {useDiaryHistory} from '../hooks/useDiaryHistory';
 import {fmt, stats} from '../nutrition';
 import {weightDate} from '../weight';
+import {useScrollReveal} from '../hooks/useScrollReveal';
 import './DiarySearch.css';
 
 export default function DiarySearch({onOpen, onClose}: {onOpen: (entry: Entry) => void; onClose: () => void}) {
@@ -13,9 +14,10 @@ export default function DiarySearch({onOpen, onClose}: {onOpen: (entry: Entry) =
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [limit, setLimit] = useState(30);
+  const sectionRef = useScrollReveal<HTMLElement>(true);
   const valid = validDiaryRange({from, to});
   const results = useMemo(() => searchDiary(history.entries, {text, from, to}), [history.entries, text, from, to]);
-  return <section className="panel diary-search" aria-labelledby="diary-search-title">
+  return <section ref={sectionRef} className="panel diary-search" aria-labelledby="diary-search-title">
     <div className="section-head"><h3 id="diary-search-title"><Search size={17} aria-hidden="true"/>Tagebuch durchsuchen</h3>
       <button type="button" className="iconbtn" aria-label="Tagebuchsuche schließen" onClick={onClose}><X size={18}/></button></div>
     <label>Suchbegriff<input type="search" autoFocus value={text} placeholder="Lebensmittel, Marke, Mahlzeit oder Notiz…" onChange={event => {setText(event.target.value); setLimit(30);}}/></label>

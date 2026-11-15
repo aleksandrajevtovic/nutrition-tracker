@@ -6,6 +6,7 @@ import {validDate, weightDate} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
 import {useDraftGuard} from './UnsavedChangesProvider';
+import {useScrollReveal} from '../hooks/useScrollReveal';
 
 export type CopyMeal = (sourceDate: string, sourceMeal: string, targetDate: string, targetMeal: string) => Promise<void>;
 
@@ -18,6 +19,7 @@ export default function MealCopyForm({date, meal, count, onCopy, onClose}: {
   const [busy, setBusy] = useState(false);
   const submitting = useRef(false);
   const notify = useToast();
+  const formRef = useScrollReveal<HTMLFormElement>(true);
   const guard = useDraftGuard('Mahlzeit kopieren', {targetDate, targetMeal}, busy, 'meal-copy');
 
   async function submit(event: React.FormEvent) {
@@ -29,7 +31,7 @@ export default function MealCopyForm({date, meal, count, onCopy, onClose}: {
     finally {submitting.current = false; setBusy(false);}
   }
 
-  return <form className="meal-copy editor" onSubmit={submit} aria-labelledby={`${id}-title`}>
+  return <form ref={formRef} className="meal-copy editor" onSubmit={submit} aria-labelledby={`${id}-title`}>
     <div className="section-head"><h3 id={`${id}-title`}>Mahlzeit kopieren</h3>
       <button type="button" className="iconbtn" aria-label="Kopieren abbrechen" disabled={busy} onClick={() => {if (guard.confirmLeave()) onClose();}}><X size={17}/></button></div>
     <p className="hint">{count} {count === 1 ? 'Eintrag' : 'Einträge'} aus „{meal}“ vom {weightDate(date)} übernehmen. Bestehende Einträge am Ziel bleiben erhalten.</p>

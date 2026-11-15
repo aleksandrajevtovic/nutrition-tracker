@@ -1,0 +1,9 @@
+.diary-page { --reveal-top-offset: 80px; }
+.meal-filter { position: sticky; top: 0; z-index: 5; margin: 0 0 18px; padding: 8px 0; border-bottom: 1px solid #e2e8dd; background: #f7f7f3; }
+.meal-filter__list { display: flex; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; padding: 2px; }
+.meal-filter__list::-webkit-scrollbar { display: none; }
+.meal-filter button { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 7px; max-width: 230px; min-height: 44px; padding: 8px 12px; border: 1px solid #dce5d8; border-radius: 999px; background: white; color: #506c59; font-size: 12px; font-weight: 650; }
+.meal-filter button[aria-pressed="true"] { background: #315c46; border-color: #315c46; color: white; }
+.meal-filter__name { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.meal-filter__count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding-inline: 4px; border-radius: 10px; background: #edf2e9; color: #506c59; font-size: 11px; font-variant-numeric: tabular-nums; }
+.meal-filter button[aria-pressed="true"] .meal-filter__count { background: #ffffff26; color: white; }
