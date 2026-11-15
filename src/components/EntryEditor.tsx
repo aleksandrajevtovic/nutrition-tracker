@@ -1,6 +1,6 @@
 import {germanError} from '../german';
 import {useRef, useState} from 'react';
-import {Check, Minus, Plus} from 'lucide-react';
+import {Check, Minus, Plus, ScanBarcode} from 'lucide-react';
 import type {Entry, Food} from '../db';
 import {useToast} from './ToastProvider';
 import FoodPicker from './FoodPicker';
@@ -8,6 +8,7 @@ import PortionPicker from './PortionPicker';
 import RecentFoods from './RecentFoods';
 import {useDraftGuard} from './UnsavedChangesProvider';
 import type {RecentFood} from '../diaryHistory';
+import ProductImport from './ProductImport';
 import './EntryEditor.css';
 import {fmt, isPositive, meals, stats, toGrams, unitLabels, units, validFood, type Unit} from '../nutrition';
 
@@ -18,9 +19,10 @@ type Props = {
   initialMeal?: string;
   onSave: (entry: Entry, conversions: Partial<Food>) => Promise<void>;
   onClose: () => void;
+  onSaveFood: (food: Food) => Promise<void>;
 };
 
-export default function EntryEditor({foods, date, entry, initialMeal = 'Frühstück', onSave, onClose}: Props) {
+export default function EntryEditor({foods, date, entry, initialMeal = 'Frühstück', onSave, onClose, onSaveFood}: Props) {
   const notify = useToast();
   const [selected, setSelected] = useState<Food | undefined>(entry?.foodSnapshot);
   const [meal, setMeal] = useState(entry?.meal ?? initialMeal);
@@ -29,6 +31,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
   const [conversions, setConversions] = useState<Partial<Food>>({});
   const [note, setNote] = useState(entry?.note ?? '');
   const [saving, setSaving] = useState(false);
+  const [importing,setImporting] = useState(false);
   const savingRef = useRef(false);
   const guard = useDraftGuard('Tagebucheintrag', {selected, meal, amount, unit, conversions, note}, saving, 'entry-editor');
   const food = selected ? {...selected, ...conversions} : undefined;
@@ -76,6 +79,8 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
       {Array.from(new Set([...meals, meal])).map(m => <option key={m}>{m}</option>)}
     </select></label>
     {!entry && <RecentFoods foods={foods} busy={saving} onSelect={item => {setSelected(item.food); setAmount(String(item.amount)); setUnit(item.unit); setConversions({});}} onAdd={item => void addRecent(item)}/>}
+    {!entry && <button type="button" className="secondary wide" disabled={saving} onClick={() => setImporting(true)}><ScanBarcode size={17}/>Produkt scannen</button>}
+    {importing && <ProductImport foods={foods} onSave={onSaveFood} onClose={() => setImporting(false)} onSelect={food => {setSelected(food);setConversions({});setAmount('1');setUnit(food.nutritionReference?.unit === 'ml' ? 'ml' : 'portion');if (food.nutritionReference?.unit === 'ml') setAmount('100');}}/>}
     <FoodPicker foods={options} selected={selected} disabled={saving} onChange={food => {
       if (food.id === selected?.id) return;
       setSelected(food);
@@ -85,7 +90,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
       {unit === 'portion' && <PortionPicker food={food} disabled={saving} onChange={setSelected}/>}
       <div className="quantity-fields">
         <label>Menge<input type="number" min="0" step="any" required value={amount} disabled={saving} onChange={e => setAmount(e.target.value)}/></label>
-        <label>Einheit<select value={unit} disabled={saving} onChange={e => {
+        <label>Einheit<select aria-label="Einheit" value={unit} disabled={saving} onChange={e => {
           // Keep the physical amount when switching between configured units.
           const next = e.target.value as Unit;
           const factor = toGrams(food, 1, next);

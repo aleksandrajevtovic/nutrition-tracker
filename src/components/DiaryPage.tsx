@@ -16,12 +16,13 @@ import {useNavigationGuard} from './UnsavedChangesProvider';
 import {scrollToRevealed} from '../hooks/useScrollReveal';
 import './MealCard.css';
 
-export default function DiaryPage({date, foods, entries, onDateChange, onSave, onDelete, onCopy, onQuantityChange}: {
+export default function DiaryPage({date, foods, entries, onDateChange, onSave, onDelete, onCopy, onQuantityChange, onSaveFood}: {
   date: string; foods: Food[]; entries: Entry[]; onDateChange: (date: string) => void;
   onSave: (entry: Entry, conversions: Partial<Food>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onCopy: CopyMeal;
   onQuantityChange: SaveQuantity;
+  onSaveFood: (food: Food) => Promise<void>;
 }) {
   const [editor, setEditor] = useState<{entry: Entry | null; initialMeal?: string; session?: string} | null>(null);
   const [copying, setCopying] = useState<string | null>(null);
@@ -76,7 +77,7 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
       <button ref={searchButtonRef} type="button" className="diary-view-toggle" aria-expanded={searching} onClick={() => setSearching(value => !value)}><Search size={17} aria-hidden="true"/>Tagebuchsuche</button></div>
       <button className="primary" onClick={() => openEditor(null)}><Plus size={17}/> Lebensmittel hinzufügen</button></div>
     {searching && <DiarySearch onClose={() => {setSearching(false); searchButtonRef.current?.focus();}} onOpen={entry => {if (!confirmNavigation(entry.date === date ? ['entry-editor', 'meal-copy', 'template-save', 'quantity:'] : undefined)) return; setSearching(false); setCopying(null); setSavingTemplate(null); setSelectedMeal(entry.meal); onDateChange(entry.date); setEditor({entry});}}/>}
-    {editor && <div ref={editorRef} className="diary-entry-editor"><EntryEditor key={editor.entry?.id ?? editor.session ?? 'new'} foods={foods} date={date} entry={editor.entry} initialMeal={editor.initialMeal ?? selectedMeal ?? undefined}
+    {editor && <div ref={editorRef} className="diary-entry-editor"><EntryEditor key={editor.entry?.id ?? editor.session ?? 'new'} foods={foods} date={date} entry={editor.entry} initialMeal={editor.initialMeal ?? selectedMeal ?? undefined} onSaveFood={onSaveFood}
       onClose={() => setEditor(null)} onSave={async (entry, conversions) => {await onSave(entry, conversions); if (selectedMeal !== null) setSelectedMeal(entry.meal); setEditor(null);}}/></div>}
     <div className={view.compact ? 'diary-meals diary-meals--compact' : 'diary-meals'}>
     {visibleEntries.length === 0 ? <div className="empty"><BookOpen size={30}/><strong>{selectedMeal ? `Noch keine Einträge für ${selectedMeal}` : 'Noch keine Einträge'}</strong><p>{selectedMeal ? 'Füge ein Lebensmittel für diese Mahlzeit hinzu.' : 'Füge dein erstes Lebensmittel für diesen Tag hinzu.'}</p>

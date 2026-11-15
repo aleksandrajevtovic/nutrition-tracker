@@ -1,20 +1,21 @@
 import {useState} from 'react';
-import {CookingPot, Plus, Star} from 'lucide-react';
+import {CookingPot, Plus, ScanBarcode, Star} from 'lucide-react';
 import type {Food} from '../db';
 import {emptyFood} from '../nutrition';
 import {filterFoods} from '../foods';
 import FoodCard from './FoodCard';
 
-export default function FoodsPage({foods, onEdit, onDelete, onFavorite, onNewRecipe}: {
+export default function FoodsPage({foods, onEdit, onDelete, onFavorite, onNewRecipe, onScan}: {
   foods: Food[]; onEdit: (food: Food) => void; onDelete: (food: Food) => void; onFavorite: (id: string) => Promise<void>;
   onNewRecipe: () => void;
+  onScan: () => void;
 }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'favorites' | 'recipes'>('all');
   const filtered = filterFoods(foods, search, filter === 'favorites').filter(food => filter !== 'recipes' || food.recipe);
   return <>
     <div className="heading"><div><span className="eyebrow">MEINE DATENBANK</span><h1>Lebensmittel</h1></div>
-      <div className="food-page__actions"><button className="secondary" onClick={onNewRecipe}><CookingPot size={17}/>Neues Rezept</button>
+      <div className="food-page__actions"><button className="secondary" onClick={onScan}><ScanBarcode size={17}/>Produkt scannen</button><button className="secondary" onClick={onNewRecipe}><CookingPot size={17}/>Neues Rezept</button>
         <button className="primary" onClick={() => onEdit(emptyFood())}><Plus size={17}/> Neu</button></div></div>
     <input className="search" aria-label="Lebensmittel suchen" placeholder="Lebensmittel suchen…" value={search} onChange={e => setSearch(e.target.value)}/>
     <div className="food-filters" role="group" aria-label="Lebensmittel filtern">

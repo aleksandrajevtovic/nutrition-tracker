@@ -1,12 +1,9 @@
 import assert from 'node:assert/strict';
-import {readFile} from 'node:fs/promises';
 import test from 'node:test';
-import ts from 'typescript';
+import {loadTypeScript} from './helpers/typescript.mjs';
 
 // Run the actual TypeScript conversion module using the project's existing compiler.
-const source = await readFile(new URL('../src/nutrition.ts', import.meta.url), 'utf8');
-const {outputText} = ts.transpileModule(source, {compilerOptions: {module: ts.ModuleKind.ESNext}});
-const {toGrams, stats, validFood, isPositive} = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`);
+const {toGrams, stats, validFood, isPositive} = await loadTypeScript(new URL('../src/nutrition.ts', import.meta.url));
 const food = {
   id: 'lachs', name: 'Lachs', brand: '', kcal: 200, protein: 20, carbs: 0,
   fat: 12, fiber: 0, sugar: 0, portionName: '1 Filet', portionGrams: 150,

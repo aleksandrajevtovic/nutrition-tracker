@@ -1,6 +1,6 @@
 # Nutrition Tracker
 
-Statische React + TypeScript PWA mit lokaler IndexedDB-Datenbank und JSON-Backup. Keine Cloud, kein Login und kein Backend.
+Statische React + TypeScript PWA mit lokaler IndexedDB-Datenbank und JSON-Backup. Kein Login und kein Backend. Erfasste Daten bleiben lokal; der optionale Produktimport fragt Open Food Facts ab.
 
 ## Lokal starten
 
@@ -41,6 +41,22 @@ Beim Öffnen von Tageszielen, Tagesnotizen, Getränke- und Gewichtsbereichen, Ei
 - Im Produkteditor die Bezugsmenge wählen: 100 g, 100 ml, 1 Portion oder eine eigene Grammmenge. Beispiel: Portionsname „Mittel“, 150 g pro Portion, Bezug „1 Portion“ und 116 kcal eingeben. Die App rechnet für ihre Berechnungen automatisch auf 100 g um und zeigt beim erneuten Bearbeiten wieder die gewählte Bezugsmenge. Für 100 ml ist eine Dichte erforderlich.
 - Weitere Portionsgrößen können eigene Namen und Gewichte erhalten, etwa „Klein“ mit 80 g und „Groß“ mit 250 g. Bei der Einheit „Portion“ steht die Größenwahl im Tagebuch, in Rezeptzutaten und in neuen Wochenplanungen zur Verfügung. Alle Größen werden aus denselben Nährwerten berechnet; gerundete Quellenwerte können leicht abweichen.
 - Gespeicherte Einträge behalten ihre Menge, Einheit, gewählte Portionsgröße und ihren Nährwert-Snapshot. Eine andere Größenwahl verändert den Tagebucheintrag, ohne die Standardportion im Produkt zu überschreiben. Ältere Einträge und Backups funktionieren weiterhin; neue Bezugsangaben und Portionsgrößen sind im JSON-Backup enthalten.
+
+## Produkte scannen und Nährwerttabellen einlesen
+
+„Produkt scannen“ gibt es unter „Produkte“ und beim Anlegen eines Tagebucheintrags. Der Import öffnet sich als Dialog mit Kamera, manueller Barcode-Eingabe und Fotoauswahl. EAN-8, UPC-A, EAN-13 und GTIN-14 werden mit Prüfziffer geprüft. Für den Kamerazugriff sind HTTPS (oder localhost) und eine Kameraberechtigung nötig. Die Kamera wird beim Erkennen, Ausschalten oder Schließen freigegeben. Ohne Kamera kann die Nummer eingegeben werden.
+
+Zuerst wird lokal nach dem Barcode gesucht. Führende Nullstellen bei UPC/EAN ändern die Produktidentität nicht. Ein gespeichertes Produkt verwendet deine aktuellen Werte und lässt sich direkt auswählen oder bearbeiten, auch offline. Neue Barcodes werden über die öffentliche Open-Food-Facts-API abgefragt. Die Abfrage hat ein Zeitlimit; fehlende Treffer, Verbindungsprobleme und Abfragelimits werden angezeigt. Ohne Treffer kann ein Produkt mit übernommenem Barcode manuell angelegt werden. Korrekturen werden ausschließlich lokal gespeichert.
+
+Bei einem Datenbanktreffer öffnet sich das vorhandene Produktformular als bearbeitbare Vorschau. Übernommen werden Name, Marke, Nährwerte und, wenn eindeutig in Gramm vorhanden, die Portionsgröße. Verwendet werden die standardisierten Werte pro 100 g beziehungsweise 100 ml, keine Angaben des zubereiteten Produkts. Falls nur kJ vorliegen, werden sie in kcal umgerechnet. Fehlende Werte bleiben leer und müssen ergänzt werden; sie werden nicht automatisch zu null. Bezugsmenge, Werte und Portionen müssen anhand der Verpackung geprüft und bestätigt werden. Für 100 ml ist eine ausdrücklich angegebene Dichte erforderlich. Die Lebensmittelübersicht zeigt weiterhin die intern verwendeten Werte pro 100 g.
+
+„Foto aufnehmen oder auswählen“ liest eine scharfe, gerade fotografierte Nährwerttabelle als JPG, PNG, WebP oder BMP (maximal 12 MB). Die Texterkennung mit Tesseract.js läuft lokal auf dem Gerät. Das Foto wird weder hochgeladen noch dauerhaft gespeichert. Beim ersten Aufruf werden Erkennungsdateien und deutsche/englische Sprachdaten aus dem Internet geladen. Der erkannte Text bleibt sichtbar und korrigierbar; bei zwei Wertespalten kann die gewünschte Spalte gewählt werden. Anschließend werden die erkannten Angaben im Produktformular geprüft. Dezimalkommas und kJ werden berücksichtigt. Nicht erkannte Werte und Angaben mit „kleiner als“/„größer als“ müssen selbst ergänzt werden; die Erkennung ersetzt keine Kontrolle der Verpackung.
+
+„Produkt speichern“ legt das Lebensmittel in deiner Liste ab. Im Tagebuch gibt es zusätzlich „Speichern und zum Tag hinzufügen“: Das Produkt wird gespeichert und im bestehenden Eintragsformular ausgewählt. Mahlzeit und Eintragsnotiz bleiben erhalten. Menge und Einheit können vor dem eigentlichen Tagebucheintrag angepasst werden. Ein bereits gespeichertes Produkt lässt sich direkt über „Für Eintrag auswählen“ übernehmen.
+
+Barcodes und die Herkunft von Open-Food-Facts-Daten sind optionale Produktfelder und bleiben bei JSON-Export/Import erhalten. Ältere Sicherungen bleiben kompatibel. Doppelte Barcodes werden beim Speichern, Wiederherstellen und beim Import einer Sicherung abgewiesen. Importierte Produkte verlinken ihre Quelle und die ODbL-Lizenz. Scanner und Texterkennung werden erst bei Bedarf geladen.
+
+Die Umsetzung ist getrennt: `ProductImport.tsx` koordiniert den Dialog, `BarcodeCamera.tsx` die Kamera, `productImport.ts` die Datenbankabfrage und Zuordnung, `barcode.ts` die Barcode-Prüfung, `labelRecognition.ts` die Texterkennung und `labelNutrition.ts` die Zuordnung der erkannten Nährwerte. Die Kontrolle und Speicherung verwenden weiterhin `FoodEditor.tsx`.
 
 ## Mahlzeiten schneller finden
 

@@ -12,6 +12,7 @@ import RecipeEditor from './components/RecipeEditor';
 import {emptyRecipeFood} from './recipes';
 import PlanningPage from './components/PlanningPage';
 import {useNavigationGuard} from './components/UnsavedChangesProvider';
+import ProductImport from './components/ProductImport';
 
 type Tab = 'today' | 'week' | 'foods' | 'planning' | 'settings';
 
@@ -19,6 +20,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>('today');
   const [date, setDate] = useState(today);
   const [editing, setEditing] = useState<Food | null>(null);
+  const [importing, setImporting] = useState(false);
   const data = useNutritionData(date);
   const confirmNavigation = useNavigationGuard();
   const navigate = (next: Tab) => {if (next !== tab && confirmNavigation()) setTab(next);};
@@ -29,8 +31,8 @@ export default function App() {
     <header><div className="brand"><span className="logo">◒</span><div><strong>Ernährungstagebuch</strong><small>Deine Ernährung im Überblick</small></div></div></header>
     <main>
       {tab === 'today' && <DiaryPage date={date} foods={data.foods} entries={data.entries}
-        onDateChange={setDate} onSave={data.persistEntry} onDelete={data.deleteEntry} onCopy={data.copyMeal} onQuantityChange={data.persistQuantity}/>}
-      {tab === 'foods' && <FoodsPage foods={data.foods} onEdit={setEditing} onDelete={data.deleteFood} onFavorite={data.toggleFavorite} onNewRecipe={() => setEditing(emptyRecipeFood())}/>}
+        onDateChange={setDate} onSave={data.persistEntry} onDelete={data.deleteEntry} onCopy={data.copyMeal} onQuantityChange={data.persistQuantity} onSaveFood={data.persistFood}/>}
+      {tab === 'foods' && <FoodsPage foods={data.foods} onEdit={setEditing} onDelete={data.deleteFood} onFavorite={data.toggleFavorite} onNewRecipe={() => setEditing(emptyRecipeFood())} onScan={() => setImporting(true)}/>}
       {tab === 'week' && <WeeklyPage date={date} onOpenDay={openDay}/>}
       {tab === 'planning' && <PlanningPage foods={data.foods} date={date} onOpenDay={openDay}/>}
       {tab === 'settings' && <BackupPage onRestored={data.reload}/>}
@@ -42,6 +44,7 @@ export default function App() {
       <button className={tab === 'planning' ? 'active' : ''} onClick={() => navigate('planning')}><CalendarPlus size={20}/>Planen</button>
       <button className={tab === 'settings' ? 'active' : ''} aria-label="Datensicherung" onClick={() => navigate('settings')}><Settings size={20}/><span className="nav-label-short">Sicherung</span><span className="nav-label-full">Datensicherung</span></button>
     </nav>
+    {importing && <ProductImport foods={data.foods} onSave={data.persistFood} onClose={() => setImporting(false)}/>}
     {editing && (editing.recipe ? <RecipeEditor key={editing.id} food={editing} foods={data.foods} existing={data.foods.some(f => f.id === editing.id)}
       onClose={() => setEditing(null)} onSave={async food => {await data.persistFood(food); setEditing(null);}}/>
       : <FoodEditor key={editing.id} food={editing} existing={data.foods.some(f => f.id === editing.id)}

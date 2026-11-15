@@ -1,4 +1,5 @@
 import type {Food} from './db';
+import {validBarcode} from './barcode';
 
 export const meals = ['Vor dem Training', 'Frühstück', 'Mittagessen', 'Abendessen', 'Zwischenmahlzeit', 'Sonstiges'];
 export const today = () => {
@@ -43,6 +44,8 @@ export const isPositive = (value: number | undefined): value is number =>
 
 export function validFood(food: Food): boolean {
   return Boolean(food.name.trim() && food.portionName.trim()) && isPositive(food.portionGrams)
+    && (food.barcode === undefined || validBarcode(food.barcode))
+    && (food.source === undefined || (food.source?.type === 'openfoodfacts' && typeof food.source.importedAt === 'string' && Number.isFinite(Date.parse(food.source.importedAt))))
     && (food.portions === undefined || (Array.isArray(food.portions)
       && food.portions.every(portion => portion && typeof portion.name === 'string' && portion.name.trim() && isPositive(portion.grams)
         && (portion.name.trim() !== food.portionName.trim() || portion.grams === food.portionGrams))

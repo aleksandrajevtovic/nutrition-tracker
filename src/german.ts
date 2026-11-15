@@ -22,6 +22,13 @@ export function germanEntry(entry: Entry): Entry {
 }
 
 const appErrors = new Set([
+  'Dieser Barcode gehört bereits zu einem gespeicherten Lebensmittel. Bitte das vorhandene Produkt bearbeiten.',
+  'Bitte einen gültigen EAN-/UPC-Barcode mit 8, 12, 13 oder 14 Ziffern eingeben.',
+  'Du bist offline. Gespeicherte Produkte sind verfügbar; für neue Produktdaten ist Internet nötig.',
+  'Zu viele Produktabfragen. Bitte warte einen Moment und versuche es erneut.',
+  'Die Produktdatenbank ist gerade nicht erreichbar. Bitte später erneut versuchen.',
+  'Die Produktabfrage hat zu lange gedauert. Bitte erneut versuchen.',
+  'Produktdaten konnten nicht geladen werden. Bitte Internetverbindung prüfen oder manuell anlegen.',
   'Ungültige Datei', 'Nicht unterstütztes Sicherungsformat', 'Ungültige Produktdaten',
   'Ungültige Tagebucheinträge', 'Ungültige Mengeneinheit', 'Ungültige Mengenangabe',
   'Ungültige Eintragsnotiz',

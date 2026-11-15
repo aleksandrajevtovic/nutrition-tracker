@@ -30,6 +30,7 @@ export default function FoodCard({food, onEdit, onDelete, onFavorite}: {
     </div>
     <div className="food__facts">{food.recipe && <small><b>{Math.round(food.kcal * food.portionGrams / 100)} kcal pro Portion</b></small>}
       <small>{fmt(food.kcal)} kcal · Eiweiß {fmt(food.protein)} g · KH {fmt(food.carbs)} g · F {fmt(food.fat)} g / 100 g</small>
+      {food.source && <small className="food-source">Quelle: <a href={`https://world.openfoodfacts.org/product/${food.barcode ?? ''}`} target="_blank" rel="noreferrer">Open Food Facts</a> · <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noreferrer">ODbL</a></small>}
       {Boolean(food.portions?.length) && <small>{food.portions?.map(portion => `${portion.name} = ${fmt(portion.grams, 3)} g`).join(' · ')}</small>}
       <small>{[
         food.pieceGrams ? `1 Stück = ${fmt(food.pieceGrams, 3)} g` : '',

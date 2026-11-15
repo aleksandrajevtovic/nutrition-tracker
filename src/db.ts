@@ -10,11 +10,14 @@ import {backupWorkspace, emptyShoppingList, type WorkspaceBackup} from './planni
 import {backupNotes, validNote, type DailyNote} from './notes';
 import {withEntryAmount} from './entryQuantity';
 import {backupDrinks, validDrink, type Drink} from './hydration';
+import {barcodeKey} from './barcode';
 
 export type Food = {
   id: string;
   name: string;
   brand: string;
+  barcode?: string;
+  source?: {type: 'openfoodfacts'; importedAt: string};
   kcal: number;
   protein: number;
   carbs: number;
@@ -92,7 +95,15 @@ export async function listFoods(): Promise<Food[]> {
 export async function saveFood(food: Food) {
   if (!validFood(food)) throw Error('Ungültige Produktdaten');
   if (food.recipe !== undefined && !validRecipeFood(food)) throw Error('Ungültige Rezeptdaten');
-  await (await dbPromise).put('foods', food);
+  const tx = (await dbPromise).transaction('foods', 'readwrite');
+  if (food.barcode) {
+    const foods: Food[] = await tx.store.getAll();
+    if (foods.some(other => other.id !== food.id && other.barcode && barcodeKey(other.barcode) === barcodeKey(food.barcode!))) {
+      await tx.done;
+      throw Error('Dieser Barcode gehört bereits zu einem gespeicherten Lebensmittel. Bitte das vorhandene Produkt bearbeiten.');
+    }
+  }
+  await tx.store.put(food); await tx.done;
 }
 export async function removeFood(id: string): Promise<Food | undefined> {
   return deleteRecord('foods', id);
@@ -169,6 +180,12 @@ async function restoreDeletedRecord(store: 'foods' | 'entries' | 'weights', key:
     await tx.done;
     throw Error(revision !== dataRevision ? 'Nach einem Datenimport ist diese Wiederherstellung nicht mehr möglich.' : 'Es gibt bereits einen neueren Datensatz. Er wurde nicht überschrieben.');
   }
+  if (store === 'foods' && (record as Food).barcode) {
+    const foods: Food[] = await tx.store.getAll();
+    if (foods.some(food => food.barcode && barcodeKey(food.barcode) === barcodeKey((record as Food).barcode!))) {
+      await tx.done;throw Error('Dieser Barcode gehört bereits zu einem gespeicherten Lebensmittel. Bitte das vorhandene Produkt bearbeiten.');
+    }
+  }
   await tx.store.add(record);
   await tx.done;
   announceDataChange();
@@ -243,8 +260,14 @@ export async function restoreBackup(data: unknown) {
   const workspace = backupWorkspace(backup);
   const dailyNotes = backupNotes(backup);
   const drinks = backupDrinks(backup as {version?: unknown; drinks?: unknown});
+  const barcodes = new Set<string>();
   for (const food of backup.foods) {
     if (!isFood(food)) throw Error('Ungültige Produktdaten');
+    if (food.barcode) {
+      const key = barcodeKey(food.barcode);
+      if (barcodes.has(key)) throw Error('Dieser Barcode gehört bereits zu einem gespeicherten Lebensmittel. Bitte das vorhandene Produkt bearbeiten.');
+      barcodes.add(key);
+    }
   }
   for (const entry of backup.entries) {
     if (!entry || typeof entry.id !== 'string' || typeof entry.foodId !== 'string'
