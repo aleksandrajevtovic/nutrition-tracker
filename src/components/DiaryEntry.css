@@ -1,0 +1,31 @@
+.diary-view-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 8px 12px; border: 1px solid #dbe4d9; border-radius: 10px; background: white; color: #506c59; font-size: 13px; font-weight: 650; }
+.diary-view-toggle[aria-pressed="true"] { background: #e9f0e6; color: #315c46; border-color: #baceb7; }
+.diary-meals--compact .meal { margin-block: 8px; }
+.diary-meals--compact .meal__heading { padding: 6px 12px; gap: 4px 8px; }
+.diary-meals--compact .meal__heading h3 { font-size: 15px; }
+.diary-meals--compact .meal__tools { gap: 3px; }
+.diary-meals--compact .meal__calories { padding: 4px 6px; font-size: 15px; gap: 3px; }
+.diary-meals--compact .meal__tools .iconbtn { border: 0; }
+.diary-meals--compact .meal > .entry { margin-inline: 12px; }
+.entry.diary-entry--compact { display: block; padding: 0; }
+.diary-entry__toggle { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 9px 0; text-align: left; color: #22332a; border: 0; border-radius: 5px; background: transparent; }
+.diary-entry__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
+.diary-entry__calories { flex-shrink: 0; font-size: 13px; font-variant-numeric: tabular-nums; }
+.diary-entry__calories > span { color: #617368; font-size: 11px; }
+.diary-entry__toggle[aria-expanded="true"] > svg:last-child { transform: rotate(180deg); }
+.diary-entry__note-icon { color: #617368; }
+.diary-entry__note { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.6; color: #506c59; margin: 10px 0; }
+.diary-entry__note > span { display: block; font-size: 11px; font-weight: 700; color: #617368; margin-bottom: 2px; }
+.diary-entry__details { padding: 3px 0 12px; overflow-wrap: anywhere; }
+.diary-entry__quantity { font-size: 13px; color: #506c59; margin: 7px 0; }
+.diary-entry__nutrients { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin: 12px 0; font-size: 12px; }
+.diary-entry__nutrients div { min-width: 0; }
+.diary-entry__nutrients dt { color: #617368; }
+.diary-entry__nutrients dd { margin: 3px 0 0; font-weight: 650; }
+.diary-entry__details .actions { justify-content: flex-end; }
+@media (min-width: 640px) {
+  .diary-meals--compact .meal__heading { padding-inline: 16px; }
+  .diary-meals--compact .meal > .entry { margin-inline: 16px; }
+  .diary-entry__nutrients { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .diary-entry__name { font-size: 14px; }
+}

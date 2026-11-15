@@ -1,0 +1,39 @@
+.planning-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 20px; }
+.planning-tabs button { min-width: 0; min-height: 44px; padding: 11px 6px; border: 1px solid #dbe4dc; border-radius: 10px; background: white; color: #617368; font-size: 12px; }
+.planning-tabs button[aria-pressed="true"] { background: #e9f0e9; color: #315c46; border-color: #b9d0bb; font-weight: 700; }
+.planning-card-grid, .planner-days { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 14px; }
+.planning-card-grid > .panel, .planner-days > .panel { margin: 0; }
+.planning-card-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.planning-card-heading > div:first-child { min-width: 0; flex: 1; }
+.planning-card-heading h2 { font-size: 17px; color: #315c46; }
+.planning-card-heading .hint { margin: 6px 0 0; }
+.planning-actions { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+.planning-actions:last-child { margin-bottom: 0; }
+.planning-items { list-style: none; padding: 0; margin: 14px 0; }
+.planning-items li { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px 12px; padding: 8px 0; border-top: 1px solid #edf1e9; font-size: 13px; overflow-wrap: anywhere; }
+.planning-items small { color: #617368; }
+.planning-inline-form { padding-top: 8px; border-top: 1px solid #e3e9df; }
+.shopping-selections, .shopping-checklist { list-style: none; padding: 0; margin: 16px 0 0; }
+.shopping-selections li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #e7ebe4; }
+.shopping-selections li > div { flex: 1; min-width: 0; }
+.shopping-selections strong { font-size: 14px; overflow-wrap: anywhere; }
+.shopping-checklist li { border-top: 1px solid #e7ebe4; }
+.shopping-checklist label { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 60px; padding: 12px 0; cursor: pointer; }
+.shopping-checklist input { width: 22px; height: 22px; accent-color: #315c46; cursor: pointer; flex-shrink: 0; }
+.shopping-checklist label > span { flex: 1; min-width: 0; }
+.shopping-checklist strong { font-size: 14px; overflow-wrap: anywhere; }
+.shopping-checklist small { display: block; color: #617368; font-size: 11px; margin-top: 4px; }
+.shopping-checklist b { font-size: 13px; color: #315c46; }
+.shopping-checked strong { text-decoration: line-through; color: #617368; }
+.planner-meal { border-top: 1px solid #e7ebe4; padding: 16px 0; margin-top: 12px; }
+.planner-meal:last-child { padding-bottom: 0; }
+.planner-meal strong { display: block; font-size: 14px; overflow-wrap: anywhere; }
+.planner-meal small { display: block; color: #617368; font-size: 11px; line-height: 1.6; margin-top: 5px; }
+.planner-meal .planning-card-heading { flex-wrap: wrap; }
+.planner-meal .planning-card-heading > .actions { margin-left: auto; }
+@media (min-width: 480px) {
+  .planning-actions { flex-direction: row; flex-wrap: wrap; }
+}
+@media (min-width: 960px) {
+  .planning-card-grid, .planner-days { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

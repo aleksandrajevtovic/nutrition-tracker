@@ -1,0 +1,52 @@
+.week-picker { margin: 0 0 20px; display: grid; gap: 18px; }
+.week-picker__navigation { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.week-picker__navigation > div { min-width: 0; text-align: center; }
+.week-picker__navigation strong { display: block; font-size: 17px; color: #315c46; }
+.week-picker__navigation span { display: block; margin-top: 5px; font-size: 12px; color: #617368; line-height: 1.6; }
+.week-picker__date { display: block; min-width: 0; font-size: 12px; font-weight: 700; color: #617368; }
+.week-picker__date input { display: block; width: 100%; min-height: 46px; margin-top: 6px; padding: 10px; background: white; border: 1px solid #dbe4dc; border-radius: 10px; color: #22332a; }
+.weekly-averages { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.weekly-average.panel { margin: 0; padding: 14px; }
+.weekly-average > span { font-size: 12px; color: #617368; }
+.weekly-average > strong { display: block; margin: 10px 0; color: #315c46; font-size: clamp(18px, 3vw, 24px); overflow-wrap: anywhere; }
+.weekly-average > small { display: block; font-size: 11px; color: #617368; line-height: 1.5; overflow-wrap: anywhere; }
+.weekly-method { margin: 14px 0 20px; }
+.weekly-charts { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.weekly-charts > .panel { margin: 0; }
+.weekly-chart__heading { display: flex; flex-direction: column; gap: 14px; }
+.weekly-chart__heading label { font-size: 12px; color: #617368; min-width: 0; }
+.weekly-chart__heading select { display: block; margin-top: 6px; width: 100%; min-height: 46px; border: 1px solid #dbe4dc; border-radius: 10px; padding: 10px; background: white; color: #22332a; }
+.weekly-bars { position: relative; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 22px; }
+.weekly-bar { display: flex; flex-direction: column; align-items: stretch; min-width: 0; padding: 0; border: 0; border-radius: 5px; background: transparent; color: #315c46; }
+.weekly-bar__value { height: 24px; line-height: 24px; font-size: 10px; font-weight: 700; white-space: nowrap; text-align: center; }
+.weekly-bar__track { position: relative; display: block; height: 160px; margin-inline: 3px; background: #f0f5ed; border-radius: 6px 6px 0 0; overflow: hidden; }
+.weekly-bar__track--empty { background: transparent; border-bottom: 1px dashed #c1cec0; }
+.weekly-bar__fill { position: absolute; bottom: 0; left: 0; right: 0; border-radius: 6px 6px 0 0; background: #6b9c7d; }
+.weekly-bar:hover .weekly-bar__fill { background: #315c46; }
+.weekly-bar__day { display: block; margin-top: 10px; font-size: 11px; font-weight: 700; }
+.weekly-bar__date { display: block; padding-bottom: 8px; margin-top: 4px; font-size: 10px; color: #617368; }
+.weekly-bars__target { position: absolute; left: 0; right: 0; z-index: 1; border-top: 1px dashed #315c46; pointer-events: none; }
+.weekly-weight .weight-chart { border-top: 0; padding-top: 0; margin-top: 0; }
+.weekly-day.panel { margin: 0; }
+.weekly-days__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.weekly-day__heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #e7ebe4; padding-bottom: 12px; }
+.weekly-day__heading button { display: flex; flex-direction: column; align-items: flex-start; min-height: 44px; border: 0; padding: 0; background: none; text-align: left; color: #315c46; }
+.weekly-day__heading button > strong { font-size: 16px; }
+.weekly-day__heading button > span, .weekly-day__heading > small { font-size: 12px; color: #617368; margin-top: 4px; }
+.weekly-day dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; margin: 16px 0 0; }
+.weekly-day dt { font-size: 11px; color: #617368; overflow-wrap: anywhere; }
+.weekly-day dd { font-size: 14px; font-weight: 650; margin: 5px 0 0; overflow-wrap: anywhere; }
+@media (min-width: 480px) {
+  .weekly-day dl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .weekly-chart__heading { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .weekly-chart__heading label { max-width: 220px; }
+}
+@media (min-width: 640px) {
+  .week-picker { grid-template-columns: minmax(0, 1fr) 200px; align-items: center; gap: 24px; }
+  .weekly-averages { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .weekly-average.panel { padding: 20px; }
+  .weekly-days__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 960px) {
+  .weekly-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

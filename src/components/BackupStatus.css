@@ -1,0 +1,11 @@
+.backup-status { display: flex; align-items: flex-start; gap: 12px; background: #f0f5ed; border-color: #dce7d8; }
+.backup-status > svg { flex-shrink: 0; color: #315c46; margin-top: 2px; }
+.backup-status__content { flex: 1; min-width: 0; }
+.backup-status__content h2 { font-size: 16px; color: #315c46; }
+.backup-status__value { margin-top: 8px; color: #22332a; font-size: 15px; font-weight: 650; line-height: 1.6; overflow-wrap: anywhere; }
+.backup-status__content .hint { margin: 7px 0 0; }
+.backup-status__content .secondary { margin-top: 12px; }
+@media (min-width: 640px) {
+  .backup-status { gap: 16px; }
+  .backup-status__value { font-size: 17px; }
+}
