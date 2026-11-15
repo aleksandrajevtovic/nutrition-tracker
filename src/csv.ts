@@ -1,15 +1,22 @@
 import type {Entry} from './db';
 import {stats} from './nutrition';
 import {validDate, type WeightRecord} from './weight';
+import type {Drink} from './hydration';
+import {calendarWeek} from './week';
 
 export type CsvRange = {from?: string; to?: string};
-export const csvHeaders = ['Datum', 'Einträge', 'Kalorien (kcal)', 'Eiweiß (g)', 'Kohlenhydrate (g)', 'Fett (g)', 'Ballaststoffe (g)', 'Zucker (g)', 'Gewicht (kg)'];
+export const csvHeaders = ['Datum', 'Einträge', 'Kalorien (kcal)', 'Eiweiß (g)', 'Kohlenhydrate (g)', 'Fett (g)', 'Ballaststoffe (g)', 'Zucker (g)', 'Gewicht (kg)', 'Trinkmenge (ml)'];
+export const weeklyCsvHeaders = ['Wochenbeginn', 'Wochenende', 'Ausgewertet ab', 'Ausgewertet bis', 'Tage mit Lebensmitteln',
+  'Ø Kalorien (kcal)', 'Ø Eiweiß (g)', 'Ø Kohlenhydrate (g)', 'Ø Fett (g)', 'Ø Ballaststoffe (g)', 'Ø Zucker (g)',
+  'Gewichtsmessungen', 'Ø Gewicht (kg)', 'Tage mit Getränken', 'Trinkmenge gesamt (ml)', 'Ø Trinkmenge (ml je erfasstem Tag)'];
+const nutrients = ['kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar'] as const;
+type CsvDay = {count: number; kcal: number; protein: number; carbs: number; fat: number; fiber: number; sugar: number; weight?: number; drinkMl?: number};
 
-export function dailyCsv(entries: Entry[], weights: WeightRecord[], range: CsvRange = {}) {
+function collectDays(entries: Entry[], weights: WeightRecord[], range: CsvRange, drinks: Drink[]) {
   if ((range.from && !validDate(range.from)) || (range.to && !validDate(range.to)) || (range.from && range.to && range.from > range.to)) {
     throw Error('Bitte einen gültigen Zeitraum für den CSV-Export wählen.');
   }
-  const days = new Map<string, {count: number; kcal: number; protein: number; carbs: number; fat: number; fiber: number; sugar: number; weight?: number}>();
+  const days = new Map<string, CsvDay>();
   const includes = (date: string) => {
     if (!validDate(date)) throw Error('Ungültige Daten für den CSV-Export');
     return (!range.from || date >= range.from) && (!range.to || date <= range.to);
@@ -27,15 +34,47 @@ export function dailyCsv(entries: Entry[], weights: WeightRecord[], range: CsvRa
     current.sugar += entry.foodSnapshot.sugar / 100 * entry.grams;
   }
   for (const weight of weights) if (includes(weight.date)) day(weight.date).weight = weight.kg;
-  const number = (value: number) => {
-    if (!Number.isFinite(value)) throw Error('Ungültige Daten für den CSV-Export');
-    return value.toLocaleString('de-DE', {useGrouping: false, maximumFractionDigits: 3});
-  };
-  const rows = [...days.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, values]) => [
-    date, String(values.count), ...(['kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar'] as const).map(key => values.count ? number(values[key]) : ''),
-    values.weight === undefined ? '' : number(values.weight),
-  ]);
+  for (const drink of drinks) if (includes(drink.date)) {
+    if (!Number.isFinite(drink.ml) || drink.ml <= 0) throw Error('Ungültige Daten für den CSV-Export');
+    const values = day(drink.date); values.drinkMl = (values.drinkMl ?? 0) + drink.ml;
+  }
+  return days;
+}
+const number = (value: number) => {
+  if (!Number.isFinite(value)) throw Error('Ungültige Daten für den CSV-Export');
+  return value.toLocaleString('de-DE', {useGrouping: false, maximumFractionDigits: 3});
+};
+function csvDocument(headers: string[], rows: string[][]) {
   // UTF-8 BOM, CRLF and semicolon-separated German decimals work in common spreadsheet programs.
   const cell = (value: string) => /[";\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
-  return {csv: '\uFEFF' + [csvHeaders, ...rows].map(row => row.map(cell).join(';')).join('\r\n') + '\r\n', rowCount: rows.length};
+  return {csv: '\uFEFF' + [headers, ...rows].map(row => row.map(cell).join(';')).join('\r\n') + '\r\n', rowCount: rows.length};
+}
+
+export function dailyCsv(entries: Entry[], weights: WeightRecord[], range: CsvRange = {}, drinks: Drink[] = []) {
+  const rows = [...collectDays(entries, weights, range, drinks)].sort(([a], [b]) => a.localeCompare(b)).map(([date, values]) => [
+    date, String(values.count), ...nutrients.map(key => values.count ? number(values[key]) : ''),
+    values.weight === undefined ? '' : number(values.weight), values.drinkMl === undefined ? '' : number(values.drinkMl),
+  ]);
+  return csvDocument(csvHeaders, rows);
+}
+
+export function weeklyCsv(entries: Entry[], weights: WeightRecord[], range: CsvRange = {}, drinks: Drink[] = []) {
+  const weeks = new Map<string, CsvDay[]>();
+  for (const [date, day] of collectDays(entries, weights, range, drinks)) {
+    const start = calendarWeek(date).start;
+    if (!weeks.has(start)) weeks.set(start, []);
+    weeks.get(start)!.push(day);
+  }
+  const rows = [...weeks].sort(([a], [b]) => a.localeCompare(b)).map(([start, days]) => {
+    const {end} = calendarWeek(start);
+    const recorded = days.filter(day => day.count > 0);
+    const measured = days.filter(day => day.weight !== undefined);
+    const hydrated = days.filter(day => day.drinkMl !== undefined);
+    const drinkTotal = hydrated.reduce((sum, day) => sum + day.drinkMl!, 0);
+    return [start, end, range.from && range.from > start ? range.from : start, range.to && range.to < end ? range.to : end,
+      String(recorded.length), ...nutrients.map(key => recorded.length ? number(recorded.reduce((sum, day) => sum + day[key], 0) / recorded.length) : ''),
+      String(measured.length), measured.length ? number(measured.reduce((sum, day) => sum + day.weight!, 0) / measured.length) : '',
+      String(hydrated.length), hydrated.length ? number(drinkTotal) : '', hydrated.length ? number(drinkTotal / hydrated.length) : ''];
+  });
+  return csvDocument(weeklyCsvHeaders, rows);
 }

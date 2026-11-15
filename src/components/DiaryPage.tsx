@@ -23,7 +23,7 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
   onCopy: CopyMeal;
   onQuantityChange: SaveQuantity;
 }) {
-  const [editor, setEditor] = useState<{entry: Entry | null} | null>(null);
+  const [editor, setEditor] = useState<{entry: Entry | null; initialMeal?: string; session?: string} | null>(null);
   const [copying, setCopying] = useState<string | null>(null);
   const [savingTemplate, setSavingTemplate] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
@@ -31,8 +31,11 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
   const view = useDiaryView();
   const confirmNavigation = useNavigationGuard();
   const openEditor = (entry: Entry | null) => {
-    if (editor && editor.entry?.id === entry?.id) {setEditor({entry}); return;}
+    if (editor && editor.entry?.id === entry?.id) {setEditor({...editor, entry}); return;}
     if (confirmNavigation(['entry-editor', ...(entry ? [`quantity:${entry.id}`] : [])])) setEditor({entry});
+  };
+  const addToMeal = (meal: string) => {
+    if (confirmNavigation(['entry-editor'])) setEditor({entry: null, initialMeal: meal, session: crypto.randomUUID()});
   };
   const toggleCopy = (meal: string) => {if (confirmNavigation(['meal-copy'])) setCopying(copying === meal ? null : meal);};
   const toggleTemplate = (meal: string) => {if (confirmNavigation(['template-save'])) setSavingTemplate(savingTemplate === meal ? null : meal);};
@@ -73,15 +76,17 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
       <button ref={searchButtonRef} type="button" className="diary-view-toggle" aria-expanded={searching} onClick={() => setSearching(value => !value)}><Search size={17} aria-hidden="true"/>Tagebuchsuche</button></div>
       <button className="primary" onClick={() => openEditor(null)}><Plus size={17}/> Lebensmittel hinzufügen</button></div>
     {searching && <DiarySearch onClose={() => {setSearching(false); searchButtonRef.current?.focus();}} onOpen={entry => {if (!confirmNavigation(entry.date === date ? ['entry-editor', 'meal-copy', 'template-save', 'quantity:'] : undefined)) return; setSearching(false); setCopying(null); setSavingTemplate(null); setSelectedMeal(entry.meal); onDateChange(entry.date); setEditor({entry});}}/>}
-    {editor && <div ref={editorRef} className="diary-entry-editor"><EntryEditor key={editor.entry?.id ?? 'new'} foods={foods} date={date} entry={editor.entry} initialMeal={selectedMeal ?? undefined}
+    {editor && <div ref={editorRef} className="diary-entry-editor"><EntryEditor key={editor.entry?.id ?? editor.session ?? 'new'} foods={foods} date={date} entry={editor.entry} initialMeal={editor.initialMeal ?? selectedMeal ?? undefined}
       onClose={() => setEditor(null)} onSave={async (entry, conversions) => {await onSave(entry, conversions); if (selectedMeal !== null) setSelectedMeal(entry.meal); setEditor(null);}}/></div>}
     <div className={view.compact ? 'diary-meals diary-meals--compact' : 'diary-meals'}>
-    {visibleEntries.length === 0 ? <div className="empty"><BookOpen size={30}/><strong>{selectedMeal ? `Noch keine Einträge für ${selectedMeal}` : 'Noch keine Einträge'}</strong><p>{selectedMeal ? 'Füge ein Lebensmittel für diese Mahlzeit hinzu.' : 'Füge dein erstes Lebensmittel für diesen Tag hinzu.'}</p></div>
+    {visibleEntries.length === 0 ? <div className="empty"><BookOpen size={30}/><strong>{selectedMeal ? `Noch keine Einträge für ${selectedMeal}` : 'Noch keine Einträge'}</strong><p>{selectedMeal ? 'Füge ein Lebensmittel für diese Mahlzeit hinzu.' : 'Füge dein erstes Lebensmittel für diesen Tag hinzu.'}</p>
+      {selectedMeal && <button type="button" className="secondary" onClick={() => addToMeal(selectedMeal)}><Plus size={17} aria-hidden="true"/>Zu {selectedMeal} hinzufügen</button>}</div>
       : groups.filter(meal => selectedMeal === null || meal === selectedMeal).map(meal => {
         const group = visibleEntries.filter(e => e.meal === meal);
         if (!group.length) return null;
         return <section className="meal panel" key={meal}>
-          <div className="meal__heading"><h3>{meal}</h3><div className="meal__tools">
+          <div className="meal__heading"><h3 aria-label={meal}><button type="button" className="meal__add" title={`Lebensmittel zu ${meal} hinzufügen`} aria-label={`Lebensmittel zu ${meal} hinzufügen`} onClick={() => addToMeal(meal)}>
+            <span>{meal}</span><Plus size={17} aria-hidden="true"/></button></h3><div className="meal__tools">
             <b className="meal__calories">{Math.round(group.reduce((sum, e) => sum + stats(e.foodSnapshot, e.grams).kcal, 0))} <small>kcal</small></b>
             <button type="button" className="iconbtn" title="Mahlzeit kopieren" aria-label={`${meal} kopieren`} aria-expanded={copying === meal} onClick={() => toggleCopy(meal)}><Copy size={17}/></button>
             {view.compact && <button type="button" className="iconbtn" title="Als Vorlage speichern" aria-label={`${meal} als Vorlage speichern`} aria-expanded={savingTemplate === meal} onClick={() => toggleTemplate(meal)}><BookmarkPlus size={17}/></button>}

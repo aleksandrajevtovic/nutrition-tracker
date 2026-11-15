@@ -8,7 +8,7 @@ type PeriodData = Awaited<ReturnType<typeof getPeriodData>>;
 
 export function useWeekData(date: string) {
   const {start, end} = calendarWeek(date);
-  const [data, setData] = useState<PeriodData>({entries: [], weights: [], goals: {}});
+  const [data, setData] = useState<PeriodData>({entries: [], weights: [], goals: {}, drinks: []});
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);

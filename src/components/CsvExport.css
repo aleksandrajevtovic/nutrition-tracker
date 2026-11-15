@@ -1,4 +1,6 @@
 .csv-export__range { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.csv-export form > label { display: block; font-size: 13px; font-weight: 700; color: #617368; margin-bottom: 14px; }
+.csv-export select { display: block; width: 100%; min-height: 46px; margin-top: 6px; padding: 11px 12px; background: white; color: #22332a; border: 1px solid #dbe4dc; border-radius: 10px; }
 .csv-export__range label { min-width: 0; display: block; font-size: 13px; font-weight: 700; color: #617368; }
 .csv-export__range input { display: block; width: 100%; min-height: 46px; padding: 11px 12px; margin-top: 6px; border: 1px solid #dbe4dc; border-radius: 10px; color: #22332a; background: white; outline-color: #7ca58a; }
 @media (min-width: 480px) { .csv-export__range { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

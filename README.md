@@ -48,6 +48,8 @@ Direkt unter dem Datum gibt es eine beim Scrollen oben erreichbare Mahlzeitenlei
 
 „Lebensmittel hinzufügen“ übernimmt die ausgewählte Mahlzeit, auch bei „Zuletzt verwendet“. Bei „Alle“ bleibt Frühstück die Vorauswahl. Wird ein Eintrag in eine andere Mahlzeit verschoben, folgt der aktive Filter nach dem Speichern dieser Mahlzeit. Ein Suchtreffer öffnet Datum und Mahlzeit des gefundenen Eintrags. Leere Mahlzeiten bleiben auswählbar, damit dort direkt etwas ergänzt werden kann.
 
+Das kleine + direkt am Mahlzeitenkopf öffnet die Eingabe mit genau dieser Mahlzeit, auch in der Ansicht „Alle“ und bei eigenen Mahlzeitennamen. Das Formular wird automatisch sichtbar. Ein bestehender geänderter Entwurf wird erst nach Bestätigung ersetzt. Auch im Leerzustand einer ausgewählten Mahlzeit gibt es eine direkte Hinzufügen-Schaltfläche.
+
 Gewicht, Trinkmenge und Tagesnotizen liegen im standardmäßig geschlossenen Bereich „Weitere Tagesdaten“. Einklappen erhält die Formulare und ihre Entwürfe. Der Schutz ungespeicherter Eingaben bleibt aktiv. Beim Filtern fragt die App vor dem Verwerfen offener Formulare oder dem Ausblenden geänderter Mengen nach; weiterhin sichtbare Mengenentwürfe bleiben erhalten.
 
 ## Kompakter Tagebuchmodus
@@ -112,7 +114,9 @@ Neue Datensicherungen (Version 3) enthalten auch Tagesziele. Beim Import der Ver
 
 Über „Woche“ öffnest du eine Übersicht von Montag bis Sonntag. Die Pfeile wechseln die Woche; über ein Datum kannst du direkt zu einer anderen Kalenderwoche springen. Tagesbalken und Datumsüberschriften öffnen den jeweiligen Tag im Tagebuch.
 
-Die Übersicht zeigt tägliche Kalorien und Nährwerte, Gewichtsmessungen, Durchschnittswerte sowie den Unterschied zur Vorwoche. Nährwert-Durchschnitte verwenden nur Tage mit Einträgen, Gewichtsdurchschnitte nur tatsächliche Messungen. Fehlende Daten erscheinen als „—“; teilweise erfasste Tage zählen mit. Der Tagesvergleich lässt sich zwischen Kalorien, Eiweiß, Kohlenhydraten, Fett und Ballaststoffen umschalten. Eingestellte Tagesziele erscheinen als gestrichelte Linie.
+Die Übersicht zeigt tägliche Kalorien und Nährwerte, Gewichtsmessungen, Trinkmengen, Durchschnittswerte sowie den Unterschied zur Vorwoche. Nährwert-Durchschnitte verwenden nur Tage mit Lebensmitteln, Gewichtsdurchschnitte nur tatsächliche Messungen und Trinkmengen-Durchschnitte nur Tage mit mindestens einem Getränk. Mehrere Getränke desselben Tages werden zuerst summiert. Fehlende Daten erscheinen als „—“; teilweise erfasste Tage zählen mit.
+
+Für Getränke stehen Tageswerte, Wochensumme und Tagesdurchschnitt in Litern zur Verfügung, einschließlich Vorwochenvergleich. Auch Tage mit ausschließlich Getränken werden berücksichtigt. Der Tagesvergleich lässt sich zwischen Kalorien, Eiweiß, Kohlenhydraten, Fett, Ballaststoffen und Trinkmenge umschalten. Eingestellte Nährwertziele erscheinen als gestrichelte Linie; für Trinkmengen wird kein Ziel vorgegeben. Änderungen und Rückgängig aktualisieren die Auswertung.
 
 ## Eigene Rezepte
 
@@ -148,9 +152,11 @@ Vorhandene Notizen lassen sich bearbeiten oder löschen. „Rückgängig“ stel
 
 ## CSV-Auswertung
 
-Unter „Datensicherung“ lädt „CSV-Tageswerte herunterladen“ eine Tabelle mit einer Zeile pro erfasstem Tag herunter. Enthalten sind Datum, Anzahl der Einträge, Kalorien, Eiweiß, Kohlenhydrate, Fett, Ballaststoffe, Zucker und Gewicht. Der Zeitraum lässt sich optional eingrenzen. Ohne Datumsgrenzen werden alle vorhandenen Tageswerte exportiert.
+Unter „Datensicherung“ kann zwischen Tages- und Wochenwerten gewählt werden. „CSV-Tageswerte herunterladen“ erstellt eine Zeile pro erfasstem Tag mit Datum, Anzahl der Lebensmitteleinträge, Kalorien, Eiweiß, Kohlenhydraten, Fett, Ballaststoffen, Zucker, Gewicht und Trinkmenge in ml. Auch Tage mit ausschließlich Getränken sind enthalten. Der Zeitraum lässt sich optional eingrenzen; ohne Grenzen werden alle vorhandenen Werte exportiert.
 
-Die Datei verwendet UTF-8, Semikolon als Trennzeichen und das deutsche Dezimalkomma. Tage mit ausschließlich einer Gewichtsmessung enthalten leere Nährwertfelder; fehlende Gewichtsmessungen bleiben ebenfalls leer. Geplante Mahlzeiten zählen erst nach der Übernahme ins Tagebuch. Die Nährwerte stammen aus den gespeicherten Tagebucheinträgen.
+„CSV-Wochenwerte herunterladen“ erstellt eine Zeile pro Kalenderwoche mit Daten. Enthalten sind Wochenbeginn und -ende, die tatsächlich ausgewerteten Datumsgrenzen, Nährwertdurchschnitte, durchschnittliches Gewicht, erfasste Tage/Messungen sowie die gesamte und durchschnittliche Trinkmenge in ml. Der Nenner wird je Bereich getrennt ermittelt: Ernährungstage, Gewichtsmessungen bzw. Tage mit Getränken. Bei begrenztem Zeitraum verwenden auch die Wochenwerte ausschließlich Tage innerhalb dieser Grenzen.
+
+Die Dateien verwenden UTF-8 mit BOM, Semikolon als Trennzeichen und das deutsche Dezimalkomma. Fehlende Nährwert-, Gewichts- oder Trinkdaten bleiben leer. Fehlende Daten werden nicht als Null gewertet; tatsächlich erfasste Nährwerte von null bleiben null. Geplante Mahlzeiten zählen erst nach der Übernahme ins Tagebuch. Die Nährwerte stammen aus den gespeicherten Tagebucheinträgen.
 
 CSV dient der eigenen Auswertung. Für eine Wiederherstellung weiterhin JSON exportieren; der CSV-Download verändert den letzten Sicherungszeitpunkt nicht.
 

@@ -14,9 +14,9 @@ test('CSV sums daily nutrition snapshots, includes sugar and joins recorded weig
   assert.equal(result.rowCount, 3);
   const rows = lines(result.csv);
   assert.deepEqual(rows[0], csvHeaders);
-  assert.deepEqual(rows[1], ['2026-11-10', '2', '200', '20', '40', '6', '4', '8', '72,5']);
-  assert.deepEqual(rows[2], ['2026-11-11', '0', '', '', '', '', '', '', '72,25']);
-  assert.deepEqual(rows[3], ['2026-11-12', '1', '0', '0', '0', '0', '0', '0', '']);
+  assert.deepEqual(rows[1], ['2026-11-10', '2', '200', '20', '40', '6', '4', '8', '72,5', '']);
+  assert.deepEqual(rows[2], ['2026-11-11', '0', '', '', '', '', '', '', '72,25', '']);
+  assert.deepEqual(rows[3], ['2026-11-12', '1', '0', '0', '0', '0', '0', '0', '', '']);
   assert.ok(!result.csv.includes(food.name));
   assert.ok(!result.csv.includes(food.id));
 });
@@ -37,7 +37,7 @@ test('UTF-8 BOM, German decimals and CRLF produce spreadsheet-friendly numeric c
   const row = lines(result.csv)[1];
   assert.equal(row[2], '3000,123');
   assert.equal(row[3], '300,012');
-  assert.equal(row.length, 9);
+  assert.equal(row.length, 10);
 });
 
 test('export rejects invalid dates and non-finite nutrition instead of writing corrupt cells', () => {

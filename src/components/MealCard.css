@@ -38,6 +38,9 @@
 }
 
 .meal__calories small { font-size: 12px; font-weight: 500; }
+.meal__add { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; min-height: 44px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-weight: inherit; text-align: left; }
+.meal__add span { min-width: 0; overflow-wrap: anywhere; }
+.meal__add:hover { color: #1f4430; }
 .meal__tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .meal__tools .iconbtn { background: transparent; border: 1px solid #d8e4d5; }
 .meal__footer { padding: 0 16px 14px; }
