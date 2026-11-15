@@ -21,6 +21,14 @@ npm run dev
 
 Das Projekt nutzt relative Asset-Pfade (`base: './'`) und funktioniert dadurch auch unter einem Repository-Unterpfad.
 
+## Schutz ungespeicherter Eingaben
+
+Beim Datums- oder Seitenwechsel und beim Schließen oder Ersetzen eines geänderten Formulars fragt die App, ob die ungespeicherten Änderungen verworfen werden sollen. Mit „Abbrechen“ bleiben Formular, Datum und Eingaben erhalten. Unveränderte Formulare sowie erfolgreich gespeicherte Eingaben lösen keine Rückfrage aus. Während eines laufenden Speichervorgangs wird der Wechsel verhindert.
+
+Geschützt werden Tagebucheinträge samt Notizen, Lebensmittel, Rezepte einschließlich noch nicht hinzugefügter Zutaten, Tagesnotizen, Getränke, Gewichte, Tagesziele, direkte Mengenänderungen sowie Planungs-, Vorlagen- und Einkaufsformulare. Einklappen fragt nicht nach, wenn das Formular dabei erhalten bleibt. Ein Wechsel der Tagebuchansicht prüft ungespeicherte direkte Mengenänderungen, da dabei deren Formulare ersetzt werden.
+
+Beim Neuladen oder Schließen einer Seite mit offenen Änderungen wird die native Browserwarnung angefordert. Deren Darstellung und Verfügbarkeit hängen vom Browser ab. Entwürfe werden nicht automatisch gespeichert; ausdrücklich bestätigtes Verwerfen entfernt sie. Bei einem Speicherfehler bleibt der Schutz aktiv.
+
 ## Mengen und Einheiten
 
 - Im Tagebuch Menge und Einheit wählen: g, mg, kg, ml, l, Portion, Stück oder Scheibe. Dezimalmengen sind möglich.
@@ -133,6 +141,7 @@ Beim Bearbeiten eines Tagebucheintrags wird der Editor automatisch ins Sichtfeld
 ## Code finden
 
 - `src/main.tsx`: React-Einstiegspunkt.
+- `src/unsaved.ts` und `src/components/UnsavedChangesProvider.tsx`: zentrale Entwurfsregistrierung, gezielte Wechselprüfung und Browserwarnung; `useDraftGuard` markiert gespeicherte Formulare wieder als unverändert.
 - `src/hydration.ts`, `src/hooks/useHydration.ts`, `src/components/HydrationTracker.tsx`, `DrinkForm.tsx` und `DrinkTimeline.tsx`: Trinkmengen, Einheiten, Tagesverlauf und Eingabe.
 - `src/diaryHistory.ts`, `src/hooks/useDiaryHistory.ts`, `RecentFoods.tsx` und `DiarySearch.tsx`: letzte Produkte, Verlaufssuche und Aktualisierung nach Datenänderungen.
 - `src/entryQuantity.ts` und `src/components/QuickQuantity.tsx`: direkte Mengenänderung mit historischen Umrechnungen; atomare Speicherung in `src/db.ts`.

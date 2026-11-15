@@ -6,6 +6,7 @@ import {useToast} from './ToastProvider';
 import FoodPicker from './FoodPicker';
 import PortionPicker from './PortionPicker';
 import RecentFoods from './RecentFoods';
+import {useDraftGuard} from './UnsavedChangesProvider';
 import type {RecentFood} from '../diaryHistory';
 import './EntryEditor.css';
 import {fmt, isPositive, meals, stats, toGrams, unitLabels, units, validFood, type Unit} from '../nutrition';
@@ -28,6 +29,7 @@ export default function EntryEditor({foods, date, entry, onSave, onClose}: Props
   const [note, setNote] = useState(entry?.note ?? '');
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
+  const guard = useDraftGuard('Tagebucheintrag', {selected, meal, amount, unit, conversions, note}, saving, 'entry-editor');
   const food = selected ? {...selected, ...conversions} : undefined;
   const grams = food ? toGrams(food, Number(amount), unit) : NaN;
   const valid = Boolean(food && validFood(food) && isPositive(Number(amount)) && isPositive(grams));
@@ -49,6 +51,7 @@ export default function EntryEditor({foods, date, entry, onSave, onClose}: Props
         ...(note.trim() ? {note: note.trim()} : {}),
         createdAt: entry?.createdAt ?? new Date().toISOString(),
       }, conversions);
+      guard.markSaved();
     } catch (e) { notify(germanError(e), 'error'); }
     finally { savingRef.current = false; setSaving(false); }
   }
@@ -58,7 +61,7 @@ export default function EntryEditor({foods, date, entry, onSave, onClose}: Props
     savingRef.current = true; setSaving(true);
     try {
       await onSave({id: crypto.randomUUID(), foodId: item.food.id, date, meal, grams: item.grams, amount: item.amount,
-        unit: item.unit, foodSnapshot: structuredClone(item.food), createdAt: new Date().toISOString(), ...(note.trim() ? {note: note.trim()} : {})}, {});
+        unit: item.unit, foodSnapshot: structuredClone(item.food), createdAt: new Date().toISOString(), ...(note.trim() ? {note: note.trim()} : {})}, {}); guard.markSaved();
     } catch (error) {notify(germanError(error), 'error');}
     finally {savingRef.current = false; setSaving(false);}
   }
@@ -66,13 +69,13 @@ export default function EntryEditor({foods, date, entry, onSave, onClose}: Props
   return <form className="panel editor" onSubmit={submit}>
     <div className="section-head">
       <h3 tabIndex={-1}>{entry ? 'Eintrag bearbeiten' : 'Lebensmittel eintragen'}</h3>
-      <button type="button" className="iconbtn" aria-label="Schließen" disabled={saving} onClick={onClose}>×</button>
+      <button type="button" className="iconbtn" aria-label="Schließen" disabled={saving} onClick={() => {if (guard.confirmLeave()) onClose();}}>×</button>
     </div>
-    <label>Mahlzeit<select aria-label="Mahlzeit" value={meal} onChange={e => setMeal(e.target.value)}>
+    <label>Mahlzeit<select aria-label="Mahlzeit" value={meal} disabled={saving} onChange={e => setMeal(e.target.value)}>
       {Array.from(new Set([...meals, meal])).map(m => <option key={m}>{m}</option>)}
     </select></label>
     {!entry && <RecentFoods foods={foods} busy={saving} onSelect={item => {setSelected(item.food); setAmount(String(item.amount)); setUnit(item.unit); setConversions({});}} onAdd={item => void addRecent(item)}/>}
-    <FoodPicker foods={options} selected={selected} onChange={food => {
+    <FoodPicker foods={options} selected={selected} disabled={saving} onChange={food => {
       if (food.id === selected?.id) return;
       setSelected(food);
       setConversions({}); setAmount('1'); setUnit('portion');
@@ -80,8 +83,8 @@ export default function EntryEditor({foods, date, entry, onSave, onClose}: Props
     {food && <>
       {unit === 'portion' && <PortionPicker food={food} disabled={saving} onChange={setSelected}/>}
       <div className="quantity-fields">
-        <label>Menge<input type="number" min="0" step="any" required value={amount} onChange={e => setAmount(e.target.value)}/></label>
-        <label>Einheit<select value={unit} onChange={e => {
+        <label>Menge<input type="number" min="0" step="any" required value={amount} disabled={saving} onChange={e => setAmount(e.target.value)}/></label>
+        <label>Einheit<select value={unit} disabled={saving} onChange={e => {
           // Keep the physical amount when switching between configured units.
           const next = e.target.value as Unit;
           const factor = toGrams(food, 1, next);
@@ -93,7 +96,7 @@ export default function EntryEditor({foods, date, entry, onSave, onClose}: Props
         </select></label>
       </div>
       {conversionKey && <>
-        <label>{conversionLabel}<input type="number" min="0" step="any" required
+        <label>{conversionLabel}<input type="number" min="0" step="any" required disabled={saving}
           value={food[conversionKey] ?? ''}
           onChange={e => setConversions({...conversions, [conversionKey]: e.target.value === '' ? undefined : Number(e.target.value)})}/></label>
         <p className="hint">{conversionKey === 'gramsPerMl'
@@ -103,9 +106,9 @@ export default function EntryEditor({foods, date, entry, onSave, onClose}: Props
       <p className="hint">1 × {food.portionName} = {fmt(food.portionGrams, 3)} g{valid ? ` · Gewählte Menge: ${fmt(grams, 3)} g` : ''}</p>
       {!valid && <p className="hint" role="status">Bitte eine positive Menge und gültige Umrechnungsgewichte eingeben.</p>}
       <div className="stepper">
-        <button type="button" aria-label="Menge verringern" onClick={() => setAmount(String(Math.max(0, Number(amount) - 1)))}><Minus size={18}/></button>
+        <button type="button" disabled={saving} aria-label="Menge verringern" onClick={() => setAmount(String(Math.max(0, Number(amount) - 1)))}><Minus size={18}/></button>
         <strong>{fmt(Number(amount), 3)} {unitLabels[unit]}</strong>
-        <button type="button" aria-label="Menge erhöhen" onClick={() => setAmount(String(Number(amount) + 1))}><Plus size={18}/></button>
+        <button type="button" disabled={saving} aria-label="Menge erhöhen" onClick={() => setAmount(String(Number(amount) + 1))}><Plus size={18}/></button>
       </div>
       {preview && <div className="preview"><b>{Math.round(preview.kcal)} kcal</b><span>P {fmt(preview.protein)} g · KH {fmt(preview.carbs)} g · F {fmt(preview.fat)} g</span></div>}
     </>}

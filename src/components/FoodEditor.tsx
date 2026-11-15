@@ -6,6 +6,7 @@ import {fmt, isPositive, validFood} from '../nutrition';
 import {defaultReference, nutrientKeys, referenceGrams, scaleNutrients, type NutritionReference} from '../foodValues';
 import {useToast} from './ToastProvider';
 import FoodPortions from './FoodPortions';
+import {useDraftGuard} from './UnsavedChangesProvider';
 import './FoodEditor.css';
 
 const fields = [
@@ -27,6 +28,7 @@ export default function FoodEditor({food, existing, onSave, onClose}: {
   const [mode, setMode] = useState(referenceMode(reference));
   const [draft, setDraft] = useState(() => scaleNutrients(food, referenceGrams(food, reference) / 100));
   const [saving, setSaving] = useState(false);
+  const guard = useDraftGuard('Lebensmittel', {draft, reference, mode}, saving, 'food-editor');
   const grams = referenceGrams(draft, reference);
   const normalized = scaleNutrients(draft, 100 / grams);
   const suffix = reference.unit === 'portion' ? `Portion (${fmt(draft.portionGrams, 3)} g)` : `${fmt(reference.amount, 3)} ${reference.unit}`;
@@ -47,7 +49,7 @@ export default function FoodEditor({food, existing, onSave, onClose}: {
       notify('Bitte Namen, eindeutige Portionsnamen, positive Gewichte und gültige Nährwerte eingeben.', 'error'); return;
     }
     setSaving(true);
-    try { await onSave(result); }
+    try { await onSave(result); guard.markSaved(); }
     catch (e) { notify(germanError(e), 'error'); }
     finally { setSaving(false); }
   }
@@ -55,7 +57,7 @@ export default function FoodEditor({food, existing, onSave, onClose}: {
   return <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="food-editor-title">
     <form className="modal food-editor editor" onSubmit={submit}>
       <div className="section-head"><h2 id="food-editor-title">Lebensmittel {existing ? 'bearbeiten' : 'anlegen'}</h2>
-        <button type="button" className="iconbtn" aria-label="Schließen" disabled={saving} onClick={onClose}>×</button></div>
+        <button type="button" className="iconbtn" aria-label="Schließen" disabled={saving} onClick={() => {if (guard.confirmLeave()) onClose();}}>×</button></div>
       <div className="fields">{fields.map(([key, label, type]) => {
         const optional = key === 'pieceGrams' || key === 'sliceGrams' || key === 'gramsPerMl';
         return <label key={key}>{label}<input type={type} min={type === 'number' ? 0 : undefined} disabled={saving}

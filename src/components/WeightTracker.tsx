@@ -6,6 +6,7 @@ import {fmt} from '../nutrition';
 import {parseWeight, weightComparison, weightDate, type WeightRecord} from '../weight';
 import {useToast} from './ToastProvider';
 import WeightChart from './WeightChart';
+import {useDraftGuard} from './UnsavedChangesProvider';
 import './WeightTracker.css';
 
 function WeightForm({date, record, onSave, onRemove}: {
@@ -15,6 +16,8 @@ function WeightForm({date, record, onSave, onRemove}: {
   const [value, setValue] = useState(record ? String(record.kg).replace('.', ',') : '');
   const [busy, setBusy] = useState(false);
   const notify = useToast();
+  const parsed = parseWeight(value);
+  const guard = useDraftGuard('Gewichtseintrag', Number.isFinite(parsed) ? parsed : value, busy, 'weight');
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
@@ -22,13 +25,13 @@ function WeightForm({date, record, onSave, onRemove}: {
     const kg = parseWeight(value);
     if (!Number.isFinite(kg) || kg <= 0) {notify('Bitte ein gültiges Gewicht über 0 kg eingeben.', 'error'); return;}
     setBusy(true);
-    try {await onSave(date, kg);} catch (error) {notify(germanError(error), 'error');}
+    try {await onSave(date, kg); guard.markSaved();} catch (error) {notify(germanError(error), 'error');}
     finally {setBusy(false);}
   }
   async function remove() {
     if (busy || !confirm(`Gewichtseintrag vom ${weightDate(date)} löschen?`)) return;
     setBusy(true);
-    try {await onRemove(date);} catch (error) {notify(germanError(error), 'error');}
+    try {await onRemove(date); guard.markSaved();} catch (error) {notify(germanError(error), 'error');}
     finally {setBusy(false);}
   }
 

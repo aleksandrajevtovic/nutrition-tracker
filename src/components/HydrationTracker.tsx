@@ -8,6 +8,7 @@ import {germanError} from '../german';
 import {useToast} from './ToastProvider';
 import DrinkForm from './DrinkForm';
 import DrinkTimeline from './DrinkTimeline';
+import {useNavigationGuard} from './UnsavedChangesProvider';
 import './HydrationTracker.css';
 
 export default function HydrationTracker({date}: {date: string}) {
@@ -19,6 +20,7 @@ export default function HydrationTracker({date}: {date: string}) {
   const formRef = useRef<HTMLDivElement>(null);
   const contentId = useId();
   const notify = useToast();
+  const confirmNavigation = useNavigationGuard();
   const total = data.drinks.reduce((sum, drink) => sum + drink.ml, 0);
   const disabled = busy || data.loading || data.failed;
   useEffect(() => {
@@ -33,9 +35,9 @@ export default function HydrationTracker({date}: {date: string}) {
     try {await action();} catch (error) {notify(germanError(error), 'error');}
     finally {running.current = false; setBusy(false);}
   }
-  const save = (make: () => Drink) => void run(async () => {
+  const save = (make: () => Drink, onSaved?: () => void) => void run(async () => {
     const drink = make(); const updating = editing?.id === drink.id;
-    await saveDrink(drink); if (updating) setEditing(undefined);
+    await saveDrink(drink); onSaved?.(); if (updating) setEditing(undefined);
     notify(updating ? 'Getränk aktualisiert.' : 'Getränk hinzugefügt.', 'success');
   });
 
@@ -49,8 +51,8 @@ export default function HydrationTracker({date}: {date: string}) {
         onClick={() => save(() => createDrink(date, 'Wasser', String(ml), 'ml', drinkTimeNow()))}><Plus size={14}/>{ml} ml</button>)}</div>
     </>}
     <div id={contentId} hidden={!expanded}>
-      <div ref={formRef}><DrinkForm key={editing?.id ?? 'new'} date={date} drink={editing} busy={disabled} onSave={save} onCancel={() => setEditing(undefined)}/></div>
-      <DrinkTimeline drinks={data.drinks} busy={disabled} onEdit={setEditing} onDelete={drink => void run(async () => {
+      <div ref={formRef}><DrinkForm key={editing?.id ?? 'new'} date={date} drink={editing} busy={disabled} pending={busy} onSave={save} onCancel={() => setEditing(undefined)}/></div>
+      <DrinkTimeline drinks={data.drinks} busy={disabled} onEdit={drink => {if (drink.id === editing?.id || confirmNavigation(['drink-form'])) setEditing(drink);}} onDelete={drink => void run(async () => {
         if (!confirm(`${drink.name} um ${drink.time} löschen?`)) return;
         const revision = getDataRevision();
         const removed = await removeDrink(drink.id);

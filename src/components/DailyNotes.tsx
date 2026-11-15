@@ -6,6 +6,7 @@ import {useDayNote} from '../hooks/useDayNote';
 import {weightDate} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
+import {useDraftGuard} from './UnsavedChangesProvider';
 import './DailyNotes.css';
 
 function NoteEditor({date, note, onDeleted}: {date: string; note?: DailyNote; onDeleted: () => void}) {
@@ -15,6 +16,7 @@ function NoteEditor({date, note, onDeleted}: {date: string; note?: DailyNote; on
   const running = useRef(false);
   const notify = useToast();
   const dirty = noteFields.some(key => values[key].trim() !== (note?.[key] ?? ''));
+  const guard = useDraftGuard('Tagesnotiz', values, busy, 'day-note');
 
   async function remove() {
     const revision = getDataRevision();
@@ -22,7 +24,7 @@ function NoteEditor({date, note, onDeleted}: {date: string; note?: DailyNote; on
     if (removed) notify('Tagesnotiz gelöscht.', 'success', {label: 'Rückgängig', onClick: async () => {
       await restoreDeletedDayNote(removed, revision); notify('Tagesnotiz wiederhergestellt.', 'success');
     }});
-    onDeleted();
+    guard.markSaved(); onDeleted();
   }
   async function run(action: () => Promise<void>) {
     if (running.current) return;
@@ -33,7 +35,7 @@ function NoteEditor({date, note, onDeleted}: {date: string; note?: DailyNote; on
   return <form className="day-notes__form" onSubmit={event => {event.preventDefault(); void run(async () => {
     const next = createDayNote(date, values);
     if (!next) {if (note) await remove(); return;}
-    await saveDayNote(next); notify('Tagesnotiz gespeichert.', 'success');
+    await saveDayNote(next); guard.markSaved(); notify('Tagesnotiz gespeichert.', 'success');
   });}}>
     <p className="hint">Notizen für {weightDate(date)}. Alle Felder sind optional.</p>
     <div className="day-notes__short-fields"><label htmlFor={`${id}-hunger`}>Hunger<input id={`${id}-hunger`} value={values.hunger} disabled={busy} placeholder="Wie war dein Hungergefühl?" onChange={event => setValues({...values, hunger: event.target.value})}/></label>

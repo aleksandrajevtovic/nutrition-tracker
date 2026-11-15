@@ -9,6 +9,7 @@ import {germanError} from '../german';
 import FoodPicker from './FoodPicker';
 import PortionPicker from './PortionPicker';
 import {useToast} from './ToastProvider';
+import {useDraftGuard} from './UnsavedChangesProvider';
 
 export default function PlanEditor({foods, templates, date, plan, template, onClose, onSaved}: {
   foods: Food[]; templates: MealTemplate[]; date: string; plan?: MealPlan; template?: MealTemplate; onClose: () => void; onSaved: (date: string) => void;
@@ -24,6 +25,7 @@ export default function PlanEditor({foods, templates, date, plan, template, onCl
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const notify = useToast();
+  const guard = useDraftGuard('Wochenplanung', {source, chosenTemplate, food, target, meal, name, amount, unit}, busy, 'plan-editor');
   const selectedTemplate = templates.find(current => current.id === chosenTemplate);
   const factor = parseWeight(amount);
   let items = plan?.items ?? (source === 'template' ? selectedTemplate?.items : food ? [itemFromFood(food, 1, unit)] : undefined);
@@ -37,17 +39,17 @@ export default function PlanEditor({foods, templates, date, plan, template, onCl
     try {
       await savePlan({id: plan?.id ?? crypto.randomUUID(), name: name.trim() || (plan?.name ?? (source === 'template' ? selectedTemplate!.name : food!.name)),
         date: target, meal, items, status: 'planned', entryIds: [], createdAt: plan?.createdAt ?? new Date().toISOString()});
-      notify(plan ? 'Planung aktualisiert.' : 'Mahlzeit geplant.', 'success'); onSaved(target);
+      guard.markSaved(); notify(plan ? 'Planung aktualisiert.' : 'Mahlzeit geplant.', 'success'); onSaved(target);
     } catch (error) {notify(germanError(error), 'error');}
     finally {saving.current = false; setBusy(false);}
   }}>
-    <div className="section-head"><h2 id="plan-editor-title">{plan ? 'Planung bearbeiten' : 'Mahlzeit planen'}</h2><button type="button" className="iconbtn" disabled={busy} aria-label="Planung schließen" onClick={onClose}><X size={18}/></button></div>
+    <div className="section-head"><h2 id="plan-editor-title">{plan ? 'Planung bearbeiten' : 'Mahlzeit planen'}</h2><button type="button" className="iconbtn" disabled={busy} aria-label="Planung schließen" onClick={() => {if (guard.confirmLeave()) onClose();}}><X size={18}/></button></div>
     <div className="quantity-fields"><label>Geplantes Datum<input type="date" required value={target} disabled={busy} onChange={event => setTarget(event.target.value)}/></label>
       <label>Mahlzeit<select aria-label="Geplante Mahlzeit" value={meal} disabled={busy} onChange={event => setMeal(event.target.value)}>{Array.from(new Set([...meals, meal])).map(value => <option key={value}>{value}</option>)}</select></label></div>
     {!plan && <><label>Quelle<select aria-label="Quelle der Planung" value={source} disabled={busy} onChange={event => setSource(event.target.value as 'food' | 'template')}>
       <option value="food">Lebensmittel / Rezept</option><option value="template" disabled={!templates.length}>Mahlzeiten-Vorlage</option></select></label>
       {source === 'template' ? <label>Vorlage<select aria-label="Geplante Vorlage" value={chosenTemplate} disabled={busy} onChange={event => setChosenTemplate(event.target.value)}>{templates.map(value => <option key={value.id} value={value.id}>{value.name}</option>)}</select></label>
-        : <FoodPicker foods={foods} selected={food} onChange={value => {setFood(value); setUnit('portion');}}/>}</>}
+        : <FoodPicker foods={foods} selected={food} disabled={busy} onChange={value => {setFood(value); setUnit('portion');}}/>}</>}
     <label>Name (optional)<input value={name} disabled={busy} placeholder={plan?.name ?? (source === 'template' ? selectedTemplate?.name : food?.name)} onChange={event => setName(event.target.value)}/></label>
     <div className="quantity-fields"><label>{plan || source === 'template' ? 'Mengenfaktor' : 'Menge'}<input type="text" inputMode="decimal" required value={amount} disabled={busy} onChange={event => setAmount(event.target.value)}/></label>
       {!plan && source === 'food' && <label>Einheit<select aria-label="Einheit der Planung" value={unit} disabled={busy || !food} onChange={event => setUnit(event.target.value as Unit)}>

@@ -6,6 +6,7 @@ import TemplateLibrary from './TemplateLibrary';
 import ShoppingListView from './ShoppingListView';
 import MealPlanner from './MealPlanner';
 import PlanEditor from './PlanEditor';
+import {useNavigationGuard} from './UnsavedChangesProvider';
 import './WeeklyPage.css';
 import './PlanningPage.css';
 
@@ -14,12 +15,14 @@ export default function PlanningPage({foods, date, onOpenDay}: {foods: Food[]; d
   const [editor, setEditor] = useState<{date: string; template?: MealTemplate; plan?: MealPlan} | null>(null);
   const [plannerDate, setPlannerDate] = useState(date);
   const data = usePlanningData();
+  const confirmNavigation = useNavigationGuard();
+  const changeTab = (next: typeof tab) => {if (next !== tab && confirmNavigation()) setTab(next);};
   return <>
     <div className="heading"><div><span className="eyebrow">VORBEREITEN & VEREINFACHEN</span><h1>Planen & Einkaufen</h1></div></div>
     <div className="planning-tabs" role="group" aria-label="Planungsbereich auswählen">
-      <button type="button" aria-pressed={tab === 'templates'} onClick={() => setTab('templates')}>Vorlagen</button>
-      <button type="button" aria-pressed={tab === 'shopping'} onClick={() => setTab('shopping')}>Einkaufsliste</button>
-      <button type="button" aria-pressed={tab === 'week'} onClick={() => setTab('week')}>Wochenplan</button>
+      <button type="button" aria-pressed={tab === 'templates'} onClick={() => changeTab('templates')}>Vorlagen</button>
+      <button type="button" aria-pressed={tab === 'shopping'} onClick={() => changeTab('shopping')}>Einkaufsliste</button>
+      <button type="button" aria-pressed={tab === 'week'} onClick={() => changeTab('week')}>Wochenplan</button>
     </div>
     {data.loading ? <p className="hint" role="status">Planungsdaten werden geladen…</p> : data.failed ? <section className="panel"><p>Planungsdaten konnten nicht geladen werden.</p><button type="button" className="secondary" onClick={data.reload}>Erneut versuchen</button></section> : <>
       {tab === 'templates' && <TemplateLibrary templates={data.templates} date={date} onOpenDay={onOpenDay} onPlan={template => {setTab('week'); setEditor({date, template});}}/>}

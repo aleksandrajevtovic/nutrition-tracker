@@ -9,7 +9,7 @@ const {weightDate} = await loadTypeScript(new URL('../src/weight.ts', import.met
 const {formatExportTime} = await loadTypeScript(new URL('../src/backup.ts', import.meta.url));
 const display = value => value.toLocaleString('de-DE', {maximumFractionDigits: 1});
 
-const origin = 'http://127.0.0.1:4175';
+const origin = 'http://127.0.0.1:4175/nutrition-tracker/';
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '4175', '--strictPort'], {windowsHide: true, stdio: 'pipe'});
 let serverOutput = '';
 server.stderr.on('data', chunk => {serverOutput += chunk;});

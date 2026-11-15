@@ -5,6 +5,7 @@ import {fmt, stats, toGrams, unitLabels} from '../nutrition';
 import {parseWeight} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
+import {useDraftGuard} from './UnsavedChangesProvider';
 import './QuickQuantity.css';
 
 export type SaveQuantity = (id: string, amount: number) => Promise<Entry>;
@@ -16,6 +17,7 @@ export default function QuickQuantity({entry, onSave}: {entry: Entry; onSave: Sa
   const saving = useRef(false);
   const notify = useToast();
   const amount = parseWeight(value);
+  const guard = useDraftGuard(`Menge: ${entry.foodSnapshot.name}`, value, busy, `quantity:${entry.id}`, Number.isFinite(amount) ? amount !== current : value !== String(current).replace('.', ','));
   const unit = entry.unit ?? 'g';
   const grams = toGrams(entry.foodSnapshot, amount, unit);
   const valid = Number.isFinite(amount) && amount > 0 && Number.isFinite(grams) && grams > 0 && Number.isFinite(stats(entry.foodSnapshot, grams).kcal);
@@ -26,7 +28,7 @@ export default function QuickQuantity({entry, onSave}: {entry: Entry; onSave: Sa
     if (saving.current) return;
     if (!valid) {notify('Bitte eine gültige Menge über 0 eingeben.', 'error'); return;}
     saving.current = true; setBusy(true);
-    try {await onSave(entry.id, amount);} catch (error) {notify(germanError(error), 'error');}
+    try {await onSave(entry.id, amount); guard.markSaved();} catch (error) {notify(germanError(error), 'error');}
     finally {saving.current = false; setBusy(false);}
   }}>
     <label>Menge direkt ändern<span className="quick-quantity__fields"><input aria-label={`Menge für ${entry.foodSnapshot.name}`} type="text" inputMode="decimal" value={value} disabled={busy} onChange={event => setValue(event.target.value)}/>

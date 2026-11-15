@@ -7,6 +7,7 @@ import {parseWeight} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
 import RecipeIngredients from './RecipeIngredients';
+import {useDraftGuard, useNavigationGuard} from './UnsavedChangesProvider';
 import './RecipeEditor.css';
 
 export default function RecipeEditor({food, foods, existing, onSave, onClose}: {
@@ -20,6 +21,8 @@ export default function RecipeEditor({food, foods, existing, onSave, onClose}: {
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const notify = useToast();
+  const guard = useDraftGuard('Rezept', {name, servings, finishedWeight, ingredients, instructions}, busy, 'recipe-editor');
+  const confirmNavigation = useNavigationGuard();
   const totals = recipeTotals(ingredients);
   const yieldGrams = finishedWeight.trim() ? parseWeight(finishedWeight) : totals.grams;
   const count = parseWeight(servings);
@@ -27,11 +30,12 @@ export default function RecipeEditor({food, foods, existing, onSave, onClose}: {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (saving.current) return;
+    if (saving.current || !confirmNavigation(['recipe-ingredient'])) return;
     saving.current = true; setBusy(true);
     try {
       const recipe = buildRecipeFood({...food, name: name.trim()}, {servings: count, yieldGrams, autoWeight: finishedWeight.trim() === '', ingredients, instructions: instructions.trim()});
       await onSave(recipe);
+      guard.markSaved();
     } catch (error) {notify(germanError(error), 'error');}
     finally {saving.current = false; setBusy(false);}
   }
@@ -39,7 +43,7 @@ export default function RecipeEditor({food, foods, existing, onSave, onClose}: {
   return <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="recipe-editor-title">
     <form className="modal recipe-editor editor" onSubmit={submit}>
       <div className="section-head"><h2 id="recipe-editor-title">Rezept {existing ? 'bearbeiten' : 'anlegen'}</h2>
-        <button type="button" className="iconbtn" aria-label="Rezept schließen" disabled={busy} onClick={onClose}><X size={18}/></button></div>
+        <button type="button" className="iconbtn" aria-label="Rezept schließen" disabled={busy} onClick={() => {if (confirmNavigation(['recipe-editor', 'recipe-ingredient'])) onClose();}}><X size={18}/></button></div>
       <label>Rezeptname<input required value={name} disabled={busy} onChange={event => setName(event.target.value)}/></label>
       <div className="quantity-fields"><label>Anzahl der Portionen<input type="text" inputMode="decimal" required value={servings} disabled={busy} onChange={event => setServings(event.target.value)}/></label>
         <label>Fertiges Gesamtgewicht in g (optional)<input type="text" inputMode="decimal" placeholder={Number.isFinite(totals.grams) && totals.grams > 0 ? fmt(totals.grams, 2) : 'Summe der Zutatengewichte'} value={finishedWeight} disabled={busy} onChange={event => setFinishedWeight(event.target.value)}/></label></div>

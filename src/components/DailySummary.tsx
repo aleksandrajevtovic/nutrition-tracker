@@ -4,6 +4,7 @@ import {fmt, stats} from '../nutrition';
 import {goalFields, goalProgress} from '../goals';
 import {useDailyGoals} from '../hooks/useDailyGoals';
 import GoalEditor from './GoalEditor';
+import {useNavigationGuard} from './UnsavedChangesProvider';
 import './DailySummary.css';
 
 export function GoalProgress({current, target, label, unit}: {current: number; target: number; label: string; unit: string}) {
@@ -23,10 +24,11 @@ export function GoalProgress({current, target, label, unit}: {current: number; t
 export default function DailySummary({totals}: {totals: ReturnType<typeof stats>}) {
   const data = useDailyGoals();
   const [editing, setEditing] = useState(false);
+  const confirmNavigation = useNavigationGuard();
   const hasGoals = Object.keys(data.goals).length > 0;
   return <section className="summary daily-summary" aria-label="Tagesbilanz und Tagesziele">
     <div className="daily-summary__heading"><h2>Tagesbilanz</h2>
-      <button type="button" className="daily-summary__edit" disabled={data.loading || data.failed} aria-expanded={editing} onClick={() => setEditing(value => !value)}>
+      <button type="button" className="daily-summary__edit" disabled={data.loading || data.failed} aria-expanded={editing} onClick={() => {if (!editing || confirmNavigation(['goals'])) setEditing(value => !value);}}>
         <Target size={16}/>{hasGoals ? 'Ziele bearbeiten' : 'Ziele festlegen'}
       </button>
     </div>

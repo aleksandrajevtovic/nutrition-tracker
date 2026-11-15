@@ -4,10 +4,10 @@ import type {Food} from '../db';
 import {filterFoods} from '../foods';
 import './FoodPicker.css';
 
-type Props = {foods: Food[]; selected?: Food; onChange: (food: Food) => void};
+type Props = {foods: Food[]; selected?: Food; onChange: (food: Food) => void; disabled?: boolean};
 const foodLabel = (food: Food) => food.brand ? `${food.brand} · ${food.name}` : food.name;
 
-export default function FoodPicker({foods, selected, onChange}: Props) {
+export default function FoodPicker({foods, selected, onChange, disabled = false}: Props) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -45,6 +45,7 @@ export default function FoodPicker({foods, selected, onChange}: Props) {
   }
 
   function choose(food: Food) {
+    if (disabled) return;
     onChange(food);
     setOpen(false);
     trigger.current?.focus();
@@ -68,7 +69,7 @@ export default function FoodPicker({foods, selected, onChange}: Props) {
     if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
   }}>
     <label htmlFor={`${id}-trigger`}>Lebensmittel</label>
-    <button ref={trigger} id={`${id}-trigger`} type="button" className="food-picker__trigger"
+    <button ref={trigger} id={`${id}-trigger`} type="button" className="food-picker__trigger" disabled={disabled}
       aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? `${id}-list` : undefined}
       onClick={() => open ? setOpen(false) : showOptions()}
       onKeyDown={event => {
@@ -78,7 +79,7 @@ export default function FoodPicker({foods, selected, onChange}: Props) {
     </button>
     {open && <div className="food-picker__dropdown">
       <div className="food-picker__search"><Search size={17} aria-hidden="true"/>
-        <input ref={search} type="text" role="combobox" aria-label="Lebensmittel suchen"
+        <input ref={search} type="text" role="combobox" aria-label="Lebensmittel suchen" disabled={disabled}
           aria-expanded="true" aria-controls={`${id}-list`} aria-autocomplete="list"
           aria-activedescendant={activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined}
           placeholder="Nach Name oder Marke suchen…" autoComplete="off" value={query}

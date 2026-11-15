@@ -6,6 +6,7 @@ import {makeIngredient, type RecipeIngredient} from '../recipes';
 import FoodPicker from './FoodPicker';
 import PortionPicker from './PortionPicker';
 import {useToast} from './ToastProvider';
+import {useDraftGuard} from './UnsavedChangesProvider';
 
 export default function RecipeIngredients({foods, ingredients, disabled, onChange}: {
   foods: Food[]; ingredients: RecipeIngredient[]; disabled: boolean; onChange: (ingredients: RecipeIngredient[]) => void;
@@ -14,6 +15,7 @@ export default function RecipeIngredients({foods, ingredients, disabled, onChang
   const [amount, setAmount] = useState('100');
   const [unit, setUnit] = useState<Unit>('g');
   const notify = useToast();
+  useDraftGuard('Noch nicht hinzugefügte Rezeptzutat', {selected, amount, unit}, false, 'recipe-ingredient');
 
   function add() {
     if (disabled) return;
@@ -43,7 +45,7 @@ export default function RecipeIngredients({foods, ingredients, disabled, onChang
       {isPositive(ingredient.grams) && <p className="hint">{fmt(ingredient.grams, 2)} g · {fmt(ingredient.foodSnapshot.kcal / 100 * ingredient.grams)} kcal</p>}
     </div>)}</div>
     <div className="recipe-add editor">
-      <FoodPicker foods={foods} selected={selected} onChange={food => {if (!disabled) {setSelected(food); setUnit('g');}}}/>
+      <FoodPicker foods={foods} selected={selected} disabled={disabled} onChange={food => {if (!disabled) {setSelected(food); setUnit('g');}}}/>
       <div className="quantity-fields"><label>Menge<input type="number" min="0" step="any" aria-label="Menge der neuen Zutat" value={amount} disabled={disabled} onChange={event => setAmount(event.target.value)}
         onKeyDown={event => {if (event.key === 'Enter') {event.preventDefault(); add();}}}/></label>
         <label>Einheit<select value={unit} aria-label="Einheit der neuen Zutat" disabled={disabled} onChange={event => setUnit(event.target.value as Unit)}>

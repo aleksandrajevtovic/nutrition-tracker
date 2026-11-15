@@ -11,6 +11,7 @@ import WeeklyPage from './components/WeeklyPage';
 import RecipeEditor from './components/RecipeEditor';
 import {emptyRecipeFood} from './recipes';
 import PlanningPage from './components/PlanningPage';
+import {useNavigationGuard} from './components/UnsavedChangesProvider';
 
 type Tab = 'today' | 'week' | 'foods' | 'planning' | 'settings';
 
@@ -19,6 +20,9 @@ export default function App() {
   const [date, setDate] = useState(today);
   const [editing, setEditing] = useState<Food | null>(null);
   const data = useNutritionData(date);
+  const confirmNavigation = useNavigationGuard();
+  const navigate = (next: Tab) => {if (next !== tab && confirmNavigation()) setTab(next);};
+  const openDay = (value: string) => {if (confirmNavigation()) {setDate(value); setTab('today');}};
 
   if (!data.ready) return <main className="app"><p>Wird geladen… {data.error}</p></main>;
   return <div className="app">
@@ -27,16 +31,16 @@ export default function App() {
       {tab === 'today' && <DiaryPage date={date} foods={data.foods} entries={data.entries}
         onDateChange={setDate} onSave={data.persistEntry} onDelete={data.deleteEntry} onCopy={data.copyMeal} onQuantityChange={data.persistQuantity}/>}
       {tab === 'foods' && <FoodsPage foods={data.foods} onEdit={setEditing} onDelete={data.deleteFood} onFavorite={data.toggleFavorite} onNewRecipe={() => setEditing(emptyRecipeFood())}/>}
-      {tab === 'week' && <WeeklyPage date={date} onOpenDay={value => {setDate(value); setTab('today');}}/>}
-      {tab === 'planning' && <PlanningPage foods={data.foods} date={date} onOpenDay={value => {setDate(value); setTab('today');}}/>}
+      {tab === 'week' && <WeeklyPage date={date} onOpenDay={openDay}/>}
+      {tab === 'planning' && <PlanningPage foods={data.foods} date={date} onOpenDay={openDay}/>}
       {tab === 'settings' && <BackupPage onRestored={data.reload}/>}
     </main>
     <nav>
-      <button className={tab === 'today' ? 'active' : ''} onClick={() => setTab('today')}><CalendarDays size={20}/>Tagebuch</button>
-      <button className={tab === 'week' ? 'active' : ''} aria-label="Wochenübersicht" onClick={() => setTab('week')}><BarChart3 size={20}/>Woche</button>
-      <button className={tab === 'foods' ? 'active' : ''} onClick={() => setTab('foods')}><Package size={20}/>Produkte</button>
-      <button className={tab === 'planning' ? 'active' : ''} onClick={() => setTab('planning')}><CalendarPlus size={20}/>Planen</button>
-      <button className={tab === 'settings' ? 'active' : ''} aria-label="Datensicherung" onClick={() => setTab('settings')}><Settings size={20}/><span className="nav-label-short">Sicherung</span><span className="nav-label-full">Datensicherung</span></button>
+      <button className={tab === 'today' ? 'active' : ''} onClick={() => navigate('today')}><CalendarDays size={20}/>Tagebuch</button>
+      <button className={tab === 'week' ? 'active' : ''} aria-label="Wochenübersicht" onClick={() => navigate('week')}><BarChart3 size={20}/>Woche</button>
+      <button className={tab === 'foods' ? 'active' : ''} onClick={() => navigate('foods')}><Package size={20}/>Produkte</button>
+      <button className={tab === 'planning' ? 'active' : ''} onClick={() => navigate('planning')}><CalendarPlus size={20}/>Planen</button>
+      <button className={tab === 'settings' ? 'active' : ''} aria-label="Datensicherung" onClick={() => navigate('settings')}><Settings size={20}/><span className="nav-label-short">Sicherung</span><span className="nav-label-full">Datensicherung</span></button>
     </nav>
     {editing && (editing.recipe ? <RecipeEditor key={editing.id} food={editing} foods={data.foods} existing={data.foods.some(f => f.id === editing.id)}
       onClose={() => setEditing(null)} onSave={async food => {await data.persistFood(food); setEditing(null);}}/>

@@ -8,6 +8,7 @@ import {fmt, isPositive} from '../nutrition';
 import {germanError} from '../german';
 import FoodPicker from './FoodPicker';
 import {useToast} from './ToastProvider';
+import {useDraftGuard} from './UnsavedChangesProvider';
 
 type Selection = {id: string; food: Food; portions: number};
 const amount = (grams: number) => grams >= 1000 ? `${fmt(grams / 1000, 3)} kg` : `${fmt(grams, 3)} g`;
@@ -20,6 +21,8 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
   const [pendingChecks, setPendingChecks] = useState<Record<string, boolean>>({});
   const running = useRef(false);
   const notify = useToast();
+  const guard = useDraftGuard('Rezeptauswahl für die Einkaufsliste', selection, busy, 'shopping-selection');
+  useDraftGuard('Noch nicht hinzugefügtes Einkaufsrezept', {selected, portions}, false, 'shopping-pending');
   useEffect(() => {
     setPendingChecks(current => Object.fromEntries(Object.entries(current).filter(([id, checked]) => {
       const item = shopping.items.find(item => item.id === id);
@@ -41,7 +44,7 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
   function generate(append: boolean) {
     if (!append && shopping.items.length && !confirm('Vorhandene Einkaufsliste ersetzen? Die bisherigen Häkchen werden zurückgesetzt.')) return;
     setPendingChecks({});
-    void run(() => setShoppingFromMeals(selection.map(row => itemFromFood(row.food, row.portions, 'portion')), append), 'Einkaufsliste aktualisiert.');
+    void run(async () => {await setShoppingFromMeals(selection.map(row => itemFromFood(row.food, row.portions, 'portion')), append); guard.markSaved();}, 'Einkaufsliste aktualisiert.');
   }
   async function clear() {
     setPendingChecks({});
@@ -54,7 +57,7 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
     <section className="panel editor"><h2>Einkaufsliste aus Rezepten</h2>
       <p className="hint">Rezepte und benötigte Portionen wählen. Gleiche Zutaten werden in Gramm zusammengezählt. Enthaltene Unterrezepte erscheinen als eigene Zutat.</p>
       {foods.some(food => food.recipe) ? <>
-        <FoodPicker foods={foods.filter(food => food.recipe)} selected={selected} onChange={setSelected}/>
+        <FoodPicker foods={foods.filter(food => food.recipe)} selected={selected} disabled={busy} onChange={setSelected}/>
         <label>Benötigte Portionen<input type="number" min="0" step="any" value={portions} disabled={busy} onChange={event => setPortions(event.target.value)}/></label>
         <button type="button" className="secondary wide" disabled={busy || !selected} onClick={add}><Plus size={17}/>Rezept zur Auswahl hinzufügen</button>
       </> : <p className="hint">Lege unter „Produkte → Neues Rezept“ zuerst ein Rezept an.</p>}
