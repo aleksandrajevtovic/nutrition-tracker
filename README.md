@@ -84,7 +84,7 @@ JSON-Sicherungen ab Version 6 enthalten die Trinkdaten aller Tage. Beim Import d
 
 ## Eigene Tagesziele
 
-In der Tagesbilanz kannst du über „Ziele festlegen“ eigene Ziele für Kalorien, Protein, Kohlenhydrate, Fett und Ballaststoffe eintragen. Alle Ziele sind optional; leere Felder deaktivieren die jeweilige Anzeige. Es werden keine Zielwerte vorgegeben. Die eingestellten Ziele gelten für alle Tage, auch für ältere Tagesansichten.
+In der Tagesbilanz kannst du über „Ziele festlegen“ eigene Ziele für Kalorien, Eiweiß, Kohlenhydrate, Fett und Ballaststoffe eintragen. Alle Ziele sind optional; leere Felder deaktivieren die jeweilige Anzeige. Es werden keine Zielwerte vorgegeben. Die eingestellten Ziele gelten für alle Tage, auch für ältere Tagesansichten.
 
 Die Fortschrittsbalken zeigen den aktuellen Verbrauch, den Zielwert und die verbleibende Menge. Überschreitungen werden als Menge und Prozentwert angezeigt; der Balken bleibt maximal voll. Ziele lassen sich jederzeit bearbeiten oder vollständig entfernen.
 
@@ -94,7 +94,7 @@ Neue Datensicherungen (Version 3) enthalten auch Tagesziele. Beim Import der Ver
 
 Über „Woche“ öffnest du eine Übersicht von Montag bis Sonntag. Die Pfeile wechseln die Woche; über ein Datum kannst du direkt zu einer anderen Kalenderwoche springen. Tagesbalken und Datumsüberschriften öffnen den jeweiligen Tag im Tagebuch.
 
-Die Übersicht zeigt tägliche Kalorien und Nährwerte, Gewichtsmessungen, Durchschnittswerte sowie den Unterschied zur Vorwoche. Nährwert-Durchschnitte verwenden nur Tage mit Einträgen, Gewichtsdurchschnitte nur tatsächliche Messungen. Fehlende Daten erscheinen als „—“; teilweise erfasste Tage zählen mit. Der Tagesvergleich lässt sich zwischen Kalorien, Protein, Kohlenhydraten, Fett und Ballaststoffen umschalten. Eingestellte Tagesziele erscheinen als gestrichelte Linie.
+Die Übersicht zeigt tägliche Kalorien und Nährwerte, Gewichtsmessungen, Durchschnittswerte sowie den Unterschied zur Vorwoche. Nährwert-Durchschnitte verwenden nur Tage mit Einträgen, Gewichtsdurchschnitte nur tatsächliche Messungen. Fehlende Daten erscheinen als „—“; teilweise erfasste Tage zählen mit. Der Tagesvergleich lässt sich zwischen Kalorien, Eiweiß, Kohlenhydraten, Fett und Ballaststoffen umschalten. Eingestellte Tagesziele erscheinen als gestrichelte Linie.
 
 ## Eigene Rezepte
 
@@ -130,7 +130,7 @@ Vorhandene Notizen lassen sich bearbeiten oder löschen. „Rückgängig“ stel
 
 ## CSV-Auswertung
 
-Unter „Datensicherung“ lädt „CSV-Tageswerte herunterladen“ eine Tabelle mit einer Zeile pro erfasstem Tag herunter. Enthalten sind Datum, Anzahl der Einträge, Kalorien, Protein, Kohlenhydrate, Fett, Ballaststoffe, Zucker und Gewicht. Der Zeitraum lässt sich optional eingrenzen. Ohne Datumsgrenzen werden alle vorhandenen Tageswerte exportiert.
+Unter „Datensicherung“ lädt „CSV-Tageswerte herunterladen“ eine Tabelle mit einer Zeile pro erfasstem Tag herunter. Enthalten sind Datum, Anzahl der Einträge, Kalorien, Eiweiß, Kohlenhydrate, Fett, Ballaststoffe, Zucker und Gewicht. Der Zeitraum lässt sich optional eingrenzen. Ohne Datumsgrenzen werden alle vorhandenen Tageswerte exportiert.
 
 Die Datei verwendet UTF-8, Semikolon als Trennzeichen und das deutsche Dezimalkomma. Tage mit ausschließlich einer Gewichtsmessung enthalten leere Nährwertfelder; fehlende Gewichtsmessungen bleiben ebenfalls leer. Geplante Mahlzeiten zählen erst nach der Übernahme ins Tagebuch. Die Nährwerte stammen aus den gespeicherten Tagebucheinträgen.
 
@@ -155,7 +155,7 @@ Beim Bearbeiten eines Tagebucheintrags wird der Editor automatisch ins Sichtfeld
 - `src/backup.ts`, `src/components/BackupStatus.tsx` und `src/hooks/useBackupStatus.ts`: Exportzeitpunkt und Statusanzeige.
 - `src/App.tsx`: Navigation und Seitenzusammenstellung.
 - `src/components/`: Tagebuch, Lebensmittelliste, Eintragseditor, Produkteditor und Backup-Seite.
-- `src/hooks/useNutritionData.ts`: Laden und Speichern sowie Initialisierung der Beispieldaten.
+- `src/hooks/useNutritionData.ts`: Laden und Speichern der eigenen Lebensmittel und Tagebucheinträge.
 - `src/nutrition.ts`: Einheiten, Umrechnung, Nährwertberechnung und Validierung.
 - `src/goals.ts`: Tagesziele, Validierung und Fortschrittsberechnung.
 - `src/components/DailySummary.tsx` und `GoalEditor.tsx`: Tagesbilanz, Fortschrittsbalken und Zieleingabe.
@@ -179,8 +179,7 @@ Prüfen: `npm test` und `npm run build`.
 - **Import ersetzt die enthaltenen Daten** nach einer Sicherheitsabfrage; ältere Sicherungen erhalten Gewichtswerte und Ziele, die ihr Format noch nicht unterstützt.
 - Browserdaten löschen, private Tabs oder ein anderes Gerät können zu einem leeren Datenbestand führen. Regelmäßig JSON-Backups erstellen.
 - Einträge speichern einen Snapshot der Nährwerte. Änderungen an einem Produkt verändern alte Tagebucheinträge nicht.
-- Die 11 Startprodukte sind Beispielwerte, teilweise geschätzt. Prüfe besonders Brot, Putenbrust und Portionsgrößen anhand der Verpackung.
-- Beim allerersten Start werden die Startprodukte geladen. Nach einem vollständigen Löschen aller Produkte bei bereits existierenden Einträgen werden sie nicht neu eingefügt.
+- Neue Installationen starten ohne vorgegebene Lebensmittel. Lebensmittel selbst anlegen oder aus einer JSON-Sicherung importieren. Vorhandene gespeicherte Lebensmittel bleiben beim Update erhalten; gelöschte Produkte werden nicht automatisch neu angelegt.
 
 ## Hinweis zur PWA
 

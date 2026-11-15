@@ -17,7 +17,7 @@ const fields = [
   ['sliceGrams', 'Gramm pro Scheibe (optional)', 'number'],
   ['gramsPerMl', 'Gramm pro ml / Dichte (optional)', 'number'],
 ] as const;
-const labels = {kcal: 'Kalorien', protein: 'Protein', carbs: 'Kohlenhydrate', fat: 'Fett', fiber: 'Ballaststoffe', sugar: 'Zucker'};
+const labels = {kcal: 'Kalorien', protein: 'Eiweiß', carbs: 'Kohlenhydrate', fat: 'Fett', fiber: 'Ballaststoffe', sugar: 'Zucker'};
 const referenceMode = (reference: NutritionReference) => reference.unit === 'portion' ? 'portion' : reference.unit === 'ml' ? '100ml' : reference.amount === 100 ? '100g' : 'custom';
 
 export default function FoodEditor({food, existing, onSave, onClose}: {

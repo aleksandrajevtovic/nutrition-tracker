@@ -1,28 +1,10 @@
 import {germanError} from '../german';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {copyMealEntries, getBackup, listEntries, listFoods, removeEntry, removeFood, saveEntry, saveFood, toggleFoodFavorite, type Entry, type Food} from '../db';
+import {copyMealEntries, listEntries, listFoods, removeEntry, removeFood, saveEntry, saveFood, toggleFoodFavorite, type Entry, type Food} from '../db';
 import {getDataRevision, restoreDeletedEntry, restoreDeletedFood} from '../db';
 import {changeEntryAmount} from '../db';
 import {weightDate} from '../weight';
-import {starterFoods} from '../seed';
 import {useToast} from '../components/ToastProvider';
-
-// One initialization promise also avoids duplicate seeding under React StrictMode.
-let initialization: Promise<Food[]> | undefined;
-function initialize() {
-  if (!initialization) initialization = (async () => {
-    let foods = await listFoods();
-    if (!foods.length) {
-      const backup = await getBackup();
-      if (!backup.entries.length && !backup.templates.length && !backup.plans.length && !backup.shoppingList.items.length && !backup.dailyNotes.length && !backup.drinks.length) {
-        for (const food of starterFoods) await saveFood(food);
-        foods = await listFoods();
-      }
-    }
-    return foods;
-  })().catch(error => {initialization = undefined; throw error;});
-  return initialization;
-}
 
 export function useNutritionData(date: string) {
   const notify = useToast();
@@ -45,7 +27,7 @@ export function useNutritionData(date: string) {
 
   useEffect(() => {
     let cancelled = false;
-    initialize().then(values => {if (!cancelled) {setFoods(values); setReady(true);}})
+    listFoods().then(values => {if (!cancelled) {setFoods(values); setReady(true);}})
       .catch(e => {if (!cancelled) setError(germanError(e));});
     return () => {cancelled = true;};
   }, [setError]);

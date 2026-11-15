@@ -1,6 +1,6 @@
 export const goalFields = [
   {key: 'kcal', label: 'Kalorien', unit: 'kcal'},
-  {key: 'protein', label: 'Protein', unit: 'g'},
+  {key: 'protein', label: 'Eiweiß', unit: 'g'},
   {key: 'carbs', label: 'Kohlenhydrate', unit: 'g'},
   {key: 'fat', label: 'Fett', unit: 'g'},
   {key: 'fiber', label: 'Ballaststoffe', unit: 'g'},

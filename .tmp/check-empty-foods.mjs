@@ -1,0 +1,77 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+import {chromium} from 'playwright-core';
+const origin = 'http://127.0.0.1:4181/nutrition-tracker/';
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '4181', '--strictPort'], {windowsHide: true, stdio: 'pipe'});
+let browser;
+try {
+  for (let i = 0; i < 100; i++) {try {if ((await fetch(origin)).ok) break;} catch {} await new Promise(resolve => setTimeout(resolve, 100));}
+  browser = await chromium.launch({channel: 'msedge', headless: true});
+  for (const viewport of [{width: 320, height: 740}, {width: 1440, height: 900}]) {
+    const context = await browser.newContext({viewport, locale: 'de-DE'});
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message)); page.on('dialog', dialog => dialog.accept());
+    async function dismiss() {while (await page.getByRole('button', {name: 'Benachrichtigung schließen'}).count()) await page.getByRole('button', {name: 'Benachrichtigung schließen'}).first().click();}
+    await page.goto(origin);
+    await page.getByRole('heading', {name: 'Mein Ernährungstagebuch'}).waitFor();
+    await page.locator('nav').getByRole('button', {name: 'Produkte', exact: true}).click();
+    await page.getByText('Keine Lebensmittel gefunden', {exact: true}).waitFor();
+    assert.equal(await page.locator('.food').count(), 0);
+    await page.reload(); await page.getByRole('heading', {name: 'Mein Ernährungstagebuch'}).waitFor();
+    await page.locator('nav').getByRole('button', {name: 'Produkte', exact: true}).click();
+    assert.equal(await page.locator('.food').count(), 0);
+    await page.getByRole('button', {name: 'Neu', exact: true}).click();
+    await page.getByLabel('Name', {exact: true}).fill('Mein eigenes Lebensmittel');
+    await page.getByLabel('Kalorien / 100 g', {exact: true}).fill('100');
+    await page.getByLabel('Eiweiß / 100 g', {exact: true}).fill('10');
+    const nutrientLabels = await page.locator('.food-editor__nutrition .fields label').allTextContents();
+    assert.ok(nutrientLabels[2].startsWith('Kohlenhydrate'));
+    assert.ok(nutrientLabels[3].startsWith('Zucker'));
+    await page.getByRole('button', {name: 'Produkt speichern', exact: true}).click();
+    await page.getByRole('dialog').waitFor({state: 'hidden'}); await dismiss();
+    assert.equal(await page.locator('.food').count(), 1);
+    assert.match(await page.locator('.food').innerText(), /Eiweiß 10 g/);
+    await page.reload(); await page.getByRole('heading', {name: 'Mein Ernährungstagebuch'}).waitFor();
+    await page.locator('nav').getByRole('button', {name: 'Produkte', exact: true}).click();
+    assert.equal(await page.locator('.food').count(), 1);
+    await page.locator('nav').getByRole('button', {name: 'Tagebuch', exact: true}).click();
+    await page.getByRole('button', {name: 'Lebensmittel hinzufügen', exact: true}).click();
+    await page.locator('.food-picker__trigger').click();
+    await page.getByRole('combobox', {name: 'Lebensmittel suchen'}).fill('Mein eigenes');
+    await page.getByRole('combobox', {name: 'Lebensmittel suchen'}).press('Enter');
+    assert.match(await page.locator('.preview').innerText(), /Eiweiß 10 g/);
+    await page.getByRole('button', {name: 'Zum Tag hinzufügen', exact: true}).click();
+    await page.locator('.entry').waitFor(); await dismiss();
+    await page.locator('.diary-entry__toggle').click();
+    assert.equal(await page.getByText('Eiweiß', {exact: true}).count() >= 1, true);
+    await page.getByRole('button', {name: 'Ziele festlegen', exact: true}).click();
+    await page.getByLabel('Eiweiß (g)', {exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Tagesziele schließen', exact: true}).click();
+    await page.locator('nav').getByRole('button', {name: 'Datensicherung', exact: true}).click();
+    const csvPending = page.waitForEvent('download');
+    await page.getByRole('button', {name: 'CSV-Tageswerte herunterladen', exact: true}).click();
+    const csv = await csvPending;
+    assert.ok((await readFile(await csv.path(), 'utf8')).includes('Eiweiß (g)')); await dismiss();
+    const jsonPending = page.waitForEvent('download');
+    await page.getByRole('button', {name: 'JSON-Datensicherung herunterladen', exact: true}).click();
+    const json = await jsonPending;
+    const backup = JSON.parse(await readFile(await json.path(), 'utf8'));
+    assert.equal(backup.foods[0].protein, 10);
+    assert.equal(backup.entries[0].foodSnapshot.protein, 10); await dismiss();
+    await page.locator('nav').getByRole('button', {name: 'Produkte', exact: true}).click();
+    await page.getByRole('button', {name: 'Mein eigenes Lebensmittel löschen', exact: true}).click();
+    await page.getByText('Keine Lebensmittel gefunden', {exact: true}).waitFor(); await dismiss();
+    await page.reload(); await page.getByRole('heading', {name: 'Mein Ernährungstagebuch'}).waitFor();
+    await page.locator('.entry').waitFor();
+    assert.equal(await page.locator('.entry').count(), 1);
+    await page.locator('nav').getByRole('button', {name: 'Produkte', exact: true}).click();
+    assert.equal(await page.locator('.food').count(), 0);
+    assert.equal(await page.getByText(/Protein/).count(), 0);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    assert.deepEqual(errors, []);
+    console.log(`PASS ${viewport.width}: no seeded foods on fresh start/reload; custom foods persist; deletion stays deleted; historical entries retained; Eiweiß labels/CSV; backup protein values preserved`);
+    await context.close();
+  }
+} finally {if (browser) await browser.close(); server.kill();}

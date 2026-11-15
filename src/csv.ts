@@ -3,7 +3,7 @@ import {stats} from './nutrition';
 import {validDate, type WeightRecord} from './weight';
 
 export type CsvRange = {from?: string; to?: string};
-export const csvHeaders = ['Datum', 'Einträge', 'Kalorien (kcal)', 'Protein (g)', 'Kohlenhydrate (g)', 'Fett (g)', 'Ballaststoffe (g)', 'Zucker (g)', 'Gewicht (kg)'];
+export const csvHeaders = ['Datum', 'Einträge', 'Kalorien (kcal)', 'Eiweiß (g)', 'Kohlenhydrate (g)', 'Fett (g)', 'Ballaststoffe (g)', 'Zucker (g)', 'Gewicht (kg)'];
 
 export function dailyCsv(entries: Entry[], weights: WeightRecord[], range: CsvRange = {}) {
   if ((range.from && !validDate(range.from)) || (range.to && !validDate(range.to)) || (range.from && range.to && range.from > range.to)) {

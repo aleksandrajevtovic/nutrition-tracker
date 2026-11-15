@@ -15,7 +15,7 @@ export default function CsvExport() {
   const notify = useToast();
 
   return <section className="panel settings csv-export" aria-labelledby="csv-export-title"><h3 id="csv-export-title">Tageswerte als CSV</h3>
-    <p>Eine Zeile pro Tag mit Kalorien, Protein, Kohlenhydraten, Fett, Ballaststoffen, Zucker und Gewicht – für deine eigene Auswertung.</p>
+    <p>Eine Zeile pro Tag mit Kalorien, Eiweiß, Kohlenhydraten, Fett, Ballaststoffen, Zucker und Gewicht – für deine eigene Auswertung.</p>
     <form onSubmit={async event => {
       event.preventDefault(); if (exporting.current) return;
       exporting.current = true; setBusy(true);

@@ -110,7 +110,7 @@ export default function EntryEditor({foods, date, entry, onSave, onClose}: Props
         <strong>{fmt(Number(amount), 3)} {unitLabels[unit]}</strong>
         <button type="button" disabled={saving} aria-label="Menge erhöhen" onClick={() => setAmount(String(Number(amount) + 1))}><Plus size={18}/></button>
       </div>
-      {preview && <div className="preview"><b>{Math.round(preview.kcal)} kcal</b><span>P {fmt(preview.protein)} g · KH {fmt(preview.carbs)} g · F {fmt(preview.fat)} g</span></div>}
+      {preview && <div className="preview"><b>{Math.round(preview.kcal)} kcal</b><span>Eiweiß {fmt(preview.protein)} g · KH {fmt(preview.carbs)} g · F {fmt(preview.fat)} g</span></div>}
     </>}
     <label>Notiz zum Eintrag (optional)<textarea aria-label="Notiz zum Eintrag (optional)" rows={3} value={note} disabled={saving} onChange={event => setNote(event.target.value)} placeholder="z. B. mit Kräutern zubereitet oder nach dem Training"/></label>
     <button className="primary wide" disabled={!valid || saving}><Check size={17}/>{saving ? 'Wird gespeichert…' : entry ? 'Änderungen speichern' : 'Zum Tag hinzufügen'}</button>

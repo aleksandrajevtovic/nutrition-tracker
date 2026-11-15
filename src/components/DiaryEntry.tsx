@@ -24,7 +24,7 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
 
   if (!compact) return <div className="entry"><div><strong>{entry.foodSnapshot.name}</strong>
     <button type="button" className="diary-entry__quantity-toggle" aria-label={`Menge für ${entry.foodSnapshot.name} ändern`} aria-expanded={quantityEditing} aria-controls={detailsId} onClick={() => {if (!quantityEditing || confirmNavigation([`quantity:${entry.id}`])) setQuantityEditing(value => !value);}}>
-      <small>{quantity} · {Math.round(values.kcal)} kcal · P {fmt(values.protein)} g</small><span><Pencil size={11} aria-hidden="true"/>Menge ändern</span></button>
+      <small>{quantity} · {Math.round(values.kcal)} kcal · Eiweiß {fmt(values.protein)} g</small><span><Pencil size={11} aria-hidden="true"/>Menge ändern</span></button>
     <div id={detailsId} hidden={!quantityEditing}>{quantityEditing && <QuickQuantity entry={entry} onSave={onQuantityChange}/>}</div>
     {entry.note?.trim() && <p className="diary-entry__note"><span>Notiz</span>{entry.note}</p>}</div>{actions}</div>;
 
@@ -43,7 +43,7 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
       <QuickQuantity entry={entry} onSave={onQuantityChange}/>
       <dl className="diary-entry__nutrients">
         {[
-          ['Protein', values.protein], ['Kohlenhydrate', values.carbs], ['Fett', values.fat],
+          ['Eiweiß', values.protein], ['Kohlenhydrate', values.carbs], ['Fett', values.fat],
           ['Ballaststoffe', values.fiber], ['Zucker', entry.foodSnapshot.sugar * entry.grams / 100],
         ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{fmt(Number(value))} g</dd></div>)}
       </dl>

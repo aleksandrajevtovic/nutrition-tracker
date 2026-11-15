@@ -56,7 +56,7 @@ export default function PlanEditor({foods, templates, date, plan, template, onCl
         {units.map(value => <option key={value} value={value} disabled={food ? !isPositive(gramsPerUnit(food, value)) : value !== 'portion'}>{value === 'portion' && food ? food.portionName : unitLabels[value]}</option>)}
       </select></label>}</div>
     {!plan && source === 'food' && food && unit === 'portion' && <PortionPicker food={food} onChange={setFood} disabled={busy}/>}
-    {totals && <div className="preview"><b>{Math.round(totals.kcal)} kcal geplant</b><span>P {fmt(totals.protein)} g · KH {fmt(totals.carbs)} g · F {fmt(totals.fat)} g</span></div>}
+    {totals && <div className="preview"><b>{Math.round(totals.kcal)} kcal geplant</b><span>Eiweiß {fmt(totals.protein)} g · KH {fmt(totals.carbs)} g · F {fmt(totals.fat)} g</span></div>}
     <p className="hint">Geplante Mahlzeiten zählen erst nach „Ins Tagebuch übernehmen“ zu deinen erfassten Tages- und Wochenwerten. Beim Bearbeiten skaliert der Faktor die bisher geplanten Mengen.</p>
     <button className="primary wide" disabled={busy || !items}><Check size={17}/>{busy ? 'Wird gespeichert…' : 'Planung speichern'}</button>
   </form></div>;

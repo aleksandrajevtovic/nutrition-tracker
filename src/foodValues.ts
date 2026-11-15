@@ -1,6 +1,6 @@
 import type {Food} from './db';
 
-export const nutrientKeys = ['kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar'] as const;
+export const nutrientKeys = ['kcal', 'protein', 'carbs', 'sugar', 'fat', 'fiber'] as const;
 export type NutritionReference = NonNullable<Food['nutritionReference']>;
 export const defaultReference: NutritionReference = {unit: 'g', amount: 100};
 
