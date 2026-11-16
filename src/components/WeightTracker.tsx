@@ -42,7 +42,7 @@ export default function WeightTracker({date}: {date: string}) {
     {data.loading && <p className="hint" role="status">Gewichtsdaten werden geladen…</p>}
     {data.failed && <p className="hint">Gewichtsdaten konnten nicht geladen werden. <button type="button" className="secondary" onClick={data.reload}>Erneut versuchen</button></p>}
     <div id={formId}>{editing && !data.loading && !data.failed && <WeightEntryForm key={`${date}-${current?.updatedAt ?? 'new'}`} date={date} record={current}
-      suggestion={!current ? comparison.latest : undefined} onSave={data.save} onRemove={data.remove} onClose={closeEditor}/>}</div>
+      suggestion={current ? comparison.previous : comparison.latest} onSave={data.save} onRemove={data.remove} onClose={closeEditor}/>}</div>
     <button type="button" className="weight-tracker__toggle weight-tracker__history-toggle" aria-expanded={expanded} aria-controls={contentId}
       onClick={() => setExpanded(value => !value)}>
       <span>{expanded ? 'Verlauf ausblenden' : 'Verlauf anzeigen'}</span><ChevronDown size={16} aria-hidden="true"/>

@@ -56,3 +56,9 @@ export function backupWeights(backup: {version?: unknown; weights?: unknown}): W
 export const weightDate = (date: string) => new Date(`${date}T00:00:00Z`).toLocaleDateString('de-DE', {
   day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC',
 });
+
+// Compare calendar dates in UTC so DST and month/year boundaries do not shift "gestern".
+export function weightMeasurementDate(date: string, currentDate: string): string {
+  const days=(Date.parse(`${currentDate}T00:00:00Z`)-Date.parse(`${date}T00:00:00Z`))/86400000;
+  return days === 0 ? 'heute' : days === 1 ? 'gestern' : weightDate(date);
+}

@@ -42,6 +42,8 @@ Beim Öffnen von Tageszielen, Tagesnotizen, Getränke- und Gewichtsbereichen, Ei
 - Weitere Portionsgrößen können eigene Namen und Gewichte erhalten, etwa „Klein“ mit 80 g und „Groß“ mit 250 g. Bei der Einheit „Portion“ steht die Größenwahl im Tagebuch, in Rezeptzutaten und in neuen Wochenplanungen zur Verfügung. Alle Größen werden aus denselben Nährwerten berechnet; gerundete Quellenwerte können leicht abweichen.
 - Gespeicherte Einträge behalten ihre Menge, Einheit, gewählte Portionsgröße und ihren Nährwert-Snapshot. Eine andere Größenwahl verändert den Tagebucheintrag, ohne die Standardportion im Produkt zu überschreiben. Ältere Einträge und Backups funktionieren weiterhin; neue Bezugsangaben und Portionsgrößen sind im JSON-Backup enthalten.
 
+Portionsmengen werden über `src/quantityLabels.ts` einheitlich angezeigt: Aus „2 × 1 Becher“ wird „2 Becher · 300 g“, aus zwei Scheiben „2 Scheiben · 80 g“. Eigene Größen bleiben beispielsweise „2 × Klein · 160 g“. Die Anzeige gilt im kompakten und normalen Tagebuch, bei Mengenänderungen, zuletzt verwendeten Lebensmitteln, Suchtreffern, Rezeptzutaten und geplanten Mahlzeiten. Zahlen, freie Portionsnamen und gespeicherte Gewichte werden dafür nicht verändert; historische Einträge verwenden weiterhin ihre eigenen gespeicherten Angaben. Gramm-, ml- und andere Mengenumrechnungen bleiben unverändert.
+
 ## Lebensmittel übersichtlich anlegen und bearbeiten
 
 Das Formular ist in Produkt, Nährwerte und Portionen gegliedert. Die Nährwerte stehen in zwei Spalten; die gemeinsame Bezugsmenge wird einmal darüber angezeigt. Titel und Speichern bleiben sichtbar, während der Formularinhalt gescrollt wird. Auf größeren Bildschirmen stehen Produktname und Marke nebeneinander.
@@ -119,6 +121,8 @@ Im aufgeklappten kompakten Eintrag kann die Menge direkt geändert werden; in de
 Im Tagebuch kannst du für das gewählte Datum dein Körpergewicht in kg speichern, aktualisieren oder löschen. Komma und Punkt sind als Dezimaltrennzeichen möglich. Pro Tag gibt es eine Messung.
 
 Die kompakte Karte zeigt nur den Messwert des gewählten Tages. Antippen öffnet direkt das Eingabefeld; ohne Messung gibt es den Button „Gewicht eintragen“. Das Feld erhält automatisch den Fokus. Die letzte frühere Messung wird als ausdrücklich gekennzeichneter Vorschlag vorausgefüllt und erst durch „Speichern“ als Messung für diesen Tag übernommen. Spätere Messungen werden nicht vorgeschlagen. Nach dem Speichern schließt sich die Eingabe wieder. Ungespeicherte Änderungen bleiben durch die Wechsel- und Schließen-Rückfrage geschützt.
+
+Direkt über der Gewichtseingabe steht die letzte frühere Messung, zum Beispiel „Zuletzt 72,4 kg · gestern“. „Heute“ und „gestern“ beziehen sich auf das tatsächliche aktuelle Datum; ältere oder zukünftige Referenzdaten werden vollständig angezeigt. Das vollständige Datum ist zusätzlich am Datumshinweis hinterlegt. Beim Bearbeiten bleibt der gespeicherte Wert im Eingabefeld und die vorherige Messung dient als Vergleich. Bei rückwirkenden Einträgen werden keine späteren Messungen als Referenz verwendet. Ohne frühere Messung erscheint ein kurzer Hinweis.
 
 „Verlauf anzeigen“ öffnet Diagramm und Vergleichswerte unabhängig von der Eingabe. Der Verlauf bleibt standardmäßig eingeklappt. Ein Wechsel seiner Sichtbarkeit verwirft keine Eingaben.
 

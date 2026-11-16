@@ -25,6 +25,8 @@
 .weight-form__input:focus-within { outline: 2px solid #7ca58a; }
 .weight-form__input input { width: 100%; min-width: 0; min-height: 46px; font-size: 16px; border: 0; outline: 0; padding: 12px 0; background: transparent; color: #22332a; }
 .weight-form__input span { font-size: 13px; color: #617368; }
+.weight-entry-form__previous { font-size: 13px; line-height: 1.6; color: #617368; margin: 8px 0 12px; overflow-wrap: anywhere; }
+.weight-entry-form__previous strong { color: #315c46; font-weight: 650; }
 .weight-form__delete { display: grid; place-items: center; min-width: 44px; min-height: 44px; border: 1px solid #ead9d4; border-radius: 10px; padding: 0 12px; background: #fff8f6; color: #9e3328; }
 .weight-stats { display: grid; grid-template-columns: minmax(0, 1fr); gap: 17px; padding: 16px; background: #f0f6ef; border-radius: 12px; margin: 20px 0; }
 .weight-stats span { display: block; font-size: 11px; color: #617368; }

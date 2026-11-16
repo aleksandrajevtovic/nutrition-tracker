@@ -1,7 +1,8 @@
 import {useId, useState} from 'react';
 import {ChevronDown, MessageSquare, Pencil, Trash2} from 'lucide-react';
 import type {Entry} from '../db';
-import {fmt, stats, unitLabels} from '../nutrition';
+import {fmt, stats} from '../nutrition';
+import {entryQuantity} from '../quantityLabels';
 import QuickQuantity, {type SaveQuantity} from './QuickQuantity';
 import {useNavigationGuard} from './UnsavedChangesProvider';
 import {useScrollReveal} from '../hooks/useScrollReveal';
@@ -16,9 +17,7 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
   const confirmNavigation = useNavigationGuard();
   const detailsId = useId();
   const values = stats(entry.foodSnapshot, entry.grams);
-  const quantity = entry.unit && entry.amount !== undefined
-    ? `${fmt(entry.amount, 3)} ${entry.unit === 'portion' ? `× ${entry.foodSnapshot.portionName}` : unitLabels[entry.unit]}${entry.unit !== 'g' ? ` (${fmt(entry.grams, 3)} g)` : ''}`
-    : `${fmt(entry.grams, 3)} g`;
+  const quantity = entryQuantity(entry);
   const actions = <div className="actions">
     <button type="button" title="Bearbeiten" aria-label={`${entry.foodSnapshot.name} bearbeiten`} onClick={() => onEdit(entry)}><Pencil size={16}/></button>
     <button type="button" title="Löschen" aria-label={`${entry.foodSnapshot.name} löschen`} onClick={() => {if (confirmNavigation([`quantity:${entry.id}`])) void onDelete(entry.id);}}><Trash2 size={16}/></button>

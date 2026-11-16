@@ -9,6 +9,7 @@ import RecentFoods from './RecentFoods';
 import {useDraftGuard} from './UnsavedChangesProvider';
 import type {RecentFood} from '../diaryHistory';
 import ProductImport from './ProductImport';
+import {portionNameLabel, portionQuantity} from '../quantityLabels';
 import './EntryEditor.css';
 import {fmt, isPositive, meals, stats, toGrams, unitLabels, units, validFood, type Unit} from '../nutrition';
 
@@ -99,7 +100,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
           else if (!isPositive(factor)) setAmount('1');
           setUnit(next);
         }}>
-          {units.map(u => <option key={u} value={u}>{u === 'portion' ? `Portion (${food.portionName})` : unitLabels[u]}</option>)}
+          {units.map(u => <option key={u} value={u}>{u === 'portion' ? `Portion (${portionNameLabel(food.portionName)})` : unitLabels[u]}</option>)}
         </select></label>
       </div>
       {conversionKey && <>
@@ -110,11 +111,11 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
           ? 'Für ml und l ist die Dichte nötig. Beispiel: Wasser ≈ 1 g/ml. Den passenden Wert für dieses Lebensmittel eingeben.'
           : 'Das Gewicht einer Einheit eingeben. Es wird für dieses Lebensmittel gespeichert.'}</p>
       </>}
-      <p className="hint">1 × {food.portionName} = {fmt(food.portionGrams, 3)} g{valid ? ` · Gewählte Menge: ${fmt(grams, 3)} g` : ''}</p>
+      <p className="hint">{portionQuantity(1,food.portionName,food.portionGrams)}{valid ? ` · Gewählte Menge: ${unit === 'portion' ? portionQuantity(Number(amount),food.portionName,grams) : `${fmt(grams,3)} g`}` : ''}</p>
       {!valid && <p className="hint" role="status">Bitte eine positive Menge und gültige Umrechnungsgewichte eingeben.</p>}
       <div className="stepper">
         <button type="button" disabled={saving} aria-label="Menge verringern" onClick={() => setAmount(String(Math.max(0, Number(amount) - 1)))}><Minus size={18}/></button>
-        <strong>{fmt(Number(amount), 3)} {unitLabels[unit]}</strong>
+        <strong>{unit === 'portion' ? portionQuantity(Number(amount),food.portionName) : `${fmt(Number(amount),3)} ${unitLabels[unit]}`}</strong>
         <button type="button" disabled={saving} aria-label="Menge erhöhen" onClick={() => setAmount(String(Number(amount) + 1))}><Plus size={18}/></button>
       </div>
       {preview && <div className="preview"><b>{Math.round(preview.kcal)} kcal</b><span>Eiweiß {fmt(preview.protein)} g · KH {fmt(preview.carbs)} g · F {fmt(preview.fat)} g</span></div>}

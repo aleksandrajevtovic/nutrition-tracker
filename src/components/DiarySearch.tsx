@@ -3,7 +3,8 @@ import {Search, X} from 'lucide-react';
 import type {Entry} from '../db';
 import {searchDiary, validDiaryRange} from '../diaryHistory';
 import {useDiaryHistory} from '../hooks/useDiaryHistory';
-import {fmt, stats} from '../nutrition';
+import {stats} from '../nutrition';
+import {entryQuantity} from '../quantityLabels';
 import {weightDate} from '../weight';
 import {useScrollReveal} from '../hooks/useScrollReveal';
 import './DiarySearch.css';
@@ -30,7 +31,7 @@ export default function DiarySearch({onOpen, onClose}: {onOpen: (entry: Entry) =
       : <><p className="hint" role="status">{results.length ? `${results.length} ${results.length === 1 ? 'Eintrag gefunden' : 'Einträge gefunden'}` : 'Keine passenden Einträge gefunden.'}</p>
         <div className="diary-search__results">{results.slice(0, limit).map(entry => <article className="diary-search__result" key={entry.id}>
           <strong>{entry.foodSnapshot.name}</strong><small>{weightDate(entry.date)} · {entry.meal}</small>
-          <small>{fmt(entry.grams, 3)} g · {Math.round(stats(entry.foodSnapshot, entry.grams).kcal)} kcal{entry.foodSnapshot.brand ? ` · ${entry.foodSnapshot.brand}` : ''}</small>
+          <small>{entryQuantity(entry)} · {Math.round(stats(entry.foodSnapshot, entry.grams).kcal)} kcal{entry.foodSnapshot.brand ? ` · ${entry.foodSnapshot.brand}` : ''}</small>
           {entry.note?.trim() && <p>{entry.note}</p>}
           <button type="button" className="secondary" aria-label={`${entry.foodSnapshot.name} am ${weightDate(entry.date)} bearbeiten`} onClick={() => onOpen(entry)}>Eintrag bearbeiten</button>
         </article>)}</div>

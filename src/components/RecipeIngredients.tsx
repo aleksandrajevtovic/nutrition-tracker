@@ -7,6 +7,7 @@ import FoodPicker from './FoodPicker';
 import PortionPicker from './PortionPicker';
 import {useToast} from './ToastProvider';
 import {useDraftGuard} from './UnsavedChangesProvider';
+import {portionNameLabel, portionQuantity} from '../quantityLabels';
 
 export default function RecipeIngredients({foods, ingredients, disabled, onChange}: {
   foods: Food[]; ingredients: RecipeIngredient[]; disabled: boolean; onChange: (ingredients: RecipeIngredient[]) => void;
@@ -39,10 +40,10 @@ export default function RecipeIngredients({foods, ingredients, disabled, onChang
       <div className="quantity-fields"><label>Menge<input type="number" step="any" min="0" aria-label={`Menge für Zutat ${index + 1}`} value={Number.isFinite(ingredient.amount) ? ingredient.amount : ''} disabled={disabled}
         onChange={event => update(ingredient, event.target.value === '' ? NaN : Number(event.target.value), ingredient.unit)}/></label>
         <label>Einheit<select value={ingredient.unit} aria-label={`Einheit für Zutat ${index + 1}`} disabled={disabled} onChange={event => update(ingredient, ingredient.amount, event.target.value as Unit)}>
-          {units.map(value => <option key={value} value={value} disabled={!isPositive(gramsPerUnit(ingredient.foodSnapshot, value))}>{value === 'portion' ? ingredient.foodSnapshot.portionName : unitLabels[value]}</option>)}
+          {units.map(value => <option key={value} value={value} disabled={!isPositive(gramsPerUnit(ingredient.foodSnapshot, value))}>{value === 'portion' ? portionNameLabel(ingredient.foodSnapshot.portionName) : unitLabels[value]}</option>)}
         </select></label></div>
       {ingredient.unit === 'portion' && <PortionPicker food={ingredient.foodSnapshot} disabled={disabled} label={`Portionsgröße für Zutat ${index + 1}`} onChange={food => onChange(ingredients.map(current => current.id === ingredient.id ? {...current, foodSnapshot: food, grams: toGrams(food, current.amount, current.unit)} : current))}/>}
-      {isPositive(ingredient.grams) && <p className="hint">{fmt(ingredient.grams, 2)} g · {fmt(ingredient.foodSnapshot.kcal / 100 * ingredient.grams)} kcal</p>}
+      {isPositive(ingredient.grams) && <p className="hint">{ingredient.unit === 'portion' ? portionQuantity(ingredient.amount,ingredient.foodSnapshot.portionName,ingredient.grams,2) : `${fmt(ingredient.grams,2)} g`} · {fmt(ingredient.foodSnapshot.kcal / 100 * ingredient.grams)} kcal</p>}
     </div>)}</div>
     <div className="recipe-add editor">
       <FoodPicker foods={foods} selected={selected} disabled={disabled} onChange={food => {if (!disabled) {setSelected(food); setUnit('g');}}}/>
@@ -50,7 +51,7 @@ export default function RecipeIngredients({foods, ingredients, disabled, onChang
         onKeyDown={event => {if (event.key === 'Enter') {event.preventDefault(); add();}}}/></label>
         <label>Einheit<select value={unit} aria-label="Einheit der neuen Zutat" disabled={disabled} onChange={event => setUnit(event.target.value as Unit)}>
           {units.map(value => <option key={value} value={value} disabled={selected ? !isPositive(gramsPerUnit(selected, value)) : value !== 'g'}>
-            {value === 'portion' && selected ? selected.portionName : unitLabels[value]}
+            {value === 'portion' && selected ? portionNameLabel(selected.portionName) : unitLabels[value]}
           </option>)}
         </select></label></div>
       {selected && unit === 'portion' && <PortionPicker food={selected} onChange={setSelected} disabled={disabled}/>}

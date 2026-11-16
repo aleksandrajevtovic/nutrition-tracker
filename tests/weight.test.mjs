@@ -4,9 +4,30 @@ import {createElement} from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {loadTypeScript} from './helpers/typescript.mjs';
 
-const {parseWeight, validWeight, weightComparison, weightsInRange, backupWeights} = await loadTypeScript(new URL('../src/weight.ts', import.meta.url));
+const {parseWeight, validWeight, weightComparison, weightsInRange, backupWeights, weightMeasurementDate} = await loadTypeScript(new URL('../src/weight.ts', import.meta.url));
 const {default: WeightChart} = await loadTypeScript(new URL('../src/components/WeightChart.tsx', import.meta.url));
+const {default: WeightEntryForm} = await loadTypeScript(new URL('../src/components/WeightEntryForm.tsx', import.meta.url));
+const {default: ToastProvider} = await loadTypeScript(new URL('../src/components/ToastProvider.tsx', import.meta.url));
 const record = (date, kg) => ({date, kg, updatedAt: '2026-11-15T12:00:00.000Z'});
+
+test('measurement date labels refer to the actual calendar day across month/year and DST boundaries', () => {
+  assert.equal(weightMeasurementDate('2026-11-16','2026-11-16'),'heute');
+  assert.equal(weightMeasurementDate('2026-11-15','2026-11-16'),'gestern');
+  assert.equal(weightMeasurementDate('2025-12-31','2026-01-01'),'gestern');
+  assert.equal(weightMeasurementDate('2026-03-29','2026-03-30'),'gestern');
+  assert.equal(weightMeasurementDate('2026-10-25','2026-10-26'),'gestern');
+  assert.equal(weightMeasurementDate('2026-11-14','2026-11-16'),'14.11.2026');
+  assert.equal(weightMeasurementDate('2026-11-17','2026-11-16'),'17.11.2026');
+});
+
+test('weight editing shows the preceding measurement without replacing the saved value', () => {
+  const render=props=>renderToStaticMarkup(createElement(ToastProvider,null,createElement(WeightEntryForm,props)));
+  const props={date:'2026-11-16',record:record('2026-11-16',72.8),suggestion:record('2026-11-15',72.4),onSave:async()=>{},onRemove:async()=>{},onClose:()=>{}};
+  const html=render(props);
+  assert.match(html,/Zuletzt <strong>72,4 kg<\/strong>/);assert.match(html,/dateTime="2026-11-15"/);assert.match(html,/value="72,8"/);
+  const first=render({...props,suggestion:undefined});assert.match(first,/Noch keine frühere Messung vorhanden/);assert.match(first,/value="72,8"/);
+  const newEntry=render({...props,record:undefined});assert.match(newEntry,/value="72,4"/);assert.match(newEntry,/Erst „Speichern“/);
+});
 
 test('German comma and decimal point inputs parse; malformed values are rejected', () => {
   assert.equal(parseWeight(' 72,55 '), 72.55);

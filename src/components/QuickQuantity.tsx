@@ -6,6 +6,7 @@ import {parseWeight} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
 import {useDraftGuard} from './UnsavedChangesProvider';
+import {portionQuantity, portionUnitLabel} from '../quantityLabels';
 import './QuickQuantity.css';
 
 export type SaveQuantity = (id: string, amount: number) => Promise<Entry>;
@@ -32,8 +33,8 @@ export default function QuickQuantity({entry, onSave}: {entry: Entry; onSave: Sa
     finally {saving.current = false; setBusy(false);}
   }}>
     <label>Menge direkt ändern<span className="quick-quantity__fields"><input aria-label={`Menge für ${entry.foodSnapshot.name}`} type="text" inputMode="decimal" value={value} disabled={busy} onChange={event => setValue(event.target.value)}/>
-      <span className="quick-quantity__unit">{unit === 'portion' ? `× ${entry.foodSnapshot.portionName}` : unitLabels[unit]}</span></span></label>
-    <p className="hint" aria-live="polite">{valid ? `${fmt(grams, 3)} g · ${Math.round(stats(entry.foodSnapshot, grams).kcal)} kcal` : 'Bitte eine gültige Menge über 0 eingeben.'}</p>
+      <span className="quick-quantity__unit">{unit === 'portion' ? portionUnitLabel(amount,entry.foodSnapshot.portionName) : unitLabels[unit]}</span></span></label>
+    <p className="hint" aria-live="polite">{valid ? `${unit === 'portion' ? portionQuantity(amount,entry.foodSnapshot.portionName,grams) : `${fmt(grams,3)} g`} · ${Math.round(stats(entry.foodSnapshot, grams).kcal)} kcal` : 'Bitte eine gültige Menge über 0 eingeben.'}</p>
     <button type="submit" className="secondary" disabled={busy || !valid || amount === current}><Check size={16}/>{busy ? 'Wird gespeichert…' : 'Menge speichern'}</button>
   </form>;
 }

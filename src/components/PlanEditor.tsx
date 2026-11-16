@@ -10,6 +10,7 @@ import FoodPicker from './FoodPicker';
 import PortionPicker from './PortionPicker';
 import {useToast} from './ToastProvider';
 import {useDraftGuard} from './UnsavedChangesProvider';
+import {portionNameLabel} from '../quantityLabels';
 
 export default function PlanEditor({foods, templates, date, plan, template, onClose, onSaved}: {
   foods: Food[]; templates: MealTemplate[]; date: string; plan?: MealPlan; template?: MealTemplate; onClose: () => void; onSaved: (date: string) => void;
@@ -53,7 +54,7 @@ export default function PlanEditor({foods, templates, date, plan, template, onCl
     <label>Name (optional)<input value={name} disabled={busy} placeholder={plan?.name ?? (source === 'template' ? selectedTemplate?.name : food?.name)} onChange={event => setName(event.target.value)}/></label>
     <div className="quantity-fields"><label>{plan || source === 'template' ? 'Mengenfaktor' : 'Menge'}<input type="text" inputMode="decimal" required value={amount} disabled={busy} onChange={event => setAmount(event.target.value)}/></label>
       {!plan && source === 'food' && <label>Einheit<select aria-label="Einheit der Planung" value={unit} disabled={busy || !food} onChange={event => setUnit(event.target.value as Unit)}>
-        {units.map(value => <option key={value} value={value} disabled={food ? !isPositive(gramsPerUnit(food, value)) : value !== 'portion'}>{value === 'portion' && food ? food.portionName : unitLabels[value]}</option>)}
+        {units.map(value => <option key={value} value={value} disabled={food ? !isPositive(gramsPerUnit(food, value)) : value !== 'portion'}>{value === 'portion' && food ? portionNameLabel(food.portionName) : unitLabels[value]}</option>)}
       </select></label>}</div>
     {!plan && source === 'food' && food && unit === 'portion' && <PortionPicker food={food} onChange={setFood} disabled={busy}/>}
     {totals && <div className="preview"><b>{Math.round(totals.kcal)} kcal geplant</b><span>Eiweiß {fmt(totals.protein)} g · KH {fmt(totals.carbs)} g · F {fmt(totals.fat)} g</span></div>}
