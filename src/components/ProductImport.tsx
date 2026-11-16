@@ -76,7 +76,7 @@ function ImportChooser({foods, onSelect, onClose, onReview}: Omit<Props, 'onSave
     if (parsed.reference) {
       food.nutritionReference = parsed.reference.unit === 'ml' ? {unit:'ml',amount:100} : parsed.reference;
       if (parsed.reference.unit === 'ml' && parsed.reference.amount !== 100) {
-        for (const key of nutrientKeys) food[key] *= 100 / parsed.reference.amount;
+        for (const key of nutrientKeys) if (food[key] !== null) food[key]! *= 100 / parsed.reference.amount;
       } else if (parsed.reference.unit === 'g') food.portionGrams = parsed.reference.amount;
     }
     review({food,missing:nutrientKeys.filter(key => !Number.isFinite(food[key])),warnings:parsed.warnings});

@@ -32,8 +32,8 @@ export default function WeeklyPage({date, onOpenDay}: {date: string; onOpenDay: 
     </section>
     {data.loading ? <p className="hint" role="status">Wochendaten werden geladen…</p> : data.failed ? <section className="panel"><p>Die Wochenübersicht konnte nicht geladen werden.</p><button type="button" className="secondary" onClick={data.reload}>Erneut versuchen</button></section> : <>
       <div className="weekly-averages">{goalFields.map(({key, label, unit}) => <article className="panel weekly-average" key={key}>
-        <span>Ø {label}</span><strong>{week.averages ? `${fmt(week.averages[key])} ${unit}` : '—'}</strong>
-        <small>{week.averages && previous.averages ? `${change(Number((week.averages[key] - previous.averages[key]).toFixed(3)), unit)} zur Vorwoche (Ø)` : 'Noch kein Vergleich zur Vorwoche'}</small>
+        <span>Ø {label}</span><strong>{week.averages ? key === 'fiber' && week.fiberIncomplete ? 'Unvollständig' : `${fmt(week.averages[key])} ${unit}` : '—'}</strong>
+        <small>{key === 'fiber' && (week.fiberIncomplete || previous.fiberIncomplete) ? 'Fehlende Ballaststoffangaben – kein vollständiger Vergleich' : week.averages && previous.averages ? `${change(Number((week.averages[key] - previous.averages[key]).toFixed(3)), unit)} zur Vorwoche (Ø)` : 'Noch kein Vergleich zur Vorwoche'}</small>
       </article>)}<article className="panel weekly-average"><span>Ø Gewicht</span><strong>{week.weightAverage === undefined ? '—' : `${fmt(week.weightAverage, 2)} kg`}</strong>
         <small>{week.weightAverage !== undefined && previous.weightAverage !== undefined ? `${change(Number((week.weightAverage - previous.weightAverage).toFixed(3)), 'kg')} zur Vorwoche (Ø)` : `${week.measuredDays} ${week.measuredDays === 1 ? 'Messung' : 'Messungen'} in dieser Woche`}</small></article>
         <article className="panel weekly-average weekly-average--drinks"><span>Ø Trinkmenge</span><strong>{week.drinkAverageMl === undefined ? '—' : `${fmt(week.drinkAverageMl / 1000, 3)} l`}</strong>

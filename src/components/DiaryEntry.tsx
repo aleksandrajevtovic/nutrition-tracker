@@ -47,7 +47,7 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
         {[
           ['Eiweiß', values.protein], ['Kohlenhydrate', values.carbs], ['Fett', values.fat],
           ['Ballaststoffe', values.fiber], ['Zucker', entry.foodSnapshot.sugar * entry.grams / 100],
-        ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{fmt(Number(value))} g</dd></div>)}
+        ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{label === 'Ballaststoffe' && entry.foodSnapshot.fiber === null ? 'Nicht angegeben' : `${fmt(Number(value))} g`}</dd></div>)}
       </dl>
       {entry.note?.trim() && <p className="diary-entry__note"><span>Notiz</span>{entry.note}</p>}
       {actions}

@@ -27,7 +27,7 @@ export default function WeeklyDayCard({day, note, onOpenDay}: {
       {note && <button ref={toggle} type="button" className="weekly-note-toggle" aria-expanded={expanded} aria-controls={id}
         aria-label={`Tagesnotiz vom ${weightDate(day.date)} ${expanded ? 'einklappen' : 'anzeigen'}`} title="Tagesnotiz vorhanden" onClick={() => setExpanded(value => !value)}><FileText size={18} aria-hidden="true"/></button>}
     </div><small>{day.count ? `${day.count} ${day.count === 1 ? 'Eintrag' : 'Einträge'}` : 'Keine Lebensmittel'}{day.drinkCount ? ` · ${day.drinkCount} ${day.drinkCount === 1 ? 'Getränk' : 'Getränke'}` : ''}</small></div>
-    <dl>{goalFields.map(({key, label, unit}) => <div key={key}><dt>{label}</dt><dd>{day.count ? `${fmt(day.totals[key])} ${unit}` : '—'}</dd></div>)}
+    <dl>{goalFields.map(({key, label, unit}) => <div key={key}><dt>{label}</dt><dd>{day.count ? key === 'fiber' && day.fiberIncomplete ? 'Unvollständig' : `${fmt(day.totals[key])} ${unit}` : '—'}</dd></div>)}
       <div><dt>Gewicht</dt><dd>{day.weight === undefined ? '—' : `${fmt(day.weight, 2)} kg`}</dd></div>
       <div><dt>Trinkmenge</dt><dd>{day.drinkMl === undefined ? '—' : `${fmt(day.drinkMl / 1000, 3)} l`}</dd></div></dl>
     {note && <div ref={content} id={id} className="weekly-day-note" hidden={!expanded}>

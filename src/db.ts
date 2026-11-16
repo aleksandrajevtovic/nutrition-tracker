@@ -22,7 +22,8 @@ export type Food = {
   protein: number;
   carbs: number;
   fat: number;
-  fiber: number;
+  // null means not declared; numeric zero is an explicitly known zero.
+  fiber: number | null;
   sugar: number;
   portionName: string;
   portionGrams: number;

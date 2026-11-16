@@ -10,7 +10,14 @@ export function referenceGrams(food: Food, reference: NutritionReference): numbe
 
 // Keep the calculation model per 100 g; only the editor's input/output basis changes.
 export function scaleNutrients(food: Food, factor: number): Food {
-  return {...food, ...Object.fromEntries(nutrientKeys.map(key => [key, food[key] * factor]))};
+  return {...food, ...Object.fromEntries(nutrientKeys.map(key => [key, food[key] === null ? null : food[key]! * factor]))};
+}
+
+// Empty editor values are drafts, never persisted as zero or passed into recipes.
+export function initialFoodEditorDraft(food: Food, existing: boolean, imported = false): Food {
+  if (imported) return {...food};
+  const draft = scaleNutrients(food, referenceGrams(food, food.nutritionReference ?? defaultReference) / 100);
+  return existing ? draft : {...draft, ...Object.fromEntries(nutrientKeys.map(key => [key, NaN]))};
 }
 
 export function portionOptions(food: Food) {

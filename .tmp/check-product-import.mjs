@@ -68,7 +68,7 @@ try {
     await search('3017620422003');await dialog().getByRole('heading',{name:'Lebensmittel anlegen'}).waitFor();
     assert.equal(await dialog().getByLabel('Nährwerte beziehen sich auf',{exact:true}).inputValue(),'100ml');assert.equal(await dialog().getByLabel('Gramm pro ml / Dichte (optional)',{exact:true}).inputValue(),'');
     assert.equal(await dialog().getByLabel('Kalorien / 100 ml',{exact:true}).inputValue(),'45');
-    await dialog().getByLabel('Gramm pro ml / Dichte (optional)',{exact:true}).fill('1.1');await dialog().getByLabel('Gramm pro Portion',{exact:true}).fill('275');
+    await dialog().getByLabel('Gramm pro ml / Dichte (optional)',{exact:true}).fill('1.1');await dialog().locator('.food-standard-portion > summary').click();await dialog().getByLabel('Gramm pro Portion',{exact:true}).fill('275');
     await dialog().getByRole('checkbox').check();await dialog().getByRole('button',{name:'Speichern und zum Tag hinzufügen',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});
     assert.equal(await entry.getByLabel('Einheit',{exact:true}).inputValue(),'ml');await entry.getByLabel('Menge',{exact:true}).fill('250');assert.match(await entry.locator('.preview').innerText(),/11[23] kcal/);
     await entry.getByRole('button',{name:'Zum Tag hinzufügen',exact:true}).click();await page.locator('.diary-entry-editor').waitFor({state:'hidden'});await dismiss();

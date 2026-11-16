@@ -1,7 +1,7 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {BookmarkPlus, BookOpen, CalendarDays, Copy, List, Plus, Search} from 'lucide-react';
 import type {Entry, Food} from '../db';
-import {meals, stats} from '../nutrition';
+import {fiberIncomplete, meals, stats} from '../nutrition';
 import EntryEditor from './EntryEditor';
 import DailySummary from './DailySummary';
 import DailyExtras from './DailyExtras';
@@ -69,7 +69,7 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
       <label className="date"><CalendarDays size={17}/><input aria-label="Datum" type="date" required value={date}
         onChange={e => {if (e.target.value && e.target.value !== date && confirmNavigation()) {setEditor(null); setCopying(null); setSavingTemplate(null); onDateChange(e.target.value);}}}/></label></div>
     <MealFilter entries={entries} selected={selectedMeal} onSelect={selectMeal}/>
-    <DailySummary totals={totals}/>
+    <DailySummary totals={totals} fiberIncomplete={fiberIncomplete(entries)}/>
     <DailyExtras date={date}/>
     <div ref={mealsRef}>
     <div className="section-head"><h2>Mahlzeiten</h2>

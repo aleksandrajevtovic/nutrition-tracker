@@ -9,8 +9,10 @@ export const today = () => {
 export const fmt = (value: number, digits = 1) => value.toLocaleString('de-DE', {maximumFractionDigits: digits});
 export const stats = (food: Food, grams: number) => ({
   kcal: food.kcal * grams / 100, protein: food.protein * grams / 100,
-  carbs: food.carbs * grams / 100, fat: food.fat * grams / 100, fiber: food.fiber * grams / 100,
+  // Unknown fibre contributes no known amount; callers must show incomplete totals.
+  carbs: food.carbs * grams / 100, fat: food.fat * grams / 100, fiber: (food.fiber ?? 0) * grams / 100,
 });
+export const fiberIncomplete = (items: {foodSnapshot: Food}[]) => items.some(item => item.foodSnapshot.fiber === null);
 export const emptyFood = (): Food => ({
   id: crypto.randomUUID(), name: '', brand: '', kcal: 0, protein: 0, carbs: 0,
   fat: 0, fiber: 0, sugar: 0, portionName: '1 Portion', portionGrams: 100,
@@ -57,6 +59,7 @@ export function validFood(food: Food): boolean {
     && (food.favorite === undefined || typeof food.favorite === 'boolean')
     && ['kcal','protein','carbs','fat','fiber','sugar'].every(key => {
       const value = food[key as keyof Food];
+      if (key === 'fiber' && value === null) return true;
       return typeof value === 'number' && Number.isFinite(value) && value >= 0;
     })
     && [food.gramsPerMl, food.pieceGrams, food.sliceGrams].every(value => value === undefined || isPositive(value));

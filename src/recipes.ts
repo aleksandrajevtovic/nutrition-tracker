@@ -1,5 +1,5 @@
 import type {Food} from './db';
-import {emptyFood, isPositive, toGrams, units, validFood, type Unit} from './nutrition';
+import {emptyFood, fiberIncomplete, isPositive, toGrams, units, validFood, type Unit} from './nutrition';
 
 export type RecipeIngredient = {id: string; amount: number; unit: Unit; grams: number; foodSnapshot: Food};
 export type Recipe = {servings: number; yieldGrams: number; autoWeight?: boolean; ingredients: RecipeIngredient[]; instructions: string};
@@ -28,7 +28,7 @@ export function recipeTotals(ingredients: RecipeIngredient[]) {
   let grams = 0;
   for (const ingredient of ingredients) {
     grams += ingredient.grams;
-    for (const key of recipeNutrients) totals[key] += ingredient.foodSnapshot[key] / 100 * ingredient.grams;
+    for (const key of recipeNutrients) totals[key] += (ingredient.foodSnapshot[key] ?? 0) / 100 * ingredient.grams;
   }
   return {grams, ...totals};
 }
@@ -48,7 +48,7 @@ export function buildRecipeFood(base: Food, recipe: Recipe): Food {
   if (!validRecipe(recipe)) throw Error('Bitte gültige Zutaten, eine positive Portionsanzahl und ein positives Gesamtgewicht eingeben.');
   const totals = recipeTotals(recipe.ingredients);
   const nutrients = Object.fromEntries(recipeNutrients.map(key => [key, totals[key] / recipe.yieldGrams * 100]));
-  const food = {...base, ...nutrients, portionName: '1 Portion', portionGrams: recipe.yieldGrams / recipe.servings, recipe} as Food;
+  const food = {...base, ...nutrients, ...(fiberIncomplete(recipe.ingredients) ? {fiber:null} : {}), portionName: '1 Portion', portionGrams: recipe.yieldGrams / recipe.servings, recipe} as Food;
   if (!validFood(food)) throw Error('Ungültige Rezeptdaten');
   return food;
 }
@@ -56,8 +56,12 @@ export function buildRecipeFood(base: Food, recipe: Recipe): Food {
 export function validRecipeFood(food: Food): boolean {
   if (!validRecipe(food.recipe) || food.recipe.ingredients.some(ingredient => ingredient.foodSnapshot.id === food.id)) return false;
   const calculated = buildRecipeFood(food, food.recipe);
-  return ([...recipeNutrients, 'portionGrams'] as const).every(key => Number.isFinite(food[key])
-    && Math.abs(food[key] - calculated[key]) <= Math.max(1e-8, Math.abs(calculated[key]) * 1e-9));
+  return ([...recipeNutrients, 'portionGrams'] as const).every(key => {
+    const value=food[key], expected=calculated[key];
+    if (key === 'fiber' && (value === null || expected === null)) return value === expected;
+    return typeof value === 'number' && typeof expected === 'number' && Number.isFinite(value)
+      && Math.abs(value-expected) <= Math.max(1e-8,Math.abs(expected)*1e-9);
+  });
 }
 
 export const emptyRecipeFood = (): Food => ({...emptyFood(), brand: 'Eigenes Rezept', portionName: '1 Portion', recipe: {servings: 1, yieldGrams: 0, autoWeight: true, ingredients: [], instructions: ''}});

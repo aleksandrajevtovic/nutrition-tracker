@@ -22,7 +22,7 @@ export function GoalProgress({current, target, label, unit}: {current: number; t
   </div>;
 }
 
-export default function DailySummary({totals}: {totals: ReturnType<typeof stats>}) {
+export default function DailySummary({totals, fiberIncomplete = false}: {totals: ReturnType<typeof stats>; fiberIncomplete?: boolean}) {
   const data = useDailyGoals();
   const [editing, setEditing] = useState(false);
   const confirmNavigation = useNavigationGuard();
@@ -37,9 +37,10 @@ export default function DailySummary({totals}: {totals: ReturnType<typeof stats>
     <div className="daily-summary__values"><div className="daily-summary__calories"><span>Kalorien</span><strong>{Math.round(totals.kcal)} <small>kcal</small></strong>
       {data.goals.kcal !== undefined && <GoalProgress current={totals.kcal} target={data.goals.kcal} label="Kalorien" unit="kcal"/>}
     </div><div className="macros">{goalFields.filter(field => field.key !== 'kcal').map(({key, label, unit}) => <div key={key}>
-      <span>{label}</span><b>{fmt(totals[key])} g</b>
-      {data.goals[key] !== undefined && <GoalProgress current={totals[key]} target={data.goals[key]!} label={label} unit={unit}/>}
+      <span>{label}</span><b>{key === 'fiber' && fiberIncomplete ? 'Unvollständig' : `${fmt(totals[key])} g`}</b>
+      {data.goals[key] !== undefined && !(key === 'fiber' && fiberIncomplete) && <GoalProgress current={totals[key]} target={data.goals[key]!} label={label} unit={unit}/>}
     </div>)}</div></div>
+    {fiberIncomplete && <p className="daily-summary__notice">Ballaststoffe sind nicht für alle Lebensmittel angegeben. Tageswert und Zielvergleich sind deshalb unvollständig.</p>}
     {data.loading && <p className="daily-summary__notice" role="status">Tagesziele werden geladen…</p>}
     {data.failed && <p className="daily-summary__notice">Tagesziele konnten nicht geladen werden. <button type="button" onClick={data.reload}>Erneut versuchen</button></p>}
     {editing && <div ref={editorRef}><GoalEditor goals={data.goals} onSave={data.save} onClose={() => setEditing(false)}/></div>}

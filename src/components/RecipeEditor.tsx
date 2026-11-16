@@ -1,7 +1,7 @@
 import {useRef, useState} from 'react';
 import {Check, X} from 'lucide-react';
 import type {Food} from '../db';
-import {fmt} from '../nutrition';
+import {fiberIncomplete, fmt} from '../nutrition';
 import {buildRecipeFood, recipeTotals, validIngredient, type RecipeIngredient} from '../recipes';
 import {parseWeight} from '../weight';
 import {germanError} from '../german';
@@ -49,6 +49,7 @@ export default function RecipeEditor({food, foods, existing, onSave, onClose}: {
         <label>Fertiges Gesamtgewicht in g (optional)<input type="text" inputMode="decimal" placeholder={Number.isFinite(totals.grams) && totals.grams > 0 ? fmt(totals.grams, 2) : 'Summe der Zutatengewichte'} value={finishedWeight} disabled={busy} onChange={event => setFinishedWeight(event.target.value)}/></label></div>
       <p className="hint">Leer lassen, um die Summe der Zutatengewichte zu verwenden. Wenn sich das Gewicht beim Kochen ändert, wiege das fertige Gericht und trage das Gesamtgewicht ein. Die Kalorien bleiben gleich; das Gewicht pro Portion wird angepasst.</p>
       <RecipeIngredients foods={foods.filter(current => current.id !== food.id)} ingredients={ingredients} disabled={busy} onChange={setIngredients}/>
+      {fiberIncomplete(ingredients) && <p className="hint">Ballaststoffe sind nicht für alle Zutaten angegeben. Der Ballaststoffwert des Rezepts ist unvollständig.</p>}
       {preview && <div className="recipe-preview" aria-live="polite"><div><span>Gesamtes Rezept</span><strong>{fmt(totals.kcal)} kcal</strong><small>{fmt(yieldGrams, 2)} g · {fmt(count, 2)} Portionen</small></div>
         <div><span>Pro Portion</span><strong>{fmt(totals.kcal / count)} kcal</strong><small>{fmt(yieldGrams / count, 2)} g · Eiweiß {fmt(totals.protein / count)} g · KH {fmt(totals.carbs / count)} g · F {fmt(totals.fat / count)} g</small></div></div>}
       <label>Zubereitung / Notizen (optional)<textarea aria-label="Zubereitung / Notizen (optional)" value={instructions} disabled={busy} rows={3} onChange={event => setInstructions(event.target.value)}/></label>

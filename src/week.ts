@@ -1,5 +1,5 @@
 import type {Entry} from './db';
-import {stats} from './nutrition';
+import {fiberIncomplete, stats} from './nutrition';
 import {validDate, type WeightRecord} from './weight';
 import type {Drink} from './hydration';
 
@@ -32,7 +32,7 @@ export function summarizeWeek(entries: Entry[], weights: WeightRecord[], date: s
       return sum;
     }, emptyTotals());
     const dayDrinks = drinks.filter(drink => drink.date === date);
-    return {date, count: matches.length, totals, weight: weights.find(record => record.date === date)?.kg,
+    return {date, count: matches.length, totals, fiberIncomplete: fiberIncomplete(matches), weight: weights.find(record => record.date === date)?.kg,
       drinkCount: dayDrinks.length, drinkMl: dayDrinks.length ? dayDrinks.reduce((sum, drink) => sum + drink.ml, 0) : undefined};
   });
   const recorded = days.filter(day => day.count > 0);
@@ -47,7 +47,7 @@ export function summarizeWeek(entries: Entry[], weights: WeightRecord[], date: s
   const averages = recorded.length ? Object.fromEntries(Object.entries(totals).map(([key, value]) => [key, value / recorded.length])) as NutritionTotals : undefined;
   const weightAverage = measured.length ? measured.reduce((sum, day) => sum + day.weight!, 0) / measured.length : undefined;
   const weightChange = measured.length > 1 ? Number((measured[measured.length - 1].weight! - measured[0].weight!).toFixed(3)) : undefined;
-  return {...week, days, totals, averages, weightAverage, weightChange, recordedDays: recorded.length, measuredDays: measured.length,
+  return {...week, days, totals, averages, fiberIncomplete: recorded.some(day => day.fiberIncomplete), weightAverage, weightChange, recordedDays: recorded.length, measuredDays: measured.length,
     drinkTotalMl, drinkAverageMl, drinkingDays: hydrated.length};
 }
 export type WeekSummary = ReturnType<typeof summarizeWeek>;
