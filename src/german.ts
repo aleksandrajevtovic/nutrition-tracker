@@ -22,6 +22,9 @@ export function germanEntry(entry: Entry): Entry {
 }
 
 const appErrors = new Set([
+  'Bitte ein gültiges Zieldatum für die Planung wählen.',
+  'Bitte einen anderen Tag für die Planung wählen.',
+  'Diese Planung wurde inzwischen verschoben. Bitte erneut öffnen.',
   'Dieser Eintrag wurde inzwischen geändert. Bitte die Aktion erneut öffnen.',
   'Bitte ein anderes Zieldatum oder eine andere Mahlzeit wählen.',
   'Dieser Barcode gehört bereits zu einem gespeicherten Lebensmittel. Bitte das vorhandene Produkt bearbeiten.',

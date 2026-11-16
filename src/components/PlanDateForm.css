@@ -1,0 +1,9 @@
+.plan-date-form { margin-top: 12px; padding: 12px; border: 1px solid #dce6d8; border-radius: 11px; background: #f6f9f2; }
+.plan-date-form__heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.plan-date-form__heading h3 { font-size: 14px; }
+.plan-date-form__fields { display: grid; gap: 8px; margin-top: 6px; }
+.plan-date-form__fields input { margin-top: 0; }
+.plan-date-form__fields .primary { min-width: 0; }
+.planner-meal__date-button { margin-top: 12px; }
+.planner-meal:focus { outline: 2px solid #84a580; outline-offset: 4px; border-radius: 8px; }
+@media (min-width: 480px) { .plan-date-form__fields { grid-template-columns: minmax(0,1fr) auto; align-items: center; } }

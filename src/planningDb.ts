@@ -39,6 +39,20 @@ export async function savePlan(plan: MealPlan) {
   if (existing?.status === 'logged') throw Error('Diese Planung wurde bereits ins Tagebuch übernommen.');
   await tx.store.put(plan); await tx.done; announceDataChange();
 }
+export async function reschedulePlan(id: string, sourceDate: string, targetDate: string): Promise<MealPlan> {
+  if(!validDate(sourceDate) || !validDate(targetDate))throw Error('Bitte ein gültiges Zieldatum für die Planung wählen.');
+  if(sourceDate===targetDate)throw Error('Bitte einen anderen Tag für die Planung wählen.');
+  const revision=getDataRevision();
+  const tx=(await dbPromise).transaction('plans','readwrite');
+  try{
+    const current: MealPlan | undefined=await tx.store.get(id);
+    if(!current)throw Error('Diese Planung ist nicht mehr vorhanden.');
+    if(current.status!=='planned')throw Error('Diese Planung wurde bereits ins Tagebuch übernommen.');
+    if(revision!==getDataRevision() || current.date!==sourceDate)throw Error('Diese Planung wurde inzwischen verschoben. Bitte erneut öffnen.');
+    const moved={...current,date:targetDate};
+    await tx.store.put(moved);await tx.done;announceDataChange();return moved;
+  }catch(error){await tx.done.catch(()=>{});throw error;}
+}
 export async function logPlan(id: string) {
   const tx = (await dbPromise).transaction(['plans', 'entries'], 'readwrite');
   const plan: MealPlan | undefined = await tx.objectStore('plans').get(id);

@@ -14,9 +14,17 @@ export default function PlanningPage({foods, date, onOpenDay}: {foods: Food[]; d
   const [tab, setTab] = useState<'templates' | 'shopping' | 'week'>('templates');
   const [editor, setEditor] = useState<{date: string; template?: MealTemplate; plan?: MealPlan} | null>(null);
   const [plannerDate, setPlannerDate] = useState(date);
+  const [rescheduling,setRescheduling]=useState<MealPlan | null>(null);
   const data = usePlanningData();
   const confirmNavigation = useNavigationGuard();
-  const changeTab = (next: typeof tab) => {if (next !== tab && confirmNavigation()) setTab(next);};
+  const changeTab = (next: typeof tab) => {if (next !== tab && confirmNavigation()) {setRescheduling(null);setEditor(null);setTab(next);}};
+  const openEditor=(next: NonNullable<typeof editor>)=>{
+    if(!confirmNavigation())return false;
+    setRescheduling(null);setEditor(next);return true;
+  };
+  const changePlannerDate=(next: string)=>{
+    if(next!==plannerDate && confirmNavigation(['plan-editor','plan-date'])){setRescheduling(null);setEditor(null);setPlannerDate(next);}
+  };
   return <>
     <div className="heading"><div><span className="eyebrow">VORBEREITEN & VEREINFACHEN</span><h1>Planen & Einkaufen</h1></div></div>
     <div className="planning-tabs" role="group" aria-label="Planungsbereich auswählen">
@@ -25,9 +33,10 @@ export default function PlanningPage({foods, date, onOpenDay}: {foods: Food[]; d
       <button type="button" aria-pressed={tab === 'week'} onClick={() => changeTab('week')}>Wochenplan</button>
     </div>
     {data.loading ? <p className="hint" role="status">Planungsdaten werden geladen…</p> : data.failed ? <section className="panel"><p>Planungsdaten konnten nicht geladen werden.</p><button type="button" className="secondary" onClick={data.reload}>Erneut versuchen</button></section> : <>
-      {tab === 'templates' && <TemplateLibrary templates={data.templates} date={date} onOpenDay={onOpenDay} onPlan={template => {setTab('week'); setEditor({date, template});}}/>}
+      {tab === 'templates' && <TemplateLibrary templates={data.templates} date={date} onOpenDay={onOpenDay} onPlan={template => {if(openEditor({date,template}))setTab('week');}}/>}
       {tab === 'shopping' && <ShoppingListView foods={foods} shopping={data.shopping}/>}
-      {tab === 'week' && <MealPlanner plans={data.plans} date={plannerDate} onDateChange={setPlannerDate} shopping={data.shopping} onCreate={date => setEditor({date})} onEdit={plan => setEditor({date: plan.date, plan})} onShopping={() => setTab('shopping')} onOpenDay={onOpenDay}/>}
+      {tab === 'week' && <MealPlanner plans={data.plans} date={plannerDate} onDateChange={changePlannerDate} shopping={data.shopping} onCreate={date => {openEditor({date});}} onEdit={plan => {openEditor({date:plan.date,plan});}} onShopping={() => changeTab('shopping')} onOpenDay={onOpenDay}
+        rescheduling={rescheduling} onReschedule={plan=>{if(confirmNavigation(['plan-editor','plan-date'])){setEditor(null);setRescheduling(plan);}}} onCloseReschedule={()=>setRescheduling(null)} onRescheduled={date=>{setRescheduling(null);setPlannerDate(date);}}/>}
       {editor && <PlanEditor foods={foods} templates={data.templates} date={editor.date} plan={editor.plan} template={editor.template} onClose={() => setEditor(null)} onSaved={date => {setPlannerDate(date); setEditor(null);}}/>}
     </>}
   </>;
