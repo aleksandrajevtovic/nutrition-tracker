@@ -6,7 +6,7 @@
 .diary-meals--compact .meal__tools { gap: 3px; }
 .diary-meals--compact .meal__calories { padding: 4px 6px; font-size: 15px; gap: 3px; }
 .diary-meals--compact .meal__tools .iconbtn { border: 0; }
-.diary-meals--compact .meal > .entry { margin-inline: 12px; }
+.diary-meals--compact .meal__content > .entry { margin-inline: 12px; }
 .entry.diary-entry--compact { display: block; padding: 0; }
 .diary-entry__toggle { width: 100%; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 9px 0; text-align: left; color: #22332a; border: 0; border-radius: 5px; background: transparent; }
 .diary-entry__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 600; }
@@ -25,7 +25,7 @@
 .diary-entry__details .actions { justify-content: flex-end; }
 @media (min-width: 640px) {
   .diary-meals--compact .meal__heading { padding-inline: 16px; }
-  .diary-meals--compact .meal > .entry { margin-inline: 16px; }
+  .diary-meals--compact .meal__content > .entry { margin-inline: 16px; }
   .diary-entry__nutrients { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .diary-entry__name { font-size: 14px; }
 }

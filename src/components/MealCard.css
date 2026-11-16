@@ -38,21 +38,28 @@
 }
 
 .meal__calories small { font-size: 12px; font-weight: 500; }
-.meal__add { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; min-height: 44px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-weight: inherit; text-align: left; }
-.meal__add span { min-width: 0; overflow-wrap: anywhere; }
+.meal__identity { display: flex; flex: 1; align-items: center; gap: 4px; min-width: 120px; }
+.meal__identity h3 { margin: 0; }
+.meal__toggle { display: flex; align-items: center; justify-content: space-between; gap: 7px; width: 100%; min-height: 44px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-weight: inherit; text-align: left; }
+.meal__toggle span { min-width: 0; overflow-wrap: anywhere; }
+.meal__toggle svg { flex-shrink: 0; transition: transform .15s; }
+.meal__toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+.meal__add.iconbtn { background: transparent; color: #315c46; }
 .meal__add:hover { color: #1f4430; }
+.meal--collapsed .meal__heading { border-bottom: 0; border-radius: 14px; }
 .meal__tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .meal__tools .iconbtn { background: transparent; border: 1px solid #d8e4d5; }
 .meal__footer { padding: 0 16px 14px; }
 .meal__footer .secondary { width: 100%; font-size: 12px; background: #f5f8f2; }
 .meal-copy { margin: 0 16px 14px; padding-bottom: 16px; border-bottom: 1px solid #e7ebe4; }
-.meal > .entry { margin: 0 16px; }
-.meal__heading + .entry { border-top: 0; }
+.meal__content > .entry { margin: 0 16px; }
+.meal__content > .entry:first-child { border-top: 0; }
 
 @media (min-width: 640px) {
   .meal__heading { padding: 12px 22px; }
-  .meal > .entry { margin-inline: 22px; }
+  .meal__content > .entry { margin-inline: 22px; }
   .meal-copy { margin-inline: 22px; }
   .meal__footer { padding-inline: 22px; }
   .meal__footer .secondary { width: auto; }
 }
+@media (prefers-reduced-motion: reduce) { .meal__toggle svg { transition: none; } }

@@ -17,7 +17,7 @@ type Props = {
   date: string;
   entry: Entry | null;
   initialMeal?: string;
-  onSave: (entry: Entry, conversions: Partial<Food>) => Promise<void>;
+  onSave: (entry: Entry, conversions: Partial<Food>, keepOpen?: boolean) => Promise<void>;
   onClose: () => void;
   onSaveFood: (food: Food) => Promise<void>;
 };
@@ -47,6 +47,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!food || !valid || savingRef.current) return;
+    const keepOpen = !entry && (event.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'continue';
     savingRef.current = true; setSaving(true);
     try {
       await onSave({
@@ -54,7 +55,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
         amount: Number(amount), unit, foodSnapshot: {...food},
         ...(note.trim() ? {note: note.trim()} : {}),
         createdAt: entry?.createdAt ?? new Date().toISOString(),
-      }, conversions);
+      }, conversions, keepOpen);
       guard.markSaved();
     } catch (e) { notify(germanError(e), 'error'); }
     finally { savingRef.current = false; setSaving(false); }
@@ -119,6 +120,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
       {preview && <div className="preview"><b>{Math.round(preview.kcal)} kcal</b><span>Eiweiß {fmt(preview.protein)} g · KH {fmt(preview.carbs)} g · F {fmt(preview.fat)} g</span></div>}
     </>}
     <label>Notiz zum Eintrag (optional)<textarea aria-label="Notiz zum Eintrag (optional)" rows={3} value={note} disabled={saving} onChange={event => setNote(event.target.value)} placeholder="z. B. mit Kräutern zubereitet oder nach dem Training"/></label>
-    <button className="primary wide" disabled={!valid || saving}><Check size={17}/>{saving ? 'Wird gespeichert…' : entry ? 'Änderungen speichern' : 'Zum Tag hinzufügen'}</button>
+    <div className="entry-editor__save-actions"><button className="primary wide" value="close" disabled={!valid || saving}><Check size={17}/>{saving ? 'Wird gespeichert…' : entry ? 'Änderungen speichern' : 'Zum Tag hinzufügen'}</button>
+      {!entry && <button type="submit" className="secondary wide" value="continue" disabled={!valid || saving}><Plus size={17}/>Speichern und weiteres hinzufügen</button>}</div>
   </form>;
 }
