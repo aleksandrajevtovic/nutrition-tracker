@@ -7,12 +7,15 @@ import MealCopyForm, {type CopyMeal} from './MealCopyForm';
 import TemplateSaveForm from './TemplateSaveForm';
 import type {SaveQuantity} from './QuickQuantity';
 import './MealCard.css';
+import type {TransferEntry} from '../entryTransfer';
 
-export default function MealCard({meal,date,entries,compact,collapsed,copying,savingTemplate,onToggle,onExpand,onAdd,onEdit,onDelete,onQuantityChange,onCopy,onToggleCopy,onCloseCopy,onToggleTemplate,onCloseTemplate}: {
+export default function MealCard({meal,date,entries,compact,collapsed,copying,savingTemplate,onToggle,onExpand,onAdd,onEdit,onDelete,onQuantityChange,onCopy,onToggleCopy,onCloseCopy,onToggleTemplate,onCloseTemplate,onTransfer,mealOptions,transferEntryId,onOpenTransfer,onCloseTransfer}: {
   meal: string;date: string;entries: Entry[];compact: boolean;collapsed: boolean;copying: boolean;savingTemplate: boolean;
   onToggle: () => void;onExpand: () => void;onAdd: () => void;onEdit: (entry: Entry) => void;
   onDelete: (id: string) => Promise<void>;onQuantityChange: SaveQuantity;onCopy: CopyMeal;
   onToggleCopy: () => void;onCloseCopy: () => void;onToggleTemplate: () => void;onCloseTemplate: () => void;
+  onTransfer: TransferEntry;mealOptions: string[];
+  transferEntryId: string | null;onOpenTransfer: (entry: Entry) => boolean;onCloseTransfer: () => void;
 }) {
   const id=useId();
   return <section className={`meal panel${collapsed ? ' meal--collapsed' : ''}`} aria-labelledby={`${id}-title`}>
@@ -25,7 +28,7 @@ export default function MealCard({meal,date,entries,compact,collapsed,copying,sa
     </div></div>
     <div id={`${id}-content`} className="meal__content" hidden={collapsed}>
       {copying && <MealCopyForm key={`${date}-${meal}`} date={date} meal={meal} count={entries.length} onCopy={onCopy} onClose={onCloseCopy}/>}
-      {entries.map(entry => <DiaryEntry key={`${date}-${entry.id}`} entry={entry} compact={compact} onEdit={onEdit} onDelete={onDelete} onQuantityChange={onQuantityChange}/>)}
+      {entries.map(entry => <DiaryEntry key={`${date}-${entry.id}`} entry={entry} compact={compact} onEdit={onEdit} onDelete={onDelete} onQuantityChange={onQuantityChange} onTransfer={onTransfer} mealOptions={mealOptions} transferring={transferEntryId===entry.id} onOpenTransfer={onOpenTransfer} onCloseTransfer={onCloseTransfer}/>)}
       {!compact && <div className="meal__footer"><button type="button" className="secondary" aria-label={`${meal} als Vorlage speichern`} aria-expanded={savingTemplate} onClick={onToggleTemplate}><BookmarkPlus size={16}/>Als Vorlage speichern</button></div>}
       {savingTemplate && <TemplateSaveForm key={`${date}-${meal}`} date={date} meal={meal} onClose={onCloseTemplate}/>}
     </div>

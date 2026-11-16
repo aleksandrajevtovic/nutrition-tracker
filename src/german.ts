@@ -22,6 +22,8 @@ export function germanEntry(entry: Entry): Entry {
 }
 
 const appErrors = new Set([
+  'Dieser Eintrag wurde inzwischen geändert. Bitte die Aktion erneut öffnen.',
+  'Bitte ein anderes Zieldatum oder eine andere Mahlzeit wählen.',
   'Dieser Barcode gehört bereits zu einem gespeicherten Lebensmittel. Bitte das vorhandene Produkt bearbeiten.',
   'Bitte einen gültigen EAN-/UPC-Barcode mit 8, 12, 13 oder 14 Ziffern eingeben.',
   'Du bist offline. Gespeicherte Produkte sind verfügbar; für neue Produktdaten ist Internet nötig.',

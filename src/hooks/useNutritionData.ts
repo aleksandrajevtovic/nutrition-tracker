@@ -5,6 +5,7 @@ import {getDataRevision, restoreDeletedEntry, restoreDeletedFood} from '../db';
 import {changeEntryAmount} from '../db';
 import {weightDate} from '../weight';
 import {useToast} from '../components/ToastProvider';
+import {transferEntry as performEntryTransfer, undoEntryTransfer, type TransferEntry} from '../entryTransfer';
 
 export function useNutritionData(date: string) {
   const notify = useToast();
@@ -91,6 +92,14 @@ export function useNutritionData(date: string) {
       notify('Menge aktualisiert.', 'success');
       return updated;
     },
+    transferEntry: (async (source, targetDate, targetMeal, mode) => {
+      const result=await performEntryTransfer(source,targetDate,targetMeal,mode);
+      await refreshEntries().catch(error=>setError(germanError(error)));
+      notify(`„${source.foodSnapshot.name}“ nach „${result.after.meal}“ am ${weightDate(result.after.date)} ${mode==='copy' ? 'kopiert' : 'verschoben'}.`,'success',{label:'Rückgängig',onClick:async()=>{
+        await undoEntryTransfer(result);await refreshEntries();notify(mode==='copy' ? 'Kopie rückgängig gemacht.' : 'Verschieben rückgängig gemacht.','success');
+      }});
+      return result.after;
+    }) satisfies TransferEntry,
     deleteEntry: async (id: string) => {
       try {
         const revision = getDataRevision();

@@ -1,5 +1,5 @@
-import {useId, useState} from 'react';
-import {ChevronDown, MessageSquare, Pencil, Trash2} from 'lucide-react';
+import {useId, useRef, useState} from 'react';
+import {ArrowRightLeft, ChevronDown, MessageSquare, Pencil, Trash2} from 'lucide-react';
 import type {Entry} from '../db';
 import {fmt, stats} from '../nutrition';
 import {entryQuantity} from '../quantityLabels';
@@ -7,27 +7,41 @@ import QuickQuantity, {type SaveQuantity} from './QuickQuantity';
 import {useNavigationGuard} from './UnsavedChangesProvider';
 import {useScrollReveal} from '../hooks/useScrollReveal';
 import './DiaryEntry.css';
+import EntryTransferForm from './EntryTransferForm';
+import type {TransferEntry} from '../entryTransfer';
 
-export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantityChange}: {
+export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantityChange, onTransfer, mealOptions, transferring, onOpenTransfer, onCloseTransfer}: {
   entry: Entry; compact: boolean; onEdit: (entry: Entry) => void; onDelete: (id: string) => Promise<void>; onQuantityChange: SaveQuantity;
+  onTransfer: TransferEntry;mealOptions: string[];
+  transferring: boolean;onOpenTransfer: (entry: Entry) => boolean;onCloseTransfer: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [quantityEditing, setQuantityEditing] = useState(false);
+  const [quantitySession,setQuantitySession]=useState(0);
+  const transferButton=useRef<HTMLButtonElement>(null);
+  const transferId=useId();
   const entryRef = useScrollReveal<HTMLDivElement>(compact ? expanded : quantityEditing);
   const confirmNavigation = useNavigationGuard();
   const detailsId = useId();
   const values = stats(entry.foodSnapshot, entry.grams);
   const quantity = entryQuantity(entry);
+  const closeTransfer=()=>{onCloseTransfer();transferButton.current?.focus({preventScroll:true});};
+  const transfer=<div id={transferId} className="diary-entry__transfer" hidden={!transferring}>{transferring && <EntryTransferForm entry={entry} mealOptions={mealOptions} onTransfer={onTransfer} onClose={closeTransfer}/>}</div>;
   const actions = <div className="actions">
-    <button type="button" title="Bearbeiten" aria-label={`${entry.foodSnapshot.name} bearbeiten`} onClick={() => onEdit(entry)}><Pencil size={16}/></button>
-    <button type="button" title="Löschen" aria-label={`${entry.foodSnapshot.name} löschen`} onClick={() => {if (confirmNavigation([`quantity:${entry.id}`])) void onDelete(entry.id);}}><Trash2 size={16}/></button>
+    <button type="button" disabled={transferring} title="Bearbeiten" aria-label={`${entry.foodSnapshot.name} bearbeiten`} onClick={() => onEdit(entry)}><Pencil size={16}/></button>
+    <button ref={transferButton} type="button" title="Kopieren oder verschieben" aria-label={`${entry.foodSnapshot.name} kopieren oder verschieben`} aria-expanded={transferring} aria-controls={transferId} onClick={()=>{
+      if(transferring){if(confirmNavigation([`entry-transfer:${entry.id}`]))closeTransfer();return;}
+      if(!onOpenTransfer(entry))return;
+      setQuantityEditing(false);setQuantitySession(value=>value+1);
+    }}><ArrowRightLeft size={16}/></button>
+    <button type="button" disabled={transferring} title="Löschen" aria-label={`${entry.foodSnapshot.name} löschen`} onClick={() => {if (confirmNavigation([`quantity:${entry.id}`])) void onDelete(entry.id);}}><Trash2 size={16}/></button>
   </div>;
 
-  if (!compact) return <div ref={entryRef} className="entry"><div><strong>{entry.foodSnapshot.name}</strong>
-    <button type="button" className="diary-entry__quantity-toggle" aria-label={`Menge für ${entry.foodSnapshot.name} ändern`} aria-expanded={quantityEditing} aria-controls={detailsId} onClick={() => {if (!quantityEditing || confirmNavigation([`quantity:${entry.id}`])) setQuantityEditing(value => !value);}}>
+  if (!compact) return <div ref={entryRef} className="entry diary-entry--full"><div className="diary-entry__main"><strong>{entry.foodSnapshot.name}</strong>
+    <button type="button" disabled={transferring} className="diary-entry__quantity-toggle" aria-label={`Menge für ${entry.foodSnapshot.name} ändern`} aria-expanded={quantityEditing} aria-controls={detailsId} onClick={() => {if (!quantityEditing || confirmNavigation([`quantity:${entry.id}`])) setQuantityEditing(value => !value);}}>
       <small>{quantity} · {Math.round(values.kcal)} kcal · Eiweiß {fmt(values.protein)} g</small><span><Pencil size={11} aria-hidden="true"/>Menge ändern</span></button>
-    <div id={detailsId} hidden={!quantityEditing}>{quantityEditing && <QuickQuantity entry={entry} onSave={onQuantityChange}/>}</div>
-    {entry.note?.trim() && <p className="diary-entry__note"><span>Notiz</span>{entry.note}</p>}</div>{actions}</div>;
+    <div id={detailsId} hidden={!quantityEditing}>{quantityEditing && <QuickQuantity key={quantitySession} entry={entry} onSave={onQuantityChange}/>}</div>
+    {entry.note?.trim() && <p className="diary-entry__note"><span>Notiz</span>{entry.note}</p>}</div>{actions}{transfer}</div>;
 
   return <div ref={entryRef} className="entry diary-entry--compact">
     <button type="button" className="diary-entry__toggle" aria-label={`${entry.foodSnapshot.name}: Details ${expanded ? 'einklappen' : 'aufklappen'}`}
@@ -41,7 +55,7 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
       <strong>{entry.foodSnapshot.name}</strong>
       {entry.foodSnapshot.brand && <small>{entry.foodSnapshot.brand}</small>}
       <p className="diary-entry__quantity">{quantity}</p>
-      <QuickQuantity entry={entry} onSave={onQuantityChange}/>
+      <div hidden={transferring}><QuickQuantity key={quantitySession} entry={entry} onSave={onQuantityChange}/></div>
       <dl className="diary-entry__nutrients">
         {[
           ['Eiweiß', values.protein], ['Kohlenhydrate', values.carbs], ['Fett', values.fat],
@@ -50,6 +64,7 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
       </dl>
       {entry.note?.trim() && <p className="diary-entry__note"><span>Notiz</span>{entry.note}</p>}
       {actions}
+      {transfer}
     </div>
   </div>;
 }

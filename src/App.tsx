@@ -31,7 +31,7 @@ export default function App() {
     <header><div className="brand"><span className="logo">◒</span><div><strong>Ernährungstagebuch</strong><small>Deine Ernährung im Überblick</small></div></div></header>
     <main>
       {tab === 'today' && <DiaryPage date={date} foods={data.foods} entries={data.entries}
-        onDateChange={setDate} onSave={data.persistEntry} onDelete={data.deleteEntry} onCopy={data.copyMeal} onQuantityChange={data.persistQuantity} onSaveFood={data.persistFood}/>}
+        onDateChange={setDate} onSave={data.persistEntry} onDelete={data.deleteEntry} onCopy={data.copyMeal} onQuantityChange={data.persistQuantity} onSaveFood={data.persistFood} onTransfer={data.transferEntry}/>}
       {tab === 'foods' && <FoodsPage foods={data.foods} onEdit={setEditing} onDelete={data.deleteFood} onFavorite={data.toggleFavorite} onNewRecipe={() => setEditing(emptyRecipeFood())} onScan={() => setImporting(true)}/>}
       {tab === 'week' && <WeeklyPage date={date} onOpenDay={openDay}/>}
       {tab === 'planning' && <PlanningPage foods={data.foods} date={date} onOpenDay={openDay}/>}

@@ -1,0 +1,14 @@
+.entry-transfer { margin-top: 14px; padding: 14px; border: 1px solid #dce6d9; border-radius: 12px; background: #f7faf4; }
+.entry-transfer > .section-head { margin: 0 0 10px; }
+.entry-transfer > .section-head h3 { font-size: 14px; }
+.entry-transfer .hint { overflow-wrap: anywhere; }
+.entry-transfer__modes { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
+.entry-transfer__modes button, .entry-transfer__dates button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 8px; border: 1px solid #d8e4d5; border-radius: 9px; color: #315c46; background: white; font-size: 12px; }
+.entry-transfer__modes button[aria-pressed="true"] { background: #e5efe1; border-color: #84a580; font-weight: 700; }
+.entry-transfer__dates { display: flex; flex-wrap: wrap; gap: 8px; }
+.entry-transfer__dates button { background: transparent; }
+.diary-entry__transfer { width: 100%; min-width: 0; }
+.entry.diary-entry--full { flex-wrap: wrap; }
+.entry.diary-entry--full > .diary-entry__main { flex: 1; min-width: 100px; }
+.entry.diary-entry--full > .actions { flex-wrap: wrap; margin-left: auto; }
+.diary-entry--compact .entry-transfer { margin-bottom: 6px; }

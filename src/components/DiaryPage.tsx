@@ -14,20 +14,23 @@ import type {SaveQuantity} from './QuickQuantity';
 import {useNavigationGuard} from './UnsavedChangesProvider';
 import {scrollToRevealed} from '../hooks/useScrollReveal';
 import './MealCard.css';
+import type {TransferEntry} from '../entryTransfer';
 
-export default function DiaryPage({date, foods, entries, onDateChange, onSave, onDelete, onCopy, onQuantityChange, onSaveFood}: {
+export default function DiaryPage({date, foods, entries, onDateChange, onSave, onDelete, onCopy, onQuantityChange, onSaveFood, onTransfer}: {
   date: string; foods: Food[]; entries: Entry[]; onDateChange: (date: string) => void;
   onSave: (entry: Entry, conversions: Partial<Food>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onCopy: CopyMeal;
   onQuantityChange: SaveQuantity;
   onSaveFood: (food: Food) => Promise<void>;
+  onTransfer: TransferEntry;
 }) {
   const [editor, setEditor] = useState<{entry: Entry | null; initialMeal?: string; session?: string; focusFood?: boolean} | null>(null);
   const [copying, setCopying] = useState<string | null>(null);
   const [savingTemplate, setSavingTemplate] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
+  const [transferEntryId,setTransferEntryId]=useState<string | null>(null);
   const [folded,setFolded] = useState({date,meals:new Set<string>()});
   useEffect(() => {setFolded({date,meals:new Set<string>()});},[date]);
   const expandMeal = (meal: string) => setFolded(previous => {
@@ -42,21 +45,23 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
   const confirmNavigation = useNavigationGuard();
   const openEditor = (entry: Entry | null) => {
     if (editor && editor.entry?.id === entry?.id) {setEditor({...editor, entry}); return;}
-    if (confirmNavigation(['entry-editor', ...(entry ? [`quantity:${entry.id}`] : [])])) {if(entry)expandMeal(entry.meal);setEditor({entry});}
+    if (confirmNavigation(['entry-editor','entry-transfer:', ...(entry ? [`quantity:${entry.id}`] : [])])) {setTransferEntryId(null);if(entry)expandMeal(entry.meal);setEditor({entry});}
   };
   const addToMeal = (meal: string) => {
-    if (confirmNavigation(['entry-editor'])) setEditor({entry: null, initialMeal: meal, session: crypto.randomUUID()});
+    if (confirmNavigation(['entry-editor','entry-transfer:'])) {setTransferEntryId(null);setEditor({entry: null, initialMeal: meal, session: crypto.randomUUID()});}
   };
-  const toggleCopy = (meal: string) => {if (confirmNavigation(['meal-copy'])) setCopying(copying === meal ? null : meal);};
-  const toggleTemplate = (meal: string) => {if (confirmNavigation(['template-save'])) setSavingTemplate(savingTemplate === meal ? null : meal);};
+  const toggleCopy = (meal: string) => {if (confirmNavigation(['meal-copy','entry-transfer:'])) {setTransferEntryId(null);setCopying(copying === meal ? null : meal);}};
+  const toggleTemplate = (meal: string) => {if (confirmNavigation(['template-save','entry-transfer:'])) {setTransferEntryId(null);setSavingTemplate(savingTemplate === meal ? null : meal);}};
   const editorRef = useRef<HTMLDivElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
   const mealsRef = useRef<HTMLDivElement>(null);
   const selectMeal = (meal: string | null) => {
     if (meal === selectedMeal) {if(meal)expandMeal(meal);window.requestAnimationFrame(() => scrollToRevealed(mealsRef.current)); return;}
     const hiddenQuantities = entries.filter(entry => meal !== null && entry.meal !== meal).map(entry => `quantity:${entry.id}`);
-    if (!confirmNavigation(['entry-editor', 'meal-copy', 'template-save', ...hiddenQuantities])) return;
+    const hiddenTransfers = entries.filter(entry => meal !== null && entry.meal !== meal).map(entry => `entry-transfer:${entry.id}`);
+    if (!confirmNavigation(['entry-editor', 'meal-copy', 'template-save', ...hiddenQuantities, ...hiddenTransfers])) return;
     setEditor(null); setCopying(null); setSavingTemplate(null); setSearching(false); setSelectedMeal(meal);
+    if(meal!==null && entries.find(entry=>entry.id===transferEntryId)?.meal!==meal)setTransferEntryId(null);
     if(meal)expandMeal(meal);
     window.requestAnimationFrame(() => scrollToRevealed(mealsRef.current));
   };
@@ -78,16 +83,16 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
   return <div className="diary-page">
     <div className="heading"><div><span className="eyebrow">TAGESÜBERSICHT</span><h1>Mein Ernährungstagebuch</h1></div>
       <label className="date"><CalendarDays size={17}/><input aria-label="Datum" type="date" required value={date}
-        onChange={e => {if (e.target.value && e.target.value !== date && confirmNavigation()) {setEditor(null); setCopying(null); setSavingTemplate(null); onDateChange(e.target.value);}}}/></label></div>
+        onChange={e => {if (e.target.value && e.target.value !== date && confirmNavigation()) {setTransferEntryId(null);setEditor(null); setCopying(null); setSavingTemplate(null); onDateChange(e.target.value);}}}/></label></div>
     <MealFilter entries={entries} selected={selectedMeal} onSelect={selectMeal}/>
     <DailySummary totals={totals} fiberIncomplete={fiberIncomplete(entries)}/>
     <DailyExtras date={date}/>
     <div ref={mealsRef}>
     <div className="section-head"><h2>Mahlzeiten</h2>
-      <div className="diary-controls"><button type="button" className="diary-view-toggle" aria-pressed={view.compact} onClick={() => {if (confirmNavigation(['quantity:'])) view.toggle();}}><List size={17} aria-hidden="true"/>Kompakt</button>
+      <div className="diary-controls"><button type="button" className="diary-view-toggle" aria-pressed={view.compact} onClick={() => {if (confirmNavigation(['quantity:','entry-transfer:'])) {setTransferEntryId(null);view.toggle();}}}><List size={17} aria-hidden="true"/>Kompakt</button>
       <button ref={searchButtonRef} type="button" className="diary-view-toggle" aria-expanded={searching} onClick={() => setSearching(value => !value)}><Search size={17} aria-hidden="true"/>Tagebuchsuche</button></div>
       <button className="primary" onClick={() => openEditor(null)}><Plus size={17}/> Lebensmittel hinzufügen</button></div>
-    {searching && <DiarySearch onClose={() => {setSearching(false); searchButtonRef.current?.focus();}} onOpen={entry => {if (!confirmNavigation(entry.date === date ? ['entry-editor', 'meal-copy', 'template-save', 'quantity:'] : undefined)) return; setSearching(false); setCopying(null); setSavingTemplate(null); setSelectedMeal(entry.meal);expandMeal(entry.meal); onDateChange(entry.date); setEditor({entry});}}/>}
+    {searching && <DiarySearch onClose={() => {setSearching(false); searchButtonRef.current?.focus();}} onOpen={entry => {if (!confirmNavigation(entry.date === date ? ['entry-editor', 'meal-copy', 'template-save', 'quantity:','entry-transfer:'] : undefined)) return;setTransferEntryId(null); setSearching(false); setCopying(null); setSavingTemplate(null); setSelectedMeal(entry.meal);expandMeal(entry.meal); onDateChange(entry.date); setEditor({entry});}}/>}
     {editor && <div ref={editorRef} className="diary-entry-editor"><EntryEditor key={editor.entry?.id ?? editor.session ?? 'new'} foods={foods} date={date} entry={editor.entry} initialMeal={editor.initialMeal ?? selectedMeal ?? undefined} onSaveFood={onSaveFood}
       onClose={() => setEditor(null)} onSave={async (entry, conversions, keepOpen = false) => {
         await onSave(entry, conversions);
@@ -104,6 +109,15 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
         return <MealCard key={`${date}-${meal}`} date={date} meal={meal} entries={group} compact={view.compact} collapsed={folded.date===date && folded.meals.has(meal)}
           copying={copying===meal} savingTemplate={savingTemplate===meal} onToggle={() => toggleMeal(meal)} onExpand={() => expandMeal(meal)}
           onAdd={() => addToMeal(meal)} onEdit={openEditor} onDelete={onDelete} onQuantityChange={onQuantityChange} onCopy={onCopy}
+          mealOptions={groups} onTransfer={async(source,targetDate,targetMeal,mode)=>{
+            const result=await onTransfer(source,targetDate,targetMeal,mode);
+            if(result.date===date){expandMeal(result.meal);if(selectedMeal!==null && selectedMeal!==result.meal)setSelectedMeal(null);}
+            return result;
+          }}
+          transferEntryId={transferEntryId} onCloseTransfer={()=>setTransferEntryId(null)} onOpenTransfer={source=>{
+            if(!confirmNavigation(['entry-editor','meal-copy','template-save','entry-transfer:',`quantity:${source.id}`]))return false;
+            setEditor(null);setCopying(null);setSavingTemplate(null);setTransferEntryId(source.id);return true;
+          }}
           onToggleCopy={() => toggleCopy(meal)} onCloseCopy={() => setCopying(current => current===meal ? null : current)}
           onToggleTemplate={() => toggleTemplate(meal)} onCloseTemplate={() => setSavingTemplate(current => current===meal ? null : current)}/>;
       })}
