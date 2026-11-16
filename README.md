@@ -168,6 +168,10 @@ Für Getränke stehen Tageswerte, Wochensumme und Tagesdurchschnitt in Litern zu
 
 Unter „Produkte“ kannst du über „Neues Rezept“ Zutaten aus deiner Lebensmittelliste zusammenstellen. Mengen lassen sich in den für das Produkt konfigurierten Einheiten angeben. Lege die Anzahl der Portionen fest; Nährwerte für das gesamte Gericht und pro Portion werden automatisch berechnet, einschließlich Ballaststoffen und Zucker.
 
+Die Zutatenauswahl steht vor der Zutatenliste. Nach der Auswahl eines Lebensmittels springt der Fokus zur zunächst leeren Menge; „Zutat hinzufügen“ oder Enter übernimmt sie und führt zur Auswahl für die nächste Zutat zurück. Bereits hinzugefügte Zutaten erscheinen als kompakte, aufklappbare Karten mit Menge und Kalorien. Beim Wechsel der Einheit bleibt das tatsächliche Gewicht erhalten; die Auswahl einer anderen Portionsgröße verändert dagegen das Gewicht bei gleicher Portionsanzahl. Eine ausgewählte, noch nicht hinzugefügte Zutat muss vor dem Speichern hinzugefügt oder verworfen werden.
+
+Titel und Speichern bleiben beim Scrollen sichtbar. Die Fußzeile zeigt die berechneten Kalorien und das Gewicht pro Portion. Fertiggewicht und Zubereitungsnotizen sind aufklappbar; beim Bearbeiten öffnen sie sich, wenn eigene Angaben vorhanden sind. Ungültige Angaben werden direkt am Feld markiert und beim Speicherversuch sichtbar gemacht.
+
 Ohne eigenes Gesamtgewicht folgt das Rezept der Summe seiner Zutatengewichte. Wenn das Gericht beim Kochen Wasser verliert oder aufnimmt, kannst du stattdessen das gewogene Fertiggewicht angeben. Die Nährwerte des ganzen Rezepts bleiben dabei gleich. Die Wahl zwischen automatischem und eigenem Gewicht bleibt beim Bearbeiten erhalten.
 
 Gespeicherte Rezepte findest du über den Filter „Rezepte“ sowie in der Lebensmittelauswahl des Tagebuchs. Mit der Einheit „Portion“ lassen sich auch halbe oder mehrere Portionen eintragen. Rezepte können favorisiert, bearbeitet, gelöscht und per „Rückgängig“ wiederhergestellt werden. Zutatenwerte werden beim Hinzufügen übernommen; spätere Produkt- oder Rezeptänderungen verändern bestehende Tagebucheinträge nicht.
