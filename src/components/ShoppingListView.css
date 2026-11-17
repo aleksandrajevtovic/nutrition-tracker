@@ -1,5 +1,11 @@
 .shopping-list__heading.section-head > h2 { flex: 1 0 100%; }
 .shopping-copy-button { font-size: 12px; }
+.shopping-recipe-selection > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; cursor: pointer; list-style: none; color: #315c46; }
+.shopping-recipe-selection > summary::-webkit-details-marker { display: none; }
+.shopping-recipe-selection > summary h2 { font-size: 16px; }
+.shopping-recipe-selection > summary small { display: block; margin-top: 4px; font-size: 11px; color: #617368; }
+.shopping-recipe-selection > summary svg { flex-shrink: 0; }
+.shopping-recipe-selection[open] > summary svg { transform: rotate(180deg); }
 .shopping-open h3 { font-size: 14px; color: #315c46; margin: 18px 0 0; }
 .shopping-open .shopping-checklist { margin-top: 10px; }
 .shopping-purchased { margin-top: 18px; border-top: 1px solid #e7ebe4; }

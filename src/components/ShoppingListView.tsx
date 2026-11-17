@@ -77,7 +77,9 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
   }
 
   return <>
-    <section className="panel editor"><h2>Einkaufsliste aus Rezepten</h2>
+Rezepte ansehen, ohne sie zu bearbeiten
+Zutaten, Mengen und Zubereitung aufklappen können. Zum Kochen muss man dann nicht das Bearbeitungsformular öffnen.    <details className="panel editor shopping-recipe-selection">
+      <summary><h2>Einkaufsliste aus Rezepten{(selection.length > 0 || selected) && <small>Auswahl vorhanden</small>}</h2><ChevronDown size={18} aria-hidden="true"/></summary>
       <p className="hint">Rezepte und benötigte Portionen wählen. Gleiche Zutaten werden in Gramm zusammengezählt. Enthaltene Unterrezepte erscheinen als eigene Zutat.</p>
       {foods.some(food => food.recipe) ? <>
         <FoodPicker foods={foods.filter(food => food.recipe)} selected={selected} disabled={busy} onChange={setSelected}/>
@@ -91,7 +93,7 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
         <div className="planning-actions"><button type="button" className="primary" disabled={busy || selection.some(row => !isPositive(row.portions))} onClick={() => generate(false)}>Liste erstellen / ersetzen</button>
           <button type="button" className="secondary" disabled={busy || selection.some(row => !isPositive(row.portions))} onClick={() => generate(true)}>Zur Liste hinzufügen</button></div>
       </>}
-    </section>
+    </details>
     <section className="panel" aria-labelledby="shopping-list-title"><div className="section-head shopping-list__heading"><h2 id="shopping-list-title">Deine Einkaufsliste</h2>
       <ShoppingListCopy items={items} disabled={busy}/>
       <button type="button" className="iconbtn" disabled={busy || !shopping.items.length} aria-label="Einkaufsliste leeren" onClick={() => void run(clear)}><Trash2 size={17}/></button></div>

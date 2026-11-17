@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {mkdir} from 'node:fs/promises';
+import {chromium} from 'playwright-core';
+import {loadTypeScript} from '../tests/helpers/typescript.mjs';
+const {buildRecipeFood,makeIngredient}=await loadTypeScript(new URL('../src/recipes.ts',import.meta.url));
+const origin='http://127.0.0.1:4190/nutrition-tracker/';
+const server=spawn(process.execPath,['node_modules/vite/bin/vite.js','preview','--host','127.0.0.1','--port','4190','--strictPort'],{windowsHide:true,stdio:'pipe'});
+let browser;
+try{
+  for(let i=0;i<100;i++){try{if((await fetch(origin)).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
+  browser=await chromium.launch({channel:'msedge',headless:true});await mkdir('.tmp/shopping-collapsed',{recursive:true});
+  for(const viewport of [{width:320,height:740},{width:375,height:812},{width:768,height:1024},{width:1024,height:800},{width:1440,height:900},{width:568,height:320}]){
+    const context=await browser.newContext({viewport,locale:'de-DE',reducedMotion:'reduce',serviceWorkers:'block'});
+    const page=await context.newPage(),errors=[];let accept=true,confirmations=0;page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>{confirmations++;return accept?d.accept():d.dismiss();});
+    const tab=name=>page.locator('nav').getByRole('button',{name,exact:true}),details=()=>page.locator('.shopping-recipe-selection'),summary=()=>details().locator(':scope > summary');
+    const dismiss=async()=>{while(await page.getByRole('button',{name:'Benachrichtigung schließen'}).count())await page.getByRole('button',{name:'Benachrichtigung schließen'}).first().click();};
+    const food={id:'banana',name:'Banane',brand:'',kcal:89,protein:1,carbs:22,sugar:12,fat:0.3,fiber:2,portionName:'1 Portion',portionGrams:100,createdAt:'2026-11-17T00:00:00Z'};
+    const recipe=buildRecipeFood({...food,id:'recipe',name:'Bananenmus',brand:'Eigenes Rezept'},{servings:1,yieldGrams:100,autoWeight:true,ingredients:[makeIngredient(food,100,'g')],instructions:'Zerdrücken.'});
+    const backup={version:6,exportedAt:food.createdAt,foods:[food,recipe],entries:[],weights:[],goals:{},dailyNotes:[],drinks:[],templates:[],plans:[],shoppingList:{items:[{id:'banana',foodId:'banana',name:'Banane',brand:'',grams:100,checked:true},{id:'apple',foodId:'apple',name:'Apfel',brand:'Bio',grams:150,checked:false}],updatedAt:food.createdAt},completedDays:[]};
+    const importBackup=async data=>{await tab('Datensicherung').click();await page.locator('input[type=file]').setInputFiles({name:'shopping.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(data))});await page.locator('.toast').filter({hasText:'Datensicherung erfolgreich importiert.'}).waitFor();await dismiss();};
+    const show=async()=>{await tab('Planen').click();await page.getByRole('button',{name:'Einkaufsliste',exact:true}).click();await details().waitFor();};
+    await page.goto(origin);await importBackup(backup);await show();assert.equal(await details().getAttribute('open'),null);assert.equal(await details().locator('.food-picker__trigger').isVisible(),false);assert.equal(await page.getByRole('checkbox',{name:'Apfel gekauft',exact:true}).isVisible(),true);assert.equal(await page.getByRole('button',{name:'Liste kopieren',exact:true}).isVisible(),true);await page.screenshot({path:`.tmp/shopping-collapsed/${viewport.width}.png`});
+    await summary().focus();await page.keyboard.press('Enter');assert.equal(await details().getAttribute('open'),'');await details().locator('.food-picker__trigger').click();await page.getByRole('option',{name:'Eigenes Rezept · Bananenmus',exact:true}).click();await details().getByLabel('Benötigte Portionen',{exact:true}).fill('2');
+    const before=confirmations;await summary().click();assert.equal(confirmations,before);assert.ok((await summary().innerText()).includes('Auswahl vorhanden'));accept=false;await page.getByRole('button',{name:'Vorlagen',exact:true}).click();assert.equal(confirmations,before+1);assert.equal(await details().getAttribute('open'),null);accept=true;
+    await summary().click();assert.ok((await details().locator('.food-picker__trigger').innerText()).includes('Bananenmus'));assert.equal(await details().getByLabel('Benötigte Portionen',{exact:true}).inputValue(),'2');await details().getByRole('button',{name:'Rezept zur Auswahl hinzufügen',exact:true}).click();const portions=()=>details().getByLabel('Portionen für Bananenmus',{exact:true});await portions().fill('3');await summary().click();assert.equal(await portions().isVisible(),false);await summary().click();assert.equal(await portions().inputValue(),'3');await portions().fill('2');await details().getByRole('button',{name:'Zur Liste hinzufügen',exact:true}).click();await page.locator('.toast').filter({hasText:'Einkaufsliste aktualisiert.'}).waitFor();await dismiss();await summary().click();await page.getByRole('heading',{name:'Noch offen (2)',exact:true}).waitFor();assert.equal(await page.getByRole('checkbox',{name:'Banane gekauft',exact:true}).isChecked(),false);await page.locator('.shopping-open').getByText('300 g',{exact:true}).waitFor();
+    await page.getByRole('checkbox',{name:'Apfel gekauft',exact:true}).click();await page.getByRole('heading',{name:'Noch offen (1)',exact:true}).waitFor();assert.equal(await details().getAttribute('open'),null);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth+1),false);const box=await summary().boundingBox();assert.ok(box.height>=44,JSON.stringify(box));
+    await page.reload();await show();assert.equal(await details().getAttribute('open'),null);assert.equal(await summary().getByText('Auswahl vorhanden',{exact:true}).count(),0);await page.locator('.shopping-open').getByText('300 g',{exact:true}).waitFor();
+    await importBackup({...backup,foods:[],shoppingList:{items:[],updatedAt:null}});await show();assert.equal(await details().getAttribute('open'),null);await page.getByText('Die Liste ist leer',{exact:true}).waitFor();await summary().click();await details().getByText('Lege unter „Produkte → Neues Rezept“ zuerst ein Rezept an.',{exact:true}).waitFor();assert.deepEqual(errors,[]);
+    console.log(`PASS ${viewport.width}x${viewport.height}: collapsed default, list reachable, keyboard, pending recipe/portion preservation, no folding prompt, hidden draft guard, generation/append/checks, reload, empty/no recipes, touch/no overflow`);await context.close();
+  }
+}finally{await browser?.close();server.kill();}
