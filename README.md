@@ -74,6 +74,8 @@ Die Umsetzung ist getrennt: `ProductImport.tsx` koordiniert den Dialog, `Barcode
 
 ## Mahlzeiten schneller finden
 
+Neben dem Datum wechseln die Pfeile zum vorherigen oder nächsten Tag. „Gestern“ und „Heute“ springen direkt zum jeweiligen Datum; der gewählte Schnellzugriff wird hervorgehoben. Der Kalender bleibt für beliebige Tage verfügbar. Alle Datumswechsel prüfen ungespeicherte Eingaben wie bisher, auch Tagesnotizen, Trinkmengen und direkte Mengenänderungen. Bei Abbrechen bleiben Datum und Formulare erhalten; bei Bestätigung schließen Eintrags-, Kopier-, Verschiebe- und Vorlagenformulare wie beim bisherigen Kalenderwechsel.
+
 Direkt unter dem Datum gibt es eine beim Scrollen oben erreichbare Mahlzeitenleiste. „Alle“ zeigt den ganzen Tag, ein Mahlzeitenfilter nur die zugehörigen Einträge. Die Zahl am Button gibt die Anzahl der Einträge dieser Mahlzeit an; eigene Mahlzeitennamen werden ebenfalls angeboten. Auf schmalen Bildschirmen lässt sich die Leiste horizontal verschieben. Ein Klick führt direkt zum Mahlzeitenbereich. Die Tagesbilanz berechnet weiterhin den gesamten Tag.
 
 „Lebensmittel hinzufügen“ übernimmt die ausgewählte Mahlzeit, auch bei „Zuletzt verwendet“. Bei „Alle“ bleibt Frühstück die Vorauswahl. Wird ein Eintrag in eine andere Mahlzeit verschoben, folgt der aktive Filter nach dem Speichern dieser Mahlzeit. Ein Suchtreffer öffnet Datum und Mahlzeit des gefundenen Eintrags. Leere Mahlzeiten bleiben auswählbar, damit dort direkt etwas ergänzt werden kann.

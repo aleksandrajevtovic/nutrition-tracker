@@ -1,9 +1,11 @@
 import {useEffect, useMemo, useRef, useState} from 'react';
-import {BookOpen, CalendarDays, List, Plus, Search} from 'lucide-react';
+import {BookOpen, List, Plus, Search} from 'lucide-react';
 import type {Entry, Food} from '../db';
 import {fiberIncomplete, meals, stats} from '../nutrition';
 import EntryEditor from './EntryEditor';
 import DailySummary from './DailySummary';
+import DiaryDateNavigation from './DiaryDateNavigation';
+import {validDate} from '../weight';
 import {DiaryDayCompletion} from './DayCompletion';
 import DailyExtras from './DailyExtras';
 import MealFilter from './MealFilter';
@@ -44,6 +46,10 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
   });
   const view = useDiaryView();
   const confirmNavigation = useNavigationGuard();
+  const changeDate = (value: string) => {
+    if (!validDate(value) || value === date || !confirmNavigation()) return;
+    setTransferEntryId(null);setEditor(null);setCopying(null);setSavingTemplate(null);onDateChange(value);
+  };
   const openEditor = (entry: Entry | null) => {
     if (editor && editor.entry?.id === entry?.id) {setEditor({...editor, entry}); return;}
     if (confirmNavigation(['entry-editor','entry-transfer:', ...(entry ? [`quantity:${entry.id}`] : [])])) {setTransferEntryId(null);if(entry)expandMeal(entry.meal);setEditor({entry});}
@@ -83,8 +89,7 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
 
   return <div className="diary-page">
     <div className="heading"><div><span className="eyebrow">TAGESÜBERSICHT</span><h1>Mein Ernährungstagebuch</h1></div>
-      <label className="date"><CalendarDays size={17}/><input aria-label="Datum" type="date" required value={date}
-        onChange={e => {if (e.target.value && e.target.value !== date && confirmNavigation()) {setTransferEntryId(null);setEditor(null); setCopying(null); setSavingTemplate(null); onDateChange(e.target.value);}}}/></label></div>
+      <DiaryDateNavigation date={date} onChange={changeDate}/></div>
     <MealFilter entries={entries} selected={selectedMeal} onSelect={selectMeal}/>
     <DailySummary totals={totals} fiberIncomplete={fiberIncomplete(entries)}/>
     <DiaryDayCompletion key={date} date={date}/>

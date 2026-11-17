@@ -1,0 +1,8 @@
+.diary-date-navigation { width: 100%; min-width: 0; }
+.diary-date-navigation__calendar { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 6px; }
+.diary-date-navigation .date { width: 100%; min-height: 44px; padding: 8px; align-self: stretch; border-radius: 10px; }
+.diary-date-navigation .date input { width: 100%; }
+.diary-date-navigation__shortcuts { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
+.diary-date-navigation__shortcuts button { min-height: 44px; padding: 8px 14px; border: 1px solid #dbe4dc; border-radius: 10px; background: white; color: #617368; font-size: 12px; }
+.diary-date-navigation__shortcuts button[aria-pressed="true"] { background: #e9f0e9; border-color: #b9d0bb; color: #315c46; font-weight: 650; }
+@media (min-width: 640px) { .diary-date-navigation { width: 310px; flex-shrink: 0; align-self: flex-start; } }
