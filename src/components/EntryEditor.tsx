@@ -4,6 +4,7 @@ import {Check, Minus, Plus, ScanBarcode} from 'lucide-react';
 import type {Entry, Food} from '../db';
 import {useToast} from './ToastProvider';
 import FoodPicker from './FoodPicker';
+import FoodEditor from './FoodEditor';
 import PortionPicker from './PortionPicker';
 import RecentFoods from './RecentFoods';
 import {useDraftGuard} from './UnsavedChangesProvider';
@@ -13,7 +14,7 @@ import LastAmountSuggestion from './LastAmountSuggestion';
 import ProductImport from './ProductImport';
 import {portionNameLabel, portionQuantity} from '../quantityLabels';
 import './EntryEditor.css';
-import {fmt, isPositive, meals, stats, toGrams, unitLabels, units, validFood, type Unit} from '../nutrition';
+import {emptyFood, fmt, isPositive, meals, stats, toGrams, unitLabels, units, validFood, type Unit} from '../nutrition';
 
 type Props = {
   foods: Food[];
@@ -35,6 +36,8 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
   const [note, setNote] = useState(entry?.note ?? '');
   const [saving, setSaving] = useState(false);
   const [importing,setImporting] = useState(false);
+  const [creatingFood,setCreatingFood] = useState<Food | null>(null);
+  const form = useRef<HTMLFormElement>(null);
   const savingRef = useRef(false);
   const amountInput = useRef<HTMLInputElement>(null);
   const history = useDiaryHistory(!entry);
@@ -54,7 +57,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!food || !valid || savingRef.current) return;
+    if (!food || !valid || savingRef.current || creatingFood) return;
     const keepOpen = !entry && (event.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'continue';
     savingRef.current = true; setSaving(true);
     try {
@@ -70,7 +73,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
   }
 
   async function addRecent(item: RecentFood) {
-    if (savingRef.current) return;
+    if (savingRef.current || creatingFood) return;
     savingRef.current = true; setSaving(true);
     try {
       await onSave({id: crypto.randomUUID(), foodId: item.food.id, date, meal, grams: item.grams, amount: item.amount,
@@ -79,7 +82,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
     finally {savingRef.current = false; setSaving(false);}
   }
 
-  return <form className="panel editor" onSubmit={submit}>
+  return <><form ref={form} className="panel editor" onSubmit={submit} inert={Boolean(creatingFood)}>
     <div className="section-head">
       <h3 tabIndex={-1}>{entry ? 'Eintrag bearbeiten' : 'Lebensmittel eintragen'}</h3>
       <button type="button" className="iconbtn" aria-label="Schließen" disabled={saving} onClick={() => {if (guard.confirmLeave()) onClose();}}>×</button>
@@ -90,7 +93,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
     {!entry && <RecentFoods foods={foods} history={history} busy={saving} onSelect={item => {setSelected(item.food); setAmount(String(item.amount)); setUnit(item.unit); setConversions({});}} onAdd={item => void addRecent(item)}/>}
     {!entry && <button type="button" className="secondary wide" disabled={saving} onClick={() => setImporting(true)}><ScanBarcode size={17}/>Produkt scannen</button>}
     {importing && <ProductImport foods={foods} onSave={onSaveFood} onClose={() => setImporting(false)} onSelect={food => {setSelected(food);setConversions({});setAmount('1');setUnit(food.nutritionReference?.unit === 'ml' ? 'ml' : 'portion');if (food.nutritionReference?.unit === 'ml') setAmount('100');}}/>}
-    <FoodPicker foods={options} selected={selected} disabled={saving} onChange={food => {
+    <FoodPicker foods={options} selected={selected} disabled={saving} onCreate={name => setCreatingFood({...emptyFood(),name})} onChange={food => {
       if (food.id === selected?.id) return;
       setSelected(food);
       setConversions({}); setAmount('1'); setUnit('portion');
@@ -134,5 +137,17 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
     <label>Notiz zum Eintrag (optional)<textarea aria-label="Notiz zum Eintrag (optional)" rows={3} value={note} disabled={saving} onChange={event => setNote(event.target.value)} placeholder="z. B. mit Kräutern zubereitet oder nach dem Training"/></label>
     <div className="entry-editor__save-actions"><button className="primary wide" value="close" disabled={!valid || saving}><Check size={17}/>{saving ? 'Wird gespeichert…' : entry ? 'Änderungen speichern' : 'Zum Tag hinzufügen'}</button>
       {!entry && <button type="submit" className="secondary wide" value="continue" disabled={!valid || saving}><Plus size={17}/>Speichern und weiteres hinzufügen</button>}</div>
-  </form>;
+  </form>
+    {creatingFood && <FoodEditor key={creatingFood.id} food={creatingFood} existing={false} saveLabel="Speichern und zum Eintrag" description="Dein Tagebucheintrag bleibt erhalten. Nach dem Speichern gibst du die Menge ein."
+      onClose={() => {
+        setCreatingFood(null);
+        window.requestAnimationFrame(() => form.current?.querySelector<HTMLButtonElement>('.food-picker__trigger')?.focus());
+      }} onSave={async created => {
+        await onSaveFood(created);
+        setSelected(created);setConversions({});setAmount('');
+        setUnit(created.nutritionReference?.unit === 'ml' ? 'ml' : created.nutritionReference?.unit === 'portion' ? 'portion' : 'g');
+        setCreatingFood(null);
+        window.requestAnimationFrame(() => amountInput.current?.focus());
+      }}/>}
+  </>;
 }

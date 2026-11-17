@@ -51,7 +51,7 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
       const restored = (event as CustomEvent<Pick<Entry, 'id' | 'date' | 'meal'>>).detail;
       const switching = restored.date === date && selectedMeal !== null && selectedMeal !== restored.meal;
       const hiddenEntries = switching ? entries.filter(entry => entry.meal !== restored.meal) : [];
-      const scopes = [`quantity:${restored.id}`, `entry-transfer:${restored.id}`, ...(editor?.entry?.id === restored.id ? ['entry-editor'] : []),
+      const scopes = [`quantity:${restored.id}`, `entry-transfer:${restored.id}`, ...(editor?.entry?.id === restored.id ? ['entry-editor', 'food-editor'] : []),
         ...hiddenEntries.flatMap(entry => [`quantity:${entry.id}`, `entry-transfer:${entry.id}`]),
         ...(switching && copying !== restored.meal ? ['meal-copy'] : []), ...(switching && savingTemplate !== restored.meal ? ['template-save'] : [])];
       if (!confirmNavigation(scopes)) event.preventDefault();
