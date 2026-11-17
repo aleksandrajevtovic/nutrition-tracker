@@ -4,6 +4,7 @@ import type {Food} from '../db';
 import {fmt} from '../nutrition';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
+import RecipeDetails from './RecipeDetails';
 import './FoodCard.css';
 
 export default function FoodCard({food, onEdit, onDelete, onFavorite, onDuplicateRecipe}: {
@@ -40,6 +41,7 @@ export default function FoodCard({food, onEdit, onDelete, onFavorite, onDuplicat
         food.gramsPerMl ? `1 ml = ${fmt(food.gramsPerMl, 3)} g` : '',
       ].filter(Boolean).join(' · ')}</small>
     </div>
+    {food.recipe && <RecipeDetails name={food.name} recipe={food.recipe}/>}
     <div className="actions food__actions">
       {food.recipe && <button type="button" className="food__copy" onClick={() => onDuplicateRecipe(food)} aria-label={`${food.name} als Kopie bearbeiten`}><Copy size={16} aria-hidden="true"/>Als Kopie bearbeiten</button>}
       <button type="button" onClick={() => onEdit({...food})} title="Bearbeiten" aria-label={`${food.name} bearbeiten`}><Pencil size={17}/></button>

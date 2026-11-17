@@ -1,4 +1,4 @@
-.food-list .food { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; }
+.food-list .food { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start; align-self: start; }
 .food__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .food__header > div { min-width: 0; flex: 1; }
 .food__favorite { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border: 1px solid #e3e8df; border-radius: 10px; color: #617368; background: white; }
