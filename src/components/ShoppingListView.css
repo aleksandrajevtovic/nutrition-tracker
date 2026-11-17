@@ -1,5 +1,8 @@
 .shopping-list__heading.section-head > h2 { flex: 1 0 100%; }
 .shopping-copy-button { font-size: 12px; }
+.shopping-checklist li { display: flex; align-items: center; gap: 8px; }
+.shopping-checklist li > label { flex: 1; min-width: 0; }
+.shopping-item-remove { flex-shrink: 0; }
 .shopping-recipe-selection > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; cursor: pointer; list-style: none; color: #315c46; }
 .shopping-recipe-selection > summary::-webkit-details-marker { display: none; }
 .shopping-recipe-selection > summary h2 { font-size: 16px; }

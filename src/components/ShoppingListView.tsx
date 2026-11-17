@@ -3,7 +3,7 @@ import {ChevronDown, Plus, ShoppingBasket, Trash2} from 'lucide-react';
 import type {Food} from '../db';
 import {getDataRevision} from '../db';
 import {itemFromFood, type ShoppingItem, type ShoppingList} from '../planning';
-import {clearShopping, restoreShopping, setShoppingFromMeals, toggleShoppingItem} from '../planningDb';
+import {clearShopping, removeShoppingItem, restoreShopping, restoreShoppingItem, setShoppingFromMeals, toggleShoppingItem} from '../planningDb';
 import {isPositive} from '../nutrition';
 import {groupShoppingItems} from '../shoppingList';
 import {germanError} from '../german';
@@ -24,6 +24,7 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
   const [pendingChecks, setPendingChecks] = useState<Record<string, boolean>>({});
   const running = useRef(false);
   const list = useRef<HTMLDivElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   const items = shopping.items.map(item => ({...item, checked: pendingChecks[item.id] ?? item.checked}));
   const {open, purchased} = groupShoppingItems(items);
   const notify = useToast();
@@ -75,10 +76,27 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
       (target ?? list.current?.querySelector<HTMLElement>('summary'))?.focus({preventScroll:true});
     });
   }
+  async function remove(item: ShoppingItem) {
+    const focused = document.activeElement?.getAttribute('data-shopping-remove-id') === item.id;
+    const group = item.checked ? purchased : open;
+    const remaining = group.filter(current => current.id !== item.id);
+    const next = remaining[Math.min(group.findIndex(current => current.id === item.id), remaining.length - 1)]?.id;
+    let removed = false;
+    await run(async () => {
+      const result = await removeShoppingItem(item.id);removed = true;
+      notify(`„${result.item.name}“ aus Einkaufsliste entfernt.`, 'success', {label: 'Rückgängig', onClick: async () => {
+        await restoreShoppingItem(result);notify('Einkaufsposition wiederhergestellt.', 'success');
+      }});
+    });
+    if (focused && removed) window.requestAnimationFrame(() => {
+      if (document.activeElement !== document.body && document.activeElement?.getAttribute('data-shopping-remove-id') !== item.id) return;
+      const inputs = [...(list.current?.querySelectorAll<HTMLInputElement>('input[data-shopping-id]') ?? [])].filter(input => input.getClientRects().length);
+      (inputs.find(input => input.dataset.shoppingId === next) ?? inputs[0] ?? list.current?.querySelector<HTMLElement>('summary') ?? heading.current)?.focus({preventScroll:true});
+    });
+  }
 
   return <>
-Rezepte ansehen, ohne sie zu bearbeiten
-Zutaten, Mengen und Zubereitung aufklappen können. Zum Kochen muss man dann nicht das Bearbeitungsformular öffnen.    <details className="panel editor shopping-recipe-selection">
+    <details className="panel editor shopping-recipe-selection">
       <summary><h2>Einkaufsliste aus Rezepten{(selection.length > 0 || selected) && <small>Auswahl vorhanden</small>}</h2><ChevronDown size={18} aria-hidden="true"/></summary>
       <p className="hint">Rezepte und benötigte Portionen wählen. Gleiche Zutaten werden in Gramm zusammengezählt. Enthaltene Unterrezepte erscheinen als eigene Zutat.</p>
       {foods.some(food => food.recipe) ? <>
@@ -94,17 +112,17 @@ Zutaten, Mengen und Zubereitung aufklappen können. Zum Kochen muss man dann nic
           <button type="button" className="secondary" disabled={busy || selection.some(row => !isPositive(row.portions))} onClick={() => generate(true)}>Zur Liste hinzufügen</button></div>
       </>}
     </details>
-    <section className="panel" aria-labelledby="shopping-list-title"><div className="section-head shopping-list__heading"><h2 id="shopping-list-title">Deine Einkaufsliste</h2>
+    <section className="panel" aria-labelledby="shopping-list-title"><div className="section-head shopping-list__heading"><h2 ref={heading} tabIndex={-1} id="shopping-list-title">Deine Einkaufsliste</h2>
       <ShoppingListCopy items={items} disabled={busy}/>
       <button type="button" className="iconbtn" disabled={busy || !shopping.items.length} aria-label="Einkaufsliste leeren" onClick={() => void run(clear)}><Trash2 size={17}/></button></div>
       {!shopping.items.length ? <div className="empty"><ShoppingBasket size={28}/><strong>Die Liste ist leer</strong><p>Erstelle eine Liste aus Rezepten oder aus deinem Wochenplan.</p></div> : <>
         <p className="hint" role="status">{purchased.length} von {items.length} Zutaten abgehakt. Beim Hinzufügen weiterer Mengen werden betroffene Häkchen zurückgesetzt.</p>
         <div ref={list}>
           <div className="shopping-open"><h3>Noch offen ({open.length})</h3>
-            {open.length ? <ShoppingChecklist items={open} disabled={busy} onToggle={(item, checked) => void toggle(item, checked)}/> : <p className="hint" role="status">Alles eingekauft.</p>}
+            {open.length ? <ShoppingChecklist items={open} disabled={busy} onToggle={(item, checked) => void toggle(item, checked)} onRemove={item => void remove(item)}/> : <p className="hint" role="status">Alles eingekauft.</p>}
           </div>
           {purchased.length > 0 && <details className="shopping-purchased"><summary><span>Gekauft ({purchased.length})</span><ChevronDown size={17} aria-hidden="true"/></summary>
-            <ShoppingChecklist items={purchased} disabled={busy} onToggle={(item, checked) => void toggle(item, checked)}/>
+            <ShoppingChecklist items={purchased} disabled={busy} onToggle={(item, checked) => void toggle(item, checked)} onRemove={item => void remove(item)}/>
           </details>}
         </div>
       </>}

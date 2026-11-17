@@ -1,7 +1,10 @@
 import {announceDataChange, dbPromise, getDataRevision, type Entry} from './db';
 import {emptyShoppingList, itemsFromEntries, itemsToEntries, mergeShopping, shoppingFromMeals, validPlan, validShopping, validTemplate,
-  type MealItem, type MealPlan, type MealTemplate, type ShoppingList} from './planning';
+  type MealItem, type MealPlan, type MealTemplate, type ShoppingItem, type ShoppingList} from './planning';
 import {validDate} from './weight';
+
+const shoppingGenerationKey = 'undoGeneration';
+export type RemovedShoppingItem = {item: ShoppingItem; generation: string; removalId: string; revision: number};
 
 function diaryChanged() {
   announceDataChange();
@@ -79,18 +82,24 @@ export async function restorePlanningRecord(store: 'templates' | 'plans', value:
 export async function setShoppingFromMeals(items: MealItem[], append: boolean) {
   const additions = shoppingFromMeals(items);
   const tx = (await dbPromise).transaction('shopping', 'readwrite');
-  const previous: ShoppingList = (await tx.store.get('current')) ?? emptyShoppingList();
-  const shopping = {items: append ? mergeShopping(previous.items, additions) : additions, updatedAt: new Date().toISOString()};
-  await tx.store.put(shopping, 'current'); await tx.done; announceDataChange();
+  try {
+    const previous: ShoppingList = (await tx.store.get('current')) ?? emptyShoppingList();
+    const shopping = {items: append ? mergeShopping(previous.items, additions) : additions, updatedAt: new Date().toISOString()};
+    if (!append) await tx.store.put(crypto.randomUUID(), shoppingGenerationKey);
+    await tx.store.put(shopping, 'current'); await tx.done; announceDataChange();
+  } catch (error) {try {tx.abort();} catch {} await tx.done.catch(() => {});throw error;}
 }
 export async function shoppingFromPlanWeek(start: string, end: string, append: boolean) {
   if (!validDate(start) || !validDate(end) || start > end) throw Error('Ungültige Wochenplanung');
   const tx = (await dbPromise).transaction(['plans', 'shopping'], 'readwrite');
-  const plans: MealPlan[] = await tx.objectStore('plans').index('by-date').getAll(IDBKeyRange.bound(start, end));
-  const additions = shoppingFromMeals(plans.filter(plan => plan.status === 'planned').flatMap(plan => plan.items));
-  const previous: ShoppingList = (await tx.objectStore('shopping').get('current')) ?? emptyShoppingList();
-  await tx.objectStore('shopping').put({items: append ? mergeShopping(previous.items, additions) : additions, updatedAt: new Date().toISOString()}, 'current');
-  await tx.done; announceDataChange();
+  try {
+    const plans: MealPlan[] = await tx.objectStore('plans').index('by-date').getAll(IDBKeyRange.bound(start, end));
+    const additions = shoppingFromMeals(plans.filter(plan => plan.status === 'planned').flatMap(plan => plan.items));
+    const previous: ShoppingList = (await tx.objectStore('shopping').get('current')) ?? emptyShoppingList();
+    if (!append) await tx.objectStore('shopping').put(crypto.randomUUID(), shoppingGenerationKey);
+    await tx.objectStore('shopping').put({items: append ? mergeShopping(previous.items, additions) : additions, updatedAt: new Date().toISOString()}, 'current');
+    await tx.done; announceDataChange();
+  } catch (error) {try {tx.abort();} catch {} await tx.done.catch(() => {});throw error;}
 }
 export async function toggleShoppingItem(id: string, checked?: boolean) {
   const tx = (await dbPromise).transaction('shopping', 'readwrite');
@@ -100,17 +109,58 @@ export async function toggleShoppingItem(id: string, checked?: boolean) {
 }
 export async function clearShopping() {
   const tx = (await dbPromise).transaction('shopping', 'readwrite');
-  const previous: ShoppingList = (await tx.store.get('current')) ?? emptyShoppingList();
-  const cleared = {...emptyShoppingList(), updatedAt: new Date().toISOString()};
-  await tx.store.put(cleared, 'current'); await tx.done; announceDataChange();
-  return {previous, clearedAt: cleared.updatedAt};
+  try {
+    const previous: ShoppingList = (await tx.store.get('current')) ?? emptyShoppingList();
+    const cleared = {...emptyShoppingList(), updatedAt: new Date().toISOString()};
+    await tx.store.put(crypto.randomUUID(), shoppingGenerationKey);
+    await tx.store.put(cleared, 'current'); await tx.done; announceDataChange();
+    return {previous, clearedAt: cleared.updatedAt};
+  } catch (error) {try {tx.abort();} catch {} await tx.done.catch(() => {});throw error;}
 }
 export async function restoreShopping(previous: ShoppingList, clearedAt: string, revision: number) {
   if (!validShopping(previous)) throw Error('Ungültige Einkaufsmenge');
   const tx = (await dbPromise).transaction('shopping', 'readwrite');
-  const current: ShoppingList | undefined = await tx.store.get('current');
-  if (revision !== getDataRevision() || current?.updatedAt !== clearedAt || current.items.length) {
-    await tx.done; throw Error('Die Wiederherstellung ist nach zwischenzeitlichen Änderungen nicht mehr möglich.');
-  }
-  await tx.store.put(previous, 'current'); await tx.done; announceDataChange();
+  try {
+    const current: ShoppingList | undefined = await tx.store.get('current');
+    if (revision !== getDataRevision() || current?.updatedAt !== clearedAt || current.items.length) {
+      await tx.done; throw Error('Die Wiederherstellung ist nach zwischenzeitlichen Änderungen nicht mehr möglich.');
+    }
+    await tx.store.put(previous, 'current');
+    await tx.store.put(crypto.randomUUID(), shoppingGenerationKey);
+    await tx.done; announceDataChange();
+  } catch (error) {try {tx.abort();} catch {} await tx.done.catch(() => {});throw error;}
+}
+
+export async function removeShoppingItem(id: string): Promise<RemovedShoppingItem> {
+  const revision = getDataRevision();
+  const tx = (await dbPromise).transaction('shopping', 'readwrite');
+  try {
+    const current: ShoppingList = (await tx.store.get('current')) ?? emptyShoppingList();
+    const item = current.items.find(item => item.id === id);
+    if (!item) throw Error('Diese Einkaufsposition ist nicht mehr vorhanden.');
+    if (revision !== getDataRevision()) throw Error('Die Daten wurden inzwischen importiert. Bitte die Einkaufsliste erneut öffnen.');
+    const generation: string = (await tx.store.get(shoppingGenerationKey)) ?? crypto.randomUUID();
+    const removalId = crypto.randomUUID();
+    await tx.store.put(generation, shoppingGenerationKey);
+    await tx.store.put(removalId, `removed:${id}`);
+    await tx.store.put({...current, items: current.items.filter(item => item.id !== id), updatedAt: new Date().toISOString()}, 'current');
+    await tx.done;announceDataChange();
+    return {item: structuredClone(item), generation, removalId, revision};
+  } catch (error) {try {tx.abort();} catch {} await tx.done.catch(() => {});throw error;}
+}
+
+export async function restoreShoppingItem(removed: RemovedShoppingItem): Promise<void> {
+  if (!validShopping({items: [removed.item], updatedAt: null})) throw Error('Ungültige Einkaufsposition');
+  const tx = (await dbPromise).transaction('shopping', 'readwrite');
+  try {
+    const current: ShoppingList = (await tx.store.get('current')) ?? emptyShoppingList();
+    const generation = await tx.store.get(shoppingGenerationKey);
+    if (removed.revision !== getDataRevision() || generation !== removed.generation) throw Error('Die Einkaufsliste wurde inzwischen ersetzt, geleert oder importiert. Diese Position kann nicht mehr wiederhergestellt werden.');
+    if (current.items.some(item => item.id === removed.item.id)) throw Error('Diese Zutat steht bereits wieder auf der Einkaufsliste. Die neuere Menge wurde nicht überschrieben.');
+    if (await tx.store.get(`removed:${removed.item.id}`) !== removed.removalId) throw Error('Diese Einkaufsposition wurde inzwischen erneut geändert oder wiederhergestellt.');
+    const items = [...current.items, structuredClone(removed.item)].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+    await tx.store.put({...current, items, updatedAt: new Date().toISOString()}, 'current');
+    await tx.store.delete(`removed:${removed.item.id}`);
+    await tx.done;announceDataChange();
+  } catch (error) {try {tx.abort();} catch {} await tx.done.catch(() => {});throw error;}
 }
