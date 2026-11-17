@@ -1,0 +1,14 @@
+.shopping-list__heading.section-head > h2 { flex: 1 0 100%; }
+.shopping-copy-button { font-size: 12px; }
+.shopping-open h3 { font-size: 14px; color: #315c46; margin: 18px 0 0; }
+.shopping-open .shopping-checklist { margin-top: 10px; }
+.shopping-purchased { margin-top: 18px; border-top: 1px solid #e7ebe4; }
+.shopping-purchased > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; font-size: 13px; font-weight: 600; color: #617368; cursor: pointer; list-style: none; }
+.shopping-purchased > summary::-webkit-details-marker { display: none; }
+.shopping-purchased > summary svg { flex-shrink: 0; }
+.shopping-purchased[open] > summary svg { transform: rotate(180deg); }
+.shopping-purchased .shopping-checklist { margin-top: 0; }
+.shopping-copy-manual { flex-basis: 100%; min-width: 0; padding: 14px; background: #f6f8f3; border-radius: 10px; }
+.shopping-copy-manual > label { font-size: 13px; font-weight: 600; color: #315c46; }
+.shopping-copy-manual textarea { display: block; width: 100%; margin: 12px 0; padding: 10px; min-height: 150px; border: 1px solid #dbe4dc; border-radius: 8px; font: inherit; font-size: 16px; line-height: 1.5; color: #22332a; background: white; resize: vertical; }
+@media (min-width: 640px) { .shopping-list__heading.section-head > h2 { flex: 1 1 180px; } }

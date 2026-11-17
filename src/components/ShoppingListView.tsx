@@ -1,17 +1,20 @@
 import {useEffect, useRef, useState} from 'react';
-import {Plus, ShoppingBasket, Trash2} from 'lucide-react';
+import {ChevronDown, Plus, ShoppingBasket, Trash2} from 'lucide-react';
 import type {Food} from '../db';
 import {getDataRevision} from '../db';
-import {itemFromFood, type ShoppingList} from '../planning';
+import {itemFromFood, type ShoppingItem, type ShoppingList} from '../planning';
 import {clearShopping, restoreShopping, setShoppingFromMeals, toggleShoppingItem} from '../planningDb';
-import {fmt, isPositive} from '../nutrition';
+import {isPositive} from '../nutrition';
+import {groupShoppingItems} from '../shoppingList';
 import {germanError} from '../german';
 import FoodPicker from './FoodPicker';
 import {useToast} from './ToastProvider';
 import {useDraftGuard} from './UnsavedChangesProvider';
+import ShoppingChecklist from './ShoppingChecklist';
+import ShoppingListCopy from './ShoppingListCopy';
+import './ShoppingListView.css';
 
 type Selection = {id: string; food: Food; portions: number};
-const amount = (grams: number) => grams >= 1000 ? `${fmt(grams / 1000, 3)} kg` : `${fmt(grams, 3)} g`;
 
 export default function ShoppingListView({foods, shopping}: {foods: Food[]; shopping: ShoppingList}) {
   const [selected, setSelected] = useState<Food>();
@@ -20,6 +23,9 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
   const [busy, setBusy] = useState(false);
   const [pendingChecks, setPendingChecks] = useState<Record<string, boolean>>({});
   const running = useRef(false);
+  const list = useRef<HTMLDivElement>(null);
+  const items = shopping.items.map(item => ({...item, checked: pendingChecks[item.id] ?? item.checked}));
+  const {open, purchased} = groupShoppingItems(items);
   const notify = useToast();
   const guard = useDraftGuard('Rezeptauswahl für die Einkaufsliste', selection, busy, 'shopping-selection');
   useDraftGuard('Noch nicht hinzugefügtes Einkaufsrezept', {selected, portions}, false, 'shopping-pending');
@@ -52,6 +58,23 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
     const {previous, clearedAt} = await clearShopping();
     notify('Einkaufsliste geleert.', 'success', {label: 'Rückgängig', onClick: async () => {await restoreShopping(previous, clearedAt, revision); notify('Einkaufsliste wiederhergestellt.', 'success');}});
   }
+  async function toggle(item: ShoppingItem, checked: boolean) {
+    if (running.current) return;
+    const restoreFocus = document.activeElement?.getAttribute('data-shopping-id') === item.id;
+    const remaining = open.filter(current => current.id !== item.id);
+    const next = checked ? remaining[Math.min(open.findIndex(current => current.id === item.id), remaining.length - 1)]?.id : item.id;
+    let saved = false;
+    setPendingChecks(current => ({...current, [item.id]: checked}));
+    await run(async () => {
+      try {await toggleShoppingItem(item.id, checked);saved = true;}
+      catch (error) {setPendingChecks(current => {const next = {...current};delete next[item.id];return next;});throw error;}
+    });
+    if (restoreFocus) window.requestAnimationFrame(() => {
+      if (document.activeElement !== document.body && document.activeElement?.getAttribute('data-shopping-id') !== item.id) return;
+      const target = [...(list.current?.querySelectorAll<HTMLInputElement>('input[data-shopping-id]') ?? [])].find(input => input.dataset.shoppingId === (saved ? next : item.id));
+      (target ?? list.current?.querySelector<HTMLElement>('summary'))?.focus({preventScroll:true});
+    });
+  }
 
   return <>
     <section className="panel editor"><h2>Einkaufsliste aus Rezepten</h2>
@@ -69,22 +92,19 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
           <button type="button" className="secondary" disabled={busy || selection.some(row => !isPositive(row.portions))} onClick={() => generate(true)}>Zur Liste hinzufügen</button></div>
       </>}
     </section>
-    <section className="panel" aria-labelledby="shopping-list-title"><div className="section-head"><h2 id="shopping-list-title">Deine Einkaufsliste</h2>
+    <section className="panel" aria-labelledby="shopping-list-title"><div className="section-head shopping-list__heading"><h2 id="shopping-list-title">Deine Einkaufsliste</h2>
+      <ShoppingListCopy items={items} disabled={busy}/>
       <button type="button" className="iconbtn" disabled={busy || !shopping.items.length} aria-label="Einkaufsliste leeren" onClick={() => void run(clear)}><Trash2 size={17}/></button></div>
       {!shopping.items.length ? <div className="empty"><ShoppingBasket size={28}/><strong>Die Liste ist leer</strong><p>Erstelle eine Liste aus Rezepten oder aus deinem Wochenplan.</p></div> : <>
-        <p className="hint" role="status">{shopping.items.filter(item => item.checked).length} von {shopping.items.length} Zutaten abgehakt. Beim Hinzufügen weiterer Mengen werden betroffene Häkchen zurückgesetzt.</p>
-        <ul className="shopping-checklist">{shopping.items.map(item => <li key={item.id}><label className={(pendingChecks[item.id] ?? item.checked) ? 'shopping-checked' : ''}>
-          <input type="checkbox" aria-label={`${item.name} gekauft`} checked={pendingChecks[item.id] ?? item.checked} disabled={busy} onChange={event => {
-            if (running.current) return;
-            const checked = event.target.checked;
-            setPendingChecks(current => ({...current, [item.id]: checked}));
-            void run(async () => {
-              try {await toggleShoppingItem(item.id, checked);}
-              catch (error) {setPendingChecks(current => {const next = {...current}; delete next[item.id]; return next;}); throw error;}
-            });
-          }}/>
-          <span><strong>{item.name}</strong>{item.brand && <small>{item.brand}</small>}</span><b>{amount(item.grams)}</b>
-        </label></li>)}</ul>
+        <p className="hint" role="status">{purchased.length} von {items.length} Zutaten abgehakt. Beim Hinzufügen weiterer Mengen werden betroffene Häkchen zurückgesetzt.</p>
+        <div ref={list}>
+          <div className="shopping-open"><h3>Noch offen ({open.length})</h3>
+            {open.length ? <ShoppingChecklist items={open} disabled={busy} onToggle={(item, checked) => void toggle(item, checked)}/> : <p className="hint" role="status">Alles eingekauft.</p>}
+          </div>
+          {purchased.length > 0 && <details className="shopping-purchased"><summary><span>Gekauft ({purchased.length})</span><ChevronDown size={17} aria-hidden="true"/></summary>
+            <ShoppingChecklist items={purchased} disabled={busy} onToggle={(item, checked) => void toggle(item, checked)}/>
+          </details>}
+        </div>
       </>}
     </section>
   </>;

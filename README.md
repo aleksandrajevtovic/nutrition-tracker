@@ -196,6 +196,8 @@ Der Exportverlauf ist geräte- und browserspezifisch. Er wird nicht in die Siche
 
 ## Vorlagen, Einkaufsliste und Wochenplanung
 
+Die Einkaufsliste zeigt offene Zutaten zuerst. „Gekauft“ ist beim Öffnen eingeklappt; darin kannst du Häkchen wieder entfernen, um Zutaten zurück zu den offenen Einkäufen zu verschieben. Sind alle Zutaten abgehakt, erscheint „Alles eingekauft.“. „Liste kopieren“ kopiert offene und gekaufte Zutaten mit `[ ]`/`[x]`, Mengen und Marken als deutschen Text. Falls die Zwischenablage nicht verfügbar ist oder der Zugriff abgelehnt wird, erscheint ein markierbares Textfeld zum manuellen Kopieren. Die Aktion ändert keine Mengen oder Häkchen. Leeren und Rückgängig funktionieren weiterhin für die gesamte Liste.
+
 Unter „Planen“ gibt es drei Bereiche:
 
 - **Vorlagen:** Speichere im Tagebuch eine ganze Mahlzeit über „Als Vorlage speichern“. Eine Vorlage kann mit einem Mengenfaktor (z. B. 0,5 oder 2) an einem Datum und einer Mahlzeit ins Tagebuch übernommen oder für den Wochenplan verwendet werden. Vorlagen behalten die gespeicherten Mengen und Nährwerte, auch wenn Produkte später geändert oder gelöscht werden.
