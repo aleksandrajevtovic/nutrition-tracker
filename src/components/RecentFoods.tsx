@@ -1,16 +1,16 @@
 import {Clock, Plus} from 'lucide-react';
 import type {Food} from '../db';
 import {recentFoods, type RecentFood} from '../diaryHistory';
-import {useDiaryHistory} from '../hooks/useDiaryHistory';
+import type {useDiaryHistory} from '../hooks/useDiaryHistory';
 import {fmt, stats, unitLabels} from '../nutrition';
 import {portionQuantity} from '../quantityLabels';
 import {revealOpeningDetails} from '../hooks/useScrollReveal';
 import './RecentFoods.css';
 
-export default function RecentFoods({foods, busy, onSelect, onAdd}: {
+export default function RecentFoods({foods, busy, onSelect, onAdd, history}: {
   foods: Food[]; busy: boolean; onSelect: (recent: RecentFood) => void; onAdd: (recent: RecentFood) => void;
+  history: ReturnType<typeof useDiaryHistory>;
 }) {
-  const history = useDiaryHistory();
   const recent = recentFoods(history.entries, foods);
   return <details className="recent-foods"><summary onClick={revealOpeningDetails}><Clock size={16} aria-hidden="true"/>Zuletzt verwendet</summary>
     {history.loading ? <p className="hint" role="status">Letzte Lebensmittel werden geladen…</p> : history.failed ? <p className="hint">Letzte Lebensmittel konnten nicht geladen werden. <button type="button" onClick={history.reload}>Erneut versuchen</button></p>

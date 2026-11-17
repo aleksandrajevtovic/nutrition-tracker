@@ -1,5 +1,5 @@
 import {germanError} from '../german';
-import {useRef, useState} from 'react';
+import {useMemo, useRef, useState} from 'react';
 import {Check, Minus, Plus, ScanBarcode} from 'lucide-react';
 import type {Entry, Food} from '../db';
 import {useToast} from './ToastProvider';
@@ -7,7 +7,9 @@ import FoodPicker from './FoodPicker';
 import PortionPicker from './PortionPicker';
 import RecentFoods from './RecentFoods';
 import {useDraftGuard} from './UnsavedChangesProvider';
-import type {RecentFood} from '../diaryHistory';
+import {lastUsedAmount, type RecentFood} from '../diaryHistory';
+import {useDiaryHistory} from '../hooks/useDiaryHistory';
+import LastAmountSuggestion from './LastAmountSuggestion';
 import ProductImport from './ProductImport';
 import {portionNameLabel, portionQuantity} from '../quantityLabels';
 import './EntryEditor.css';
@@ -34,6 +36,11 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Fr√ºhst√
   const [saving, setSaving] = useState(false);
   const [importing,setImporting] = useState(false);
   const savingRef = useRef(false);
+  const amountInput = useRef<HTMLInputElement>(null);
+  const history = useDiaryHistory(!entry);
+  const lastAmount = useMemo(() => !entry && selected && !history.loading && !history.failed
+    ? lastUsedAmount(history.entries, foods.find(food => food.id === selected.id) ?? selected) : undefined,
+  [entry, selected, foods, history.entries, history.loading, history.failed]);
   const guard = useDraftGuard('Tagebucheintrag', {selected, meal, amount, unit, conversions, note}, saving, 'entry-editor');
   const food = selected ? {...selected, ...conversions} : undefined;
   const grams = food ? toGrams(food, Number(amount), unit) : NaN;
@@ -80,7 +87,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Fr√ºhst√
     <label>Mahlzeit<select aria-label="Mahlzeit" value={meal} disabled={saving} onChange={e => setMeal(e.target.value)}>
       {Array.from(new Set([...meals, meal])).map(m => <option key={m}>{m}</option>)}
     </select></label>
-    {!entry && <RecentFoods foods={foods} busy={saving} onSelect={item => {setSelected(item.food); setAmount(String(item.amount)); setUnit(item.unit); setConversions({});}} onAdd={item => void addRecent(item)}/>}
+    {!entry && <RecentFoods foods={foods} history={history} busy={saving} onSelect={item => {setSelected(item.food); setAmount(String(item.amount)); setUnit(item.unit); setConversions({});}} onAdd={item => void addRecent(item)}/>}
     {!entry && <button type="button" className="secondary wide" disabled={saving} onClick={() => setImporting(true)}><ScanBarcode size={17}/>Produkt scannen</button>}
     {importing && <ProductImport foods={foods} onSave={onSaveFood} onClose={() => setImporting(false)} onSelect={food => {setSelected(food);setConversions({});setAmount('1');setUnit(food.nutritionReference?.unit === 'ml' ? 'ml' : 'portion');if (food.nutritionReference?.unit === 'ml') setAmount('100');}}/>}
     <FoodPicker foods={options} selected={selected} disabled={saving} onChange={food => {
@@ -88,10 +95,14 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Fr√ºhst√
       setSelected(food);
       setConversions({}); setAmount('1'); setUnit('portion');
     }}/>
+    {lastAmount && <LastAmountSuggestion item={lastAmount} disabled={saving} onSelect={item => {
+      setSelected(item.food);setAmount(String(item.amount));setUnit(item.unit);setConversions({});
+      window.requestAnimationFrame(() => {amountInput.current?.focus();amountInput.current?.select();});
+    }}/>}
     {food && <>
       {unit === 'portion' && <PortionPicker food={food} disabled={saving} onChange={setSelected}/>}
       <div className="quantity-fields">
-        <label>Menge<input type="number" min="0" step="any" required value={amount} disabled={saving} onChange={e => setAmount(e.target.value)}/></label>
+        <label>Menge<input ref={amountInput} type="number" min="0" step="any" required value={amount} disabled={saving} onChange={e => setAmount(e.target.value)}/></label>
         <label>Einheit<select aria-label="Einheit" value={unit} disabled={saving} onChange={e => {
           // Keep the physical amount when switching between configured units.
           const next = e.target.value as Unit;

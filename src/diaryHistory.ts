@@ -4,13 +4,14 @@ import {portionOptions, selectPortion} from './foodValues';
 import {validDate} from './weight';
 
 export type RecentFood = {food: Food; amount: number; unit: Unit; grams: number};
+const newestFirst = (a: Entry, b: Entry) => b.createdAt.localeCompare(a.createdAt) || b.date.localeCompare(a.date) || b.id.localeCompare(a.id);
 
 export function recentFoods(entries: Entry[], foods: Food[], limit = 6): RecentFood[] {
   if (limit <= 0) return [];
   const products = new Map(foods.map(food => [food.id, food]));
   const seen = new Set<string>();
   const result: RecentFood[] = [];
-  for (const entry of [...entries].sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.date.localeCompare(a.date) || b.id.localeCompare(a.id))) {
+  for (const entry of [...entries].sort(newestFirst)) {
     let food = products.get(entry.foodId);
     if (!food || seen.has(food.id) || !validFood(food)) continue;
     seen.add(food.id);
@@ -26,6 +27,18 @@ export function recentFoods(entries: Entry[], foods: Food[], limit = 6): RecentF
     if (result.length >= limit) break;
   }
   return result;
+}
+
+export function lastUsedAmount(entries: Entry[], food: Food): RecentFood | undefined {
+  const latest = entries.filter(entry => entry.foodId === food.id).sort(newestFirst)[0];
+  if (!latest || !isPositive(latest.grams)) return undefined;
+  const recent = recentFoods([latest], [food], 1)[0];
+  if (!recent) return undefined;
+  // A changed portion weight or conversion must not change the quantity labelled "Zuletzt".
+  if (Math.abs(recent.grams - latest.grams) > Math.max(1e-8, latest.grams * 1e-9)) {
+    return {food, amount: latest.grams, unit: 'g', grams: latest.grams};
+  }
+  return recent;
 }
 
 export type DiaryQuery = {text: string; from: string; to: string};
