@@ -11,6 +11,7 @@ import {backupNotes, validNote, type DailyNote} from './notes';
 import {withEntryAmount} from './entryQuantity';
 import {backupDrinks, validDrink, type Drink} from './hydration';
 import {barcodeKey} from './barcode';
+import {backupCompletedDays} from './completedDays';
 
 export type Food = {
   id: string;
@@ -51,7 +52,7 @@ export type Entry = {
   createdAt: string;
 };
 
-export type Backup = {version: 6; exportedAt: string; foods: Food[]; entries: Entry[]; weights: WeightRecord[]; goals: DailyGoals; dailyNotes: DailyNote[]; drinks: Drink[]} & WorkspaceBackup;
+export type Backup = {version: 6; exportedAt: string; foods: Food[]; entries: Entry[]; weights: WeightRecord[]; goals: DailyGoals; dailyNotes: DailyNote[]; drinks: Drink[]; completedDays?: string[]} & WorkspaceBackup;
 type LegacyBackup = {version: 1 | 2 | 3 | 4 | 5; exportedAt: string; foods: Food[]; entries: Entry[]; weights?: WeightRecord[]; goals?: DailyGoals; dailyNotes?: DailyNote[]};
 let dataRevision = 0;
 export const getDataRevision = () => dataRevision;
@@ -202,31 +203,46 @@ export async function saveDailyGoals(goals: DailyGoals) {
   await (await dbPromise).put('settings', goals, 'dailyGoals');
   announceDataChange();
 }
-export async function getPeriodData(start: string, end: string): Promise<{entries: Entry[]; weights: WeightRecord[]; goals: DailyGoals; drinks: Drink[]; dailyNotes: DailyNote[]}> {
+export async function getCompletedDays(): Promise<string[]> {
+  return (await (await dbPromise).get('settings', 'completedDays')) ?? [];
+}
+export async function setDayCompleted(date: string, completed: boolean) {
+  if (!validDate(date) || typeof completed !== 'boolean') throw Error('Ungültiger Tagesstatus');
+  const tx = (await dbPromise).transaction('settings', 'readwrite');
+  const dates: string[] = (await tx.store.get('completedDays')) ?? [];
+  const next = dates.filter(value => value !== date);
+  if (completed) next.push(date);
+  await tx.store.put(next.sort(), 'completedDays');
+  await tx.done;
+  announceDataChange();
+}
+export async function getPeriodData(start: string, end: string): Promise<{entries: Entry[]; weights: WeightRecord[]; goals: DailyGoals; drinks: Drink[]; dailyNotes: DailyNote[]; completedDays: string[]}> {
   if (!validDate(start) || !validDate(end) || start > end) throw Error('Bitte ein gültiges Datum für die Wochenübersicht wählen.');
   const tx = (await dbPromise).transaction(['entries', 'weights', 'settings', 'drinks', 'notes'], 'readonly');
   const range = IDBKeyRange.bound(start, end);
-  const [entries, weights, goals, drinks, dailyNotes] = await Promise.all([
+  const [entries, weights, goals, drinks, dailyNotes, completedDays] = await Promise.all([
     tx.objectStore('entries').index('by-date').getAll(range),
     tx.objectStore('weights').getAll(range),
     tx.objectStore('settings').get('dailyGoals'),
     tx.objectStore('drinks').index('by-date').getAll(range),
     tx.objectStore('notes').getAll(range),
+    tx.objectStore('settings').get('completedDays'),
   ]);
   await tx.done;
-  return {entries, weights, goals: goals ?? {}, drinks, dailyNotes};
+  return {entries, weights, goals: goals ?? {}, drinks, dailyNotes, completedDays: (completedDays ?? []).filter((date: string) => date >= start && date <= end)};
 }
 export async function getBackup(): Promise<Backup> {
   const tx = (await dbPromise).transaction(['foods', 'entries', 'weights', 'settings', 'templates', 'plans', 'shopping', 'notes', 'drinks'], 'readonly');
-  const [foods, entries, weights, goals, templates, plans, shoppingList, dailyNotes, drinks] = await Promise.all([
+  const [foods, entries, weights, goals, templates, plans, shoppingList, dailyNotes, drinks, completedDays] = await Promise.all([
     tx.objectStore('foods').getAll(), tx.objectStore('entries').getAll(), tx.objectStore('weights').getAll(),
     tx.objectStore('settings').get('dailyGoals'), tx.objectStore('templates').getAll(), tx.objectStore('plans').getAll(),
     tx.objectStore('shopping').get('current'), tx.objectStore('notes').getAll(), tx.objectStore('drinks').getAll(),
+    tx.objectStore('settings').get('completedDays'),
   ]);
   await tx.done;
   return {
     version: 6, exportedAt: new Date().toISOString(),
-    foods, entries, weights, goals: goals ?? {}, templates, plans, shoppingList: shoppingList ?? emptyShoppingList(), dailyNotes, drinks,
+    foods, entries, weights, goals: goals ?? {}, templates, plans, shoppingList: shoppingList ?? emptyShoppingList(), dailyNotes, drinks, completedDays: completedDays ?? [],
   };
 }
 
@@ -261,6 +277,7 @@ export async function restoreBackup(data: unknown) {
   const workspace = backupWorkspace(backup);
   const dailyNotes = backupNotes(backup);
   const drinks = backupDrinks(backup as {version?: unknown; drinks?: unknown});
+  const completedDays = backupCompletedDays(backup as {completedDays?: unknown});
   const barcodes = new Set<string>();
   for (const food of backup.foods) {
     if (!isFood(food)) throw Error('Ungültige Produktdaten');
@@ -297,6 +314,7 @@ export async function restoreBackup(data: unknown) {
     for (const record of weights) await tx.objectStore('weights').put(record);
   }
   if (goals !== undefined) await tx.objectStore('settings').put(goals, 'dailyGoals');
+  if (completedDays !== undefined) await tx.objectStore('settings').put([...completedDays].sort(), 'completedDays');
   if (workspace) {
     await tx.objectStore('templates').clear(); await tx.objectStore('plans').clear();
     for (const template of workspace.templates) await tx.objectStore('templates').put(template);

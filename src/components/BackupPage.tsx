@@ -43,7 +43,7 @@ export default function BackupPage({onRestored}: {
     operation.current = true; setBusy(true);
     try {
       const parsed = JSON.parse(await file.text());
-      if (!confirm('Datensicherung importieren? Produkte, Rezepte und Tagebucheinträge werden ersetzt. Enthaltene Gewichtsdaten, Trinkdaten, Tagesziele, Tagesnotizen, Vorlagen, Wochenpläne und Einkaufslisten ersetzen die bisherigen Werte. Ältere Sicherungen ohne diese Bereiche lassen sie unverändert. Bitte vorher eine Datensicherung exportieren.')) return;
+      if (!confirm('Datensicherung importieren? Produkte, Rezepte und Tagebucheinträge werden ersetzt. Enthaltene Gewichtsdaten, Trinkdaten, Tagesziele, Tagesnotizen, Markierungen vollständiger Tage, Vorlagen, Wochenpläne und Einkaufslisten ersetzen die bisherigen Werte. Ältere Sicherungen ohne diese Bereiche lassen sie unverändert. Bitte vorher eine Datensicherung exportieren.')) return;
       await restoreBackup(parsed); await onRestored(); notify('Datensicherung erfolgreich importiert.', 'success');
     } catch (e) { notify(`Import fehlgeschlagen: ${germanError(e)}`, 'error'); }
     finally {operation.current = false; setBusy(false);}
@@ -59,7 +59,7 @@ export default function BackupPage({onRestored}: {
       <input ref={fileRef} type="file" accept=".json,application/json" hidden onChange={e => {
         const file = e.target.files?.[0]; if (file) void upload(file); e.target.value = '';
       }}/>
-      <p className="hint">Die Datensicherung enthält auch Getränke mit Menge und Uhrzeit, Tagesnotizen, Rezepte samt Zutaten, Vorlagen, Wochenpläne und Einkaufslisten mit Häkchen. Beim Import werden enthaltene Bereiche ersetzt. Ältere Sicherungen ohne diese Bereiche lassen sie unverändert. Exportiere regelmäßig eine Datensicherung, insbesondere vor dem Löschen von Browserdaten oder einem Gerätewechsel.</p>
+      <p className="hint">Die Datensicherung enthält auch Getränke mit Menge und Uhrzeit, Tagesnotizen, Markierungen vollständiger Tage, Rezepte samt Zutaten, Vorlagen, Wochenpläne und Einkaufslisten mit Häkchen. Beim Import werden enthaltene Bereiche ersetzt. Ältere Sicherungen ohne diese Bereiche lassen sie unverändert. Exportiere regelmäßig eine Datensicherung, insbesondere vor dem Löschen von Browserdaten oder einem Gerätewechsel.</p>
     </section>
     <CsvExport/>
     <section className="panel settings"><h3>App installieren</h3>

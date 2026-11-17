@@ -156,11 +156,17 @@ Neue Datensicherungen (Version 3) enthalten auch Tagesziele. Beim Import der Ver
 
 ## Wochenübersicht
 
+Im Tagebuch und in den Tageskarten der Woche kannst du „Tag vollständig“ markieren oder die Markierung wieder entfernen. Der Status bleibt bei späteren Eintragsänderungen bestehen, bis du ihn selbst änderst. Die Markierungen werden lokal gespeichert und in JSON-Sicherungen exportiert; ältere Sicherungen ohne dieses Feld lassen vorhandene Markierungen unverändert, eine enthaltene leere Liste entfernt sie.
+
+„Nur vollständige Tage im Nährwertdurchschnitt“ berücksichtigt ausschließlich markierte Tage mit Lebensmitteln, auch beim Vergleich zur Vorwoche. Ohne passende Tage erscheint „—“ statt 0. Unvollständige Ballaststoffangaben werden nur für die berücksichtigten Tage geprüft. Tageswerte, Diagramme, Gewicht, Trinkmengen und CSV-Auswertungen bleiben unabhängig vom Filter. Standardmäßig zählen weiterhin alle Tage mit Lebensmitteln; die Filterauswahl wird auf diesem Gerät für den nächsten Besuch gespeichert.
+
+Die Tageskarten zeigen zunächst Kalorien, Eiweiß, Trinkmenge und Gewicht. „Weitere Nährwerte“ klappt Kohlenhydrate, Fett und Ballaststoffe für den jeweiligen Tag auf; der Bereich ist beim Öffnen der Wochenübersicht geschlossen. Fehlende Angaben bleiben als „—“ sichtbar, unvollständige Ballaststoffwerte werden weiterhin gekennzeichnet. Tagesnotizen lassen sich unabhängig davon öffnen, und ein Klick auf das Datum führt ins Tagebuch.
+
 Über „Woche“ öffnest du eine Übersicht von Montag bis Sonntag. Die Pfeile wechseln die Woche; über ein Datum kannst du direkt zu einer anderen Kalenderwoche springen. Tagesbalken und Datumsüberschriften öffnen den jeweiligen Tag im Tagebuch.
 
 Bei Tagen mit gespeicherter Tagesnotiz erscheint neben dem Datum ein Notizsymbol. Es klappt Hunger, Energie, Training und eigene Beobachtungen direkt in der Tageskarte auf und scrollt zur Notiz. Leere Felder zeigen „Nicht notiert“. Die Ansicht startet eingeklappt und funktioniert auch für Tage ohne Lebensmittel, Gewicht oder Getränke. Bearbeitet werden Notizen weiterhin im Tagebuch; Änderungen, Löschen und Rückgängig werden in der Wochenübersicht berücksichtigt. Notizen verändern keine Nährwert-Durchschnitte.
 
-Die Übersicht zeigt tägliche Kalorien und Nährwerte, Gewichtsmessungen, Trinkmengen, Durchschnittswerte sowie den Unterschied zur Vorwoche. Nährwert-Durchschnitte verwenden nur Tage mit Lebensmitteln, Gewichtsdurchschnitte nur tatsächliche Messungen und Trinkmengen-Durchschnitte nur Tage mit mindestens einem Getränk. Mehrere Getränke desselben Tages werden zuerst summiert. Fehlende Daten erscheinen als „—“; teilweise erfasste Tage zählen mit.
+Die Übersicht zeigt tägliche Kalorien und Nährwerte, Gewichtsmessungen, Trinkmengen, Durchschnittswerte sowie den Unterschied zur Vorwoche. Nährwert-Durchschnitte verwenden nur Tage mit Lebensmitteln, Gewichtsdurchschnitte nur tatsächliche Messungen und Trinkmengen-Durchschnitte nur Tage mit mindestens einem Getränk. Mehrere Getränke desselben Tages werden zuerst summiert. Fehlende Daten erscheinen als „—“; ohne den Filter für vollständige Tage zählen auch teilweise erfasste Tage mit.
 
 Für Getränke stehen Tageswerte, Wochensumme und Tagesdurchschnitt in Litern zur Verfügung, einschließlich Vorwochenvergleich. Auch Tage mit ausschließlich Getränken werden berücksichtigt. Der Tagesvergleich lässt sich zwischen Kalorien, Eiweiß, Kohlenhydraten, Fett, Ballaststoffen und Trinkmenge umschalten. Eingestellte Nährwertziele erscheinen als gestrichelte Linie; für Trinkmengen wird kein Ziel vorgegeben. Änderungen und Rückgängig aktualisieren die Auswertung.
 

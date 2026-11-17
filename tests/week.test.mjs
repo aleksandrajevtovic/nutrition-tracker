@@ -8,6 +8,7 @@ import {loadTypeScript} from './helpers/typescript.mjs';
 const {calendarWeek, summarizeWeek, shiftDate} = await loadTypeScript(new URL('../src/week.ts', import.meta.url));
 const {default: WeeklyNutritionChart} = await loadTypeScript(new URL('../src/components/WeeklyNutritionChart.tsx', import.meta.url));
 const {default: WeeklyDayCard} = await loadTypeScript(new URL('../src/components/WeeklyDayCard.tsx', import.meta.url));
+const {default: ToastProvider} = await loadTypeScript(new URL('../src/components/ToastProvider.tsx', import.meta.url));
 const db = await loadTypeScript(new URL('../src/db.ts', import.meta.url));
 const food = {id: 'food', name: 'Lachs', brand: '', kcal: 200, protein: 20, carbs: 0, fat: 12,
   fiber: 0, sugar: 0, portionName: '1 Portion', portionGrams: 100, createdAt: '2026-11-15T00:00:00Z'};
@@ -85,12 +86,12 @@ test('the period query loads inclusive boundaries, goal settings and updates aft
 test('note-only days offer a collapsed note with all fields while plain days do not show a note icon', () => {
   const day = summarizeWeek([], [], '2026-12-07').days[0];
   const note = {date: day.date, hunger: 'Nachmittags hungrig', energy: '', training: 'Spaziergang', observations: 'Erste Zeile\n<b>Nur Text</b>', updatedAt: food.createdAt};
-  const html = renderToStaticMarkup(createElement(WeeklyDayCard, {day, note, onOpenDay() {}}));
+  const html = renderToStaticMarkup(createElement(ToastProvider, {}, createElement(WeeklyDayCard, {day, note, onOpenDay() {}})));
   assert.match(html, /Tagesnotiz vom 07\.12\.2026 anzeigen/);
   assert.match(html, /aria-expanded="false"/);
   for (const label of ['Hunger', 'Energie', 'Training', 'Eigene Beobachtungen', 'Nicht notiert']) assert.ok(html.includes(label));
   assert.ok(html.includes('&lt;b&gt;Nur Text&lt;/b&gt;'));
-  const empty = renderToStaticMarkup(createElement(WeeklyDayCard, {day, onOpenDay() {}}));
+  const empty = renderToStaticMarkup(createElement(ToastProvider, {}, createElement(WeeklyDayCard, {day, onOpenDay() {}})));
   assert.doesNotMatch(empty, /weekly-note-toggle|weekly-day-note/);
 });
 

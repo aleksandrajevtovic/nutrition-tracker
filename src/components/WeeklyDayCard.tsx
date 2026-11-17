@@ -1,5 +1,5 @@
 import {useEffect, useId, useRef, useState} from 'react';
-import {FileText, X} from 'lucide-react';
+import {ChevronDown, FileText, X} from 'lucide-react';
 import type {DailyNote} from '../notes';
 import {noteFields} from '../notes';
 import {goalFields} from '../goals';
@@ -7,9 +7,12 @@ import {fmt, today} from '../nutrition';
 import {weekDay, type WeekSummary} from '../week';
 import {weightDate} from '../weight';
 import {useScrollReveal} from '../hooks/useScrollReveal';
+import DayCompletion from './DayCompletion';
 import './WeeklyDayCard.css';
 
 const labels = {hunger: 'Hunger', energy: 'Energie', training: 'Training', observations: 'Eigene Beobachtungen'};
+const primaryFields = goalFields.filter(({key}) => key === 'kcal' || key === 'protein');
+const additionalFields = goalFields.filter(({key}) => key !== 'kcal' && key !== 'protein');
 
 export default function WeeklyDayCard({day, note, onOpenDay}: {
   day: WeekSummary['days'][number]; note?: DailyNote; onOpenDay: (date: string) => void;
@@ -27,9 +30,14 @@ export default function WeeklyDayCard({day, note, onOpenDay}: {
       {note && <button ref={toggle} type="button" className="weekly-note-toggle" aria-expanded={expanded} aria-controls={id}
         aria-label={`Tagesnotiz vom ${weightDate(day.date)} ${expanded ? 'einklappen' : 'anzeigen'}`} title="Tagesnotiz vorhanden" onClick={() => setExpanded(value => !value)}><FileText size={18} aria-hidden="true"/></button>}
     </div><small>{day.count ? `${day.count} ${day.count === 1 ? 'Eintrag' : 'Einträge'}` : 'Keine Lebensmittel'}{day.drinkCount ? ` · ${day.drinkCount} ${day.drinkCount === 1 ? 'Getränk' : 'Getränke'}` : ''}</small></div>
-    <dl>{goalFields.map(({key, label, unit}) => <div key={key}><dt>{label}</dt><dd>{day.count ? key === 'fiber' && day.fiberIncomplete ? 'Unvollständig' : `${fmt(day.totals[key])} ${unit}` : '—'}</dd></div>)}
-      <div><dt>Gewicht</dt><dd>{day.weight === undefined ? '—' : `${fmt(day.weight, 2)} kg`}</dd></div>
-      <div><dt>Trinkmenge</dt><dd>{day.drinkMl === undefined ? '—' : `${fmt(day.drinkMl / 1000, 3)} l`}</dd></div></dl>
+    <dl className="weekly-day__values">{primaryFields.map(({key, label, unit}) => <div key={key}><dt>{label}</dt><dd>{day.count ? `${fmt(day.totals[key])} ${unit}` : '—'}</dd></div>)}
+      <div><dt>Trinkmenge</dt><dd>{day.drinkMl === undefined ? '—' : `${fmt(day.drinkMl / 1000, 3)} l`}</dd></div>
+      <div><dt>Gewicht</dt><dd>{day.weight === undefined ? '—' : `${fmt(day.weight, 2)} kg`}</dd></div></dl>
+    <details className="weekly-day__nutrition">
+      <summary aria-label={`Weitere Nährwerte vom ${weightDate(day.date)}`}><span>Weitere Nährwerte</span><ChevronDown size={16} aria-hidden="true"/></summary>
+      <dl>{additionalFields.map(({key, label, unit}) => <div key={key}><dt>{label}</dt><dd>{day.count ? key === 'fiber' && day.fiberIncomplete ? 'Unvollständig' : `${fmt(day.totals[key])} ${unit}` : '—'}</dd></div>)}</dl>
+    </details>
+    <DayCompletion key={day.date} date={day.date} completed={day.completed}/>
     {note && <div ref={content} id={id} className="weekly-day-note" hidden={!expanded}>
       <div className="weekly-day-note__heading"><h3>Tagesnotiz vom {weightDate(day.date)}</h3><button type="button" className="iconbtn" aria-label="Tagesnotiz schließen" onClick={() => {setExpanded(false); toggle.current?.focus({preventScroll: true});}}><X size={17}/></button></div>
       <dl>{noteFields.map(key => <div key={key}><dt>{labels[key]}</dt><dd>{note[key].trim() ? note[key] : 'Nicht notiert'}</dd></div>)}</dl>

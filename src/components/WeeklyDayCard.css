@@ -1,5 +1,12 @@
 .weekly-day__date { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.weekly-day.panel { align-self: start; }
+.weekly-day.panel { align-self: start; padding: 16px; }
+.weekly-day .weekly-day__values { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin-top: 12px; }
+.weekly-day__nutrition { margin-top: 12px; border-top: 1px solid #e7ebe4; }
+.weekly-day__nutrition summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; color: #315c46; font-size: 12px; font-weight: 600; cursor: pointer; list-style: none; }
+.weekly-day__nutrition summary::-webkit-details-marker { display: none; }
+.weekly-day__nutrition summary > svg { flex-shrink: 0; }
+.weekly-day__nutrition[open] summary > svg { transform: rotate(180deg); }
+.weekly-day .weekly-day__nutrition dl { margin-top: 0; padding-top: 4px; padding-bottom: 4px; }
 .weekly-day__heading .weekly-note-toggle { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; padding: 0; border: 1px solid #d8e4d5; border-radius: 10px; background: #edf4ed; color: #315c46; }
 .weekly-note-toggle[aria-expanded="true"] { box-shadow: inset 0 0 0 1px #7ca58a; }
 .weekly-day-note { border-top: 1px solid #e0e8dc; margin-top: 18px; padding-top: 14px; }

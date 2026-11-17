@@ -4,6 +4,7 @@ import type {Entry, Food} from '../db';
 import {fiberIncomplete, meals, stats} from '../nutrition';
 import EntryEditor from './EntryEditor';
 import DailySummary from './DailySummary';
+import {DiaryDayCompletion} from './DayCompletion';
 import DailyExtras from './DailyExtras';
 import MealFilter from './MealFilter';
 import type {CopyMeal} from './MealCopyForm';
@@ -86,6 +87,7 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
         onChange={e => {if (e.target.value && e.target.value !== date && confirmNavigation()) {setTransferEntryId(null);setEditor(null); setCopying(null); setSavingTemplate(null); onDateChange(e.target.value);}}}/></label></div>
     <MealFilter entries={entries} selected={selectedMeal} onSelect={selectMeal}/>
     <DailySummary totals={totals} fiberIncomplete={fiberIncomplete(entries)}/>
+    <DiaryDayCompletion key={date} date={date}/>
     <DailyExtras date={date}/>
     <div ref={mealsRef}>
     <div className="section-head"><h2>Mahlzeiten</h2>

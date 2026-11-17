@@ -1,0 +1,11 @@
+.day-completion { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 12px; color: #617368; cursor: pointer; }
+.day-completion input { width: 18px; height: 18px; margin: 0; accent-color: #315c46; flex-shrink: 0; }
+.day-completion--checked { color: #315c46; font-weight: 650; }
+.day-completion:has(input:disabled) { cursor: default; opacity: .65; }
+.diary-completion { display: flex; flex-wrap: wrap; align-items: center; gap: 0 16px; margin: 4px 0 12px; }
+.diary-completion > small { font-size: 11px; line-height: 1.5; color: #617368; }
+.weekly-day > .day-completion { border-top: 1px solid #e7ebe4; display: flex; }
+.week-average-filter { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
+.week-average-filter > label { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 13px; font-weight: 600; color: #315c46; cursor: pointer; }
+.week-average-filter input { width: 18px; height: 18px; margin: 0; accent-color: #315c46; flex-shrink: 0; }
+.week-average-filter .hint { margin: 4px 0 0; }

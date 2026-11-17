@@ -22,8 +22,9 @@ export function calendarWeek(date: string) {
   return {start, end: shiftDate(start, 6), number, year, dates: Array.from({length: 7}, (_, index) => shiftDate(start, index))};
 }
 
-export function summarizeWeek(entries: Entry[], weights: WeightRecord[], date: string, drinks: Drink[] = []) {
+export function summarizeWeek(entries: Entry[], weights: WeightRecord[], date: string, drinks: Drink[] = [], options: {completedDays?: string[]; onlyCompleted?: boolean} = {}) {
   const week = calendarWeek(date);
+  const completed = new Set(options.completedDays);
   const days = week.dates.map(date => {
     const matches = entries.filter(entry => entry.date === date);
     const totals = matches.reduce((sum, entry) => {
@@ -32,10 +33,11 @@ export function summarizeWeek(entries: Entry[], weights: WeightRecord[], date: s
       return sum;
     }, emptyTotals());
     const dayDrinks = drinks.filter(drink => drink.date === date);
-    return {date, count: matches.length, totals, fiberIncomplete: fiberIncomplete(matches), weight: weights.find(record => record.date === date)?.kg,
+    return {date, completed: completed.has(date), count: matches.length, totals, fiberIncomplete: fiberIncomplete(matches), weight: weights.find(record => record.date === date)?.kg,
       drinkCount: dayDrinks.length, drinkMl: dayDrinks.length ? dayDrinks.reduce((sum, drink) => sum + drink.ml, 0) : undefined};
   });
   const recorded = days.filter(day => day.count > 0);
+  const averaged = options.onlyCompleted ? recorded.filter(day => day.completed) : recorded;
   const measured = days.filter(day => day.weight !== undefined);
   const hydrated = days.filter(day => day.drinkMl !== undefined);
   const drinkTotalMl = hydrated.reduce((sum, day) => sum + day.drinkMl!, 0);
@@ -44,10 +46,14 @@ export function summarizeWeek(entries: Entry[], weights: WeightRecord[], date: s
     for (const key of Object.keys(sum) as (keyof NutritionTotals)[]) sum[key] += day.totals[key];
     return sum;
   }, emptyTotals());
-  const averages = recorded.length ? Object.fromEntries(Object.entries(totals).map(([key, value]) => [key, value / recorded.length])) as NutritionTotals : undefined;
+  const averageTotals = averaged.reduce((sum, day) => {
+    for (const key of Object.keys(sum) as (keyof NutritionTotals)[]) sum[key] += day.totals[key];
+    return sum;
+  }, emptyTotals());
+  const averages = averaged.length ? Object.fromEntries(Object.entries(averageTotals).map(([key, value]) => [key, value / averaged.length])) as NutritionTotals : undefined;
   const weightAverage = measured.length ? measured.reduce((sum, day) => sum + day.weight!, 0) / measured.length : undefined;
   const weightChange = measured.length > 1 ? Number((measured[measured.length - 1].weight! - measured[0].weight!).toFixed(3)) : undefined;
-  return {...week, days, totals, averages, fiberIncomplete: recorded.some(day => day.fiberIncomplete), weightAverage, weightChange, recordedDays: recorded.length, measuredDays: measured.length,
+  return {...week, days, totals, averages, fiberIncomplete: averaged.some(day => day.fiberIncomplete), weightAverage, weightChange, recordedDays: recorded.length, averagedDays: averaged.length, measuredDays: measured.length,
     drinkTotalMl, drinkAverageMl, drinkingDays: hydrated.length};
 }
 export type WeekSummary = ReturnType<typeof summarizeWeek>;
