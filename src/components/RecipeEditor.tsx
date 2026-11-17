@@ -11,8 +11,9 @@ import {useDraftGuard, useNavigationGuard} from './UnsavedChangesProvider';
 import {useImportDialog} from '../hooks/useImportDialog';
 import './RecipeEditor.css';
 
-export default function RecipeEditor({food,foods,existing,onSave,onClose}: {
+export default function RecipeEditor({food,foods,existing,onSave,onClose,copySource}: {
   food: Food;foods: Food[];existing: boolean;onSave: (food: Food) => Promise<void>;onClose: () => void;
+  copySource?: string;
 }) {
   const id=useId();
   const [name,setName]=useState(food.name);
@@ -61,8 +62,9 @@ export default function RecipeEditor({food,foods,existing,onSave,onClose}: {
   }
   return <div ref={dialog} tabIndex={-1} className="overlay" role="dialog" aria-modal="true" aria-labelledby={`${id}-title`}>
     <form ref={form} className="modal recipe-editor editor" noValidate onSubmit={submit} onFocusCapture={event=>{const input=event.target;if(input instanceof HTMLInputElement && input.inputMode==='decimal')input.select();}}>
-      <div className="recipe-editor__header"><h2 id={`${id}-title`}>Rezept {existing ? 'bearbeiten' : 'anlegen'}</h2><button type="button" className="iconbtn" aria-label="Rezept schließen" disabled={busy} onClick={close}><X size={18}/></button></div>
+      <div className="recipe-editor__header"><h2 id={`${id}-title`}>{copySource ? 'Rezept als Kopie bearbeiten' : `Rezept ${existing ? 'bearbeiten' : 'anlegen'}`}</h2><button type="button" className="iconbtn" aria-label="Rezept schließen" disabled={busy} onClick={close}><X size={18}/></button></div>
       <div className="recipe-editor__body">
+        {copySource && <p className="hint">Kopie von „{copySource}“. Das Original bleibt erhalten.</p>}
         <section className="recipe-editor__basics"><label>Rezeptname<input data-recipe-name aria-label="Rezeptname" aria-invalid={Boolean(errors.name) || undefined} aria-describedby={errors.name ? `${id}-name-error` : undefined} required placeholder="z. B. Gemüsepfanne" disabled={busy} value={name} onChange={event=>setName(event.target.value)}/>{errors.name && <span className="recipe-field-error" id={`${id}-name-error`}>{errors.name}</span>}</label>
           <label>Portionen<input data-recipe-servings aria-label="Anzahl der Portionen" aria-invalid={Boolean(errors.servings) || undefined} aria-describedby={errors.servings ? `${id}-servings-error` : undefined} type="text" inputMode="decimal" required disabled={busy} value={servings} onChange={event=>setServings(event.target.value)}/>{errors.servings && <span className="recipe-field-error" id={`${id}-servings-error`}>{errors.servings}</span>}</label></section>
         <RecipeIngredients foods={foods.filter(current=>current.id!==food.id)} ingredients={ingredients} disabled={busy} onChange={setIngredients} onPendingChange={setPending} error={ingredientError}/>
@@ -78,7 +80,7 @@ export default function RecipeEditor({food,foods,existing,onSave,onClose}: {
         {preview && <div className="recipe-preview"><div><span>Gesamtes Rezept</span><strong>{fmt(totals.kcal)} kcal</strong><small>{fmt(yieldGrams,2)} g · {fmt(count,2)} {count===1 ? 'Portion' : 'Portionen'}</small></div><div><span>Pro Portion</span><strong>{fmt(totals.kcal/count)} kcal</strong><small>Eiweiß {fmt(totals.protein/count)} g · KH {fmt(totals.carbs/count)} g · F {fmt(totals.fat/count)} g</small></div></div>}
       </div>
       <div className="recipe-editor__footer">{preview && <p className="recipe-editor__summary" aria-live="polite"><strong>{fmt(totals.kcal/count)} kcal</strong> pro Portion · {fmt(yieldGrams/count,2)} g</p>}
-        <button className="primary wide" disabled={busy}><Check size={17}/>{busy ? 'Wird gespeichert…' : 'Rezept speichern'}</button>
+        <button className="primary wide" disabled={busy}><Check size={17}/>{busy ? 'Wird gespeichert…' : copySource ? 'Kopie speichern' : 'Rezept speichern'}</button>
       </div>
     </form>
   </div>;

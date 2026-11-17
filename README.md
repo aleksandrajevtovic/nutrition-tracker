@@ -172,6 +172,8 @@ Für Getränke stehen Tageswerte, Wochensumme und Tagesdurchschnitt in Litern zu
 
 ## Eigene Rezepte
 
+Bei gespeicherten Rezepten öffnet „Als Kopie bearbeiten“ eine unabhängige Variante im Rezeptformular. Zutaten mit ihren gespeicherten Nährwerten, Mengen, Einheiten und Portionsgrößen sowie Portionsanzahl, Fertiggewicht und Zubereitungsnotizen werden übernommen. Der Name erhält zunächst „(Kopie)“ und kann geändert werden. Erst „Kopie speichern“ legt das neue Rezept an; Abbrechen legt nichts an. Das Original und bestehende Tagebucheinträge bleiben unverändert. Die Kopie erhält neue Rezept- und Zutaten-IDs; Favoritenmarkierung, Barcode und Produktimport-Kennzeichnung werden nicht übernommen.
+
 Unter „Produkte“ kannst du über „Neues Rezept“ Zutaten aus deiner Lebensmittelliste zusammenstellen. Mengen lassen sich in den für das Produkt konfigurierten Einheiten angeben. Lege die Anzahl der Portionen fest; Nährwerte für das gesamte Gericht und pro Portion werden automatisch berechnet, einschließlich Ballaststoffen und Zucker.
 
 Die Zutatenauswahl steht vor der Zutatenliste. Nach der Auswahl eines Lebensmittels springt der Fokus zur zunächst leeren Menge; „Zutat hinzufügen“ oder Enter übernimmt sie und führt zur Auswahl für die nächste Zutat zurück. Bereits hinzugefügte Zutaten erscheinen als kompakte, aufklappbare Karten mit Menge und Kalorien. Beim Wechsel der Einheit bleibt das tatsächliche Gewicht erhalten; die Auswahl einer anderen Portionsgröße verändert dagegen das Gewicht bei gleicher Portionsanzahl. Eine ausgewählte, noch nicht hinzugefügte Zutat muss vor dem Speichern hinzugefügt oder verworfen werden.

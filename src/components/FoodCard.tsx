@@ -1,13 +1,14 @@
 import {useState} from 'react';
-import {CookingPot, Pencil, Star, Trash2} from 'lucide-react';
+import {CookingPot, Copy, Pencil, Star, Trash2} from 'lucide-react';
 import type {Food} from '../db';
 import {fmt} from '../nutrition';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
 import './FoodCard.css';
 
-export default function FoodCard({food, onEdit, onDelete, onFavorite}: {
+export default function FoodCard({food, onEdit, onDelete, onFavorite, onDuplicateRecipe}: {
   food: Food; onEdit: (food: Food) => void; onDelete: (food: Food) => void; onFavorite: (id: string) => Promise<void>;
+  onDuplicateRecipe: (food: Food) => void;
 }) {
   const [busy, setBusy] = useState(false);
   const notify = useToast();
@@ -39,7 +40,8 @@ export default function FoodCard({food, onEdit, onDelete, onFavorite}: {
         food.gramsPerMl ? `1 ml = ${fmt(food.gramsPerMl, 3)} g` : '',
       ].filter(Boolean).join(' · ')}</small>
     </div>
-    <div className="actions">
+    <div className="actions food__actions">
+      {food.recipe && <button type="button" className="food__copy" onClick={() => onDuplicateRecipe(food)} aria-label={`${food.name} als Kopie bearbeiten`}><Copy size={16} aria-hidden="true"/>Als Kopie bearbeiten</button>}
       <button type="button" onClick={() => onEdit({...food})} title="Bearbeiten" aria-label={`${food.name} bearbeiten`}><Pencil size={17}/></button>
       <button type="button" onClick={() => onDelete(food)} title="Löschen" aria-label={`${food.name} löschen`}><Trash2 size={17}/></button>
     </div>

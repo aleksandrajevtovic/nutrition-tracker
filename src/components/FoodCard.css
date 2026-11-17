@@ -5,6 +5,9 @@
 .food__favorite[aria-pressed="true"] { background: #fff6df; color: #936619; border-color: #ebd7a5; }
 .food__favorite:hover { border-color: #9caf9e; }
 .food-list .food > .actions { justify-self: end; }
+.food__actions { flex-wrap: wrap; justify-content: flex-end; }
+.food__actions button.food__copy { display: inline-flex; align-items: center; justify-content: center; gap: 6px; width: auto; max-width: 100%; padding: 10px; font-size: 12px; }
+.food-list .food:has(.food__copy) > .actions { grid-column: 1 / -1; }
 .food-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
 .food-filters button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 10px 14px; border: 1px solid #dbe4dc; border-radius: 10px; background: white; color: #617368; font-size: 13px; }
 .food-filters button[aria-pressed="true"] { background: #e9f0e9; border-color: #b9d0bb; color: #315c46; font-weight: 700; }

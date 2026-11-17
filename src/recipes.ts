@@ -65,3 +65,10 @@ export function validRecipeFood(food: Food): boolean {
 }
 
 export const emptyRecipeFood = (): Food => ({...emptyFood(), brand: 'Eigenes Rezept', portionName: '1 Portion', recipe: {servings: 1, yieldGrams: 0, autoWeight: true, ingredients: [], instructions: ''}});
+
+export function duplicateRecipeFood(source: Food): Food {
+  if (!validRecipeFood(source)) throw Error('Dieses Lebensmittel ist kein gültiges Rezept.');
+  const {barcode: _barcode, source: _source, ...copy} = structuredClone(source);
+  return {...copy, id: crypto.randomUUID(), name: `${source.name} (Kopie)`, favorite: false, createdAt: new Date().toISOString(),
+    recipe: {...copy.recipe!, ingredients: copy.recipe!.ingredients.map(ingredient => ({...ingredient, id: crypto.randomUUID()}))}};
+}

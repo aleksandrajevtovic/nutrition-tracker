@@ -5,10 +5,11 @@ import {emptyFood} from '../nutrition';
 import {filterFoods} from '../foods';
 import FoodCard from './FoodCard';
 
-export default function FoodsPage({foods, onEdit, onDelete, onFavorite, onNewRecipe, onScan}: {
+export default function FoodsPage({foods, onEdit, onDelete, onFavorite, onNewRecipe, onScan, onDuplicateRecipe}: {
   foods: Food[]; onEdit: (food: Food) => void; onDelete: (food: Food) => void; onFavorite: (id: string) => Promise<void>;
   onNewRecipe: () => void;
   onScan: () => void;
+  onDuplicateRecipe: (food: Food) => void;
 }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'favorites' | 'recipes'>('all');
@@ -24,7 +25,7 @@ export default function FoodsPage({foods, onEdit, onDelete, onFavorite, onNewRec
       <button type="button" aria-pressed={filter === 'recipes'} onClick={() => setFilter('recipes')}><CookingPot size={16}/>Rezepte ({foods.filter(food => food.recipe).length})</button>
     </div>
     <p className="hint">Die Übersicht zeigt Nährwerte pro 100 g. Unter „Bearbeiten“ kannst du Werte auch pro Portion, pro 100 ml oder für eine eigene Menge eingeben und weitere Portionsgrößen festlegen.</p>
-    {filtered.length ? <div className="food-list">{filtered.map(food => <FoodCard key={food.id} food={food} onEdit={onEdit} onDelete={onDelete} onFavorite={onFavorite}/>)}</div>
+    {filtered.length ? <div className="food-list">{filtered.map(food => <FoodCard key={food.id} food={food} onEdit={onEdit} onDelete={onDelete} onFavorite={onFavorite} onDuplicateRecipe={onDuplicateRecipe}/>)}</div>
       : <div className="empty"><Star size={26}/><strong>{filter === 'favorites' ? 'Keine passenden Favoriten' : filter === 'recipes' ? 'Noch keine passenden Rezepte' : 'Keine Lebensmittel gefunden'}</strong><p>{filter === 'favorites' ? 'Markiere Lebensmittel mit dem Stern oder passe deine Suche an.' : filter === 'recipes' ? 'Lege über „Neues Rezept“ dein erstes Gericht an oder passe deine Suche an.' : 'Passe deine Suche an oder lege ein neues Lebensmittel an.'}</p></div>}
   </>;
 }
