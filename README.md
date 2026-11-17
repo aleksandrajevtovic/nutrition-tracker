@@ -172,6 +172,8 @@ Für Getränke stehen Tageswerte, Wochensumme und Tagesdurchschnitt in Litern zu
 
 ## Eigene Rezepte
 
+In der Zutatensuche bietet „Lebensmittel anlegen“ das Anlegen eines fehlenden Produkts an, auch bei einer leeren Ergebnisliste. Der Suchtext wird als Name vorgeschlagen. Das Rezept mit allen Eingaben bleibt währenddessen erhalten. „Speichern und zum Rezept“ speichert das Lebensmittel in der Produktliste, wählt es als neue Zutat aus und führt zur leeren Mengeneingabe zurück. Erst „Zutat hinzufügen“ übernimmt die gewünschte Menge ins Rezept. Beim Abbrechen bleiben die bisherigen Rezeptangaben und eine zuvor ausgewählte Zutat samt Menge erhalten. Ungespeicherte Produkteingaben sind separat geschützt. Ein bereits gespeichertes neues Lebensmittel bleibt in der Produktliste, auch wenn das Rezept anschließend verworfen wird.
+
 Bei gespeicherten Rezepten öffnet „Als Kopie bearbeiten“ eine unabhängige Variante im Rezeptformular. Zutaten mit ihren gespeicherten Nährwerten, Mengen, Einheiten und Portionsgrößen sowie Portionsanzahl, Fertiggewicht und Zubereitungsnotizen werden übernommen. Der Name erhält zunächst „(Kopie)“ und kann geändert werden. Erst „Kopie speichern“ legt das neue Rezept an; Abbrechen legt nichts an. Das Original und bestehende Tagebucheinträge bleiben unverändert. Die Kopie erhält neue Rezept- und Zutaten-IDs; Favoritenmarkierung, Barcode und Produktimport-Kennzeichnung werden nicht übernommen.
 
 Unter „Produkte“ kannst du über „Neues Rezept“ Zutaten aus deiner Lebensmittelliste zusammenstellen. Mengen lassen sich in den für das Produkt konfigurierten Einheiten angeben. Lege die Anzahl der Portionen fest; Nährwerte für das gesamte Gericht und pro Portion werden automatisch berechnet, einschließlich Ballaststoffen und Zucker.

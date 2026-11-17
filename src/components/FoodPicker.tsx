@@ -1,13 +1,13 @@
 import {useEffect, useId, useRef, useState, type KeyboardEvent} from 'react';
-import {Check, ChevronDown, Search, Star} from 'lucide-react';
+import {Check, ChevronDown, Plus, Search, Star} from 'lucide-react';
 import type {Food} from '../db';
 import {filterFoods} from '../foods';
 import './FoodPicker.css';
 
-type Props = {foods: Food[]; selected?: Food; onChange: (food: Food) => void; disabled?: boolean};
+type Props = {foods: Food[]; selected?: Food; onChange: (food: Food) => void; disabled?: boolean; onCreate?: (name: string) => void};
 const foodLabel = (food: Food) => food.brand ? `${food.brand} · ${food.name}` : food.name;
 
-export default function FoodPicker({foods, selected, onChange, disabled = false}: Props) {
+export default function FoodPicker({foods, selected, onChange, disabled = false, onCreate}: Props) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -65,7 +65,9 @@ export default function FoodPicker({foods, selected, onChange, disabled = false}
     }
   }
 
-  return <div className="food-picker" ref={root} onBlur={event => {
+  return <div className="food-picker" ref={root} onKeyDown={event => {
+    if (open && event.key === 'Escape') {event.preventDefault();event.stopPropagation();setOpen(false);trigger.current?.focus();}
+  }} onBlur={event => {
     if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
   }}>
     <label htmlFor={`${id}-trigger`}>Lebensmittel</label>
@@ -101,6 +103,10 @@ export default function FoodPicker({foods, selected, onChange, disabled = false}
         </div>)}
       </div>
       {filtered.length === 0 && <p className="food-picker__empty" role="status">Keine Lebensmittel gefunden.</p>}
+      {onCreate && <div className="food-picker__create"><button type="button" disabled={disabled} onClick={() => {
+        if (disabled) return;
+        setOpen(false);onCreate(query.trim());
+      }}><Plus size={17} aria-hidden="true"/>Lebensmittel anlegen</button></div>}
     </div>}
   </div>;
 }

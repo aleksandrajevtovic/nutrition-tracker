@@ -17,9 +17,10 @@ import './FoodEditor.css';
 
 const referenceMode = (reference: NutritionReference) => reference.unit === 'portion' ? 'portion' : reference.unit === 'ml' ? '100ml' : reference.amount === 100 ? '100g' : 'custom';
 
-export default function FoodEditor({food,existing,onSave,onClose,onSaveAndUse,importReview}: {
+export default function FoodEditor({food,existing,onSave,onClose,onSaveAndUse,importReview,saveLabel,description}: {
   food: Food;existing: boolean;onSave: (food: Food) => Promise<void>;onClose: () => void;
   onSaveAndUse?: (food: Food) => Promise<void>;importReview?: ImportedProduct;
+  saveLabel?: string;description?: string;
 }) {
   const prefix = useId();const notify = useToast();
   const [reference,setReference] = useState<NutritionReference>(food.nutritionReference ?? defaultReference);
@@ -74,6 +75,7 @@ export default function FoodEditor({food,existing,onSave,onClose,onSaveAndUse,im
     }}>
       <div className="food-editor__header"><h2 id={`${prefix}-title`}>Lebensmittel {existing ? 'bearbeiten' : 'anlegen'}</h2><button type="button" className="iconbtn" aria-label="Schließen" disabled={saving} onClick={() => {if(guard.confirmLeave())onClose();}}>×</button></div>
       <div className="food-editor__body">
+        {description && <p className="hint">{description}</p>}
         <section className="food-editor__section food-editor__product" aria-labelledby={`${prefix}-product-title`}><h3 id={`${prefix}-product-title`}>Produkt</h3>
           <div className="food-editor__product-fields"><label>Name<input {...foodFieldProps('name',errors,prefix)} aria-label="Name" autoComplete="off" required placeholder="z. B. Naturjoghurt" disabled={saving} value={draft.name} onChange={event => setDraft({...draft,name:event.target.value})}/><FoodFieldError field="name" errors={errors} prefix={prefix}/></label>
             <label>Marke <span className="food-editor__optional">optional</span><input aria-label="Marke (optional)" disabled={saving} value={draft.brand} onChange={event => setDraft({...draft,brand:event.target.value})}/></label></div>
@@ -108,7 +110,7 @@ export default function FoodEditor({food,existing,onSave,onClose,onSaveAndUse,im
       </div>
       <div className="food-editor__footer">
         {isPositive(grams) && Number.isFinite(normalized.kcal) && isPositive(draft.portionGrams) && <p className="hint food-editor__preview" aria-live="polite">{fmt(normalized.kcal*draft.portionGrams/100,2)} kcal pro Portion · {fmt(draft.portionGrams,3)} g</p>}
-        <div className="food-editor__save-actions"><button className={onSaveAndUse ? 'secondary wide' : 'primary wide'} disabled={saving} value="save"><Check size={17}/>{saving ? 'Wird gespeichert…' : 'Produkt speichern'}</button>{onSaveAndUse && <button className="primary wide" disabled={saving} value="use">Speichern und zum Tag hinzufügen</button>}</div>
+        <div className="food-editor__save-actions"><button className={onSaveAndUse ? 'secondary wide' : 'primary wide'} disabled={saving} value="save"><Check size={17}/>{saving ? 'Wird gespeichert…' : saveLabel ?? 'Produkt speichern'}</button>{onSaveAndUse && <button className="primary wide" disabled={saving} value="use">Speichern und zum Tag hinzufügen</button>}</div>
       </div>
     </form>
   </div>;

@@ -48,7 +48,7 @@ export default function App() {
       <button className={tab === 'settings' ? 'active' : ''} aria-label="Datensicherung" onClick={() => navigate('settings')}><Settings size={20}/><span className="nav-label-short">Sicherung</span><span className="nav-label-full">Datensicherung</span></button>
     </nav>
     {importing && <ProductImport foods={data.foods} onSave={data.persistFood} onClose={() => setImporting(false)}/>}
-    {editing && (editing.recipe ? <RecipeEditor key={editing.id} food={editing} foods={data.foods} existing={data.foods.some(f => f.id === editing.id)} copySource={recipeCopySource}
+    {editing && (editing.recipe ? <RecipeEditor key={editing.id} food={editing} foods={data.foods} existing={data.foods.some(f => f.id === editing.id)} copySource={recipeCopySource} onSaveFood={data.persistFood}
       onClose={() => setEditing(null)} onSave={async food => {await data.persistFood(food); setEditing(null);}}/>
       : <FoodEditor key={editing.id} food={editing} existing={data.foods.some(f => f.id === editing.id)}
         onClose={() => setEditing(null)} onSave={async food => {await data.persistFood(food); setEditing(null);}}/>)}

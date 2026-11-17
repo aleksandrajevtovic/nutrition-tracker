@@ -1,11 +1,14 @@
 import {useEffect, useRef} from 'react';
 
 // Keep keyboard interaction inside the active import/editor dialog and restore its trigger.
-export function useImportDialog(onClose: () => void) {
+export function useImportDialog(onClose: () => void, active = true) {
   const ref = useRef<HTMLDivElement>(null);
+  const opener = useRef<HTMLElement | null | undefined>(undefined);
+  const latestActive = useRef(active); latestActive.current = active;
   const latestClose = useRef(onClose); latestClose.current = onClose;
   useEffect(() => {
-    const trigger = document.activeElement as HTMLElement | null;
+    if (!active) return;
+    if (opener.current === undefined) opener.current = document.activeElement as HTMLElement | null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     ref.current?.focus();
@@ -19,7 +22,7 @@ export function useImportDialog(onClose: () => void) {
       else if (!event.shiftKey && (document.activeElement === last || document.activeElement === ref.current)) {event.preventDefault();first.focus();}
     };
     document.addEventListener('keydown', keydown);
-    return () => {document.removeEventListener('keydown', keydown);document.body.style.overflow = previousOverflow;if(trigger?.isConnected) trigger.focus({preventScroll:true});};
-  }, []);
+    return () => {document.removeEventListener('keydown', keydown);document.body.style.overflow = previousOverflow;if(latestActive.current && opener.current?.isConnected) opener.current.focus({preventScroll:true});};
+  }, [active]);
   return ref;
 }

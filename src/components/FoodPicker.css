@@ -42,3 +42,6 @@
 .food-picker__group-title { padding: 10px 14px 5px; color: #617368; font-size: 11px; font-weight: 750; letter-spacing: .5px; }
 .food-picker__name { display: flex; align-items: center; gap: 7px; }
 .food-picker__name > svg { flex-shrink: 0; color: #936619; }
+.food-picker__create { padding: 8px; border-top: 1px solid #e7ebe4; }
+.food-picker__create button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; width: 100%; padding: 10px; border: 0; border-radius: 8px; background: #edf4ed; color: #315c46; font-size: 13px; font-weight: 600; }
+.food-picker__create button > svg { flex-shrink: 0; }

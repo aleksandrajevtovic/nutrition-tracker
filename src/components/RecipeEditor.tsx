@@ -1,19 +1,21 @@
 import {useId, useRef, useState} from 'react';
 import {Check, ChevronDown, X} from 'lucide-react';
 import type {Food} from '../db';
-import {fiberIncomplete, fmt, isPositive} from '../nutrition';
+import {emptyFood, fiberIncomplete, fmt, isPositive} from '../nutrition';
 import {buildRecipeFood, recipeTotals, validIngredient, type RecipeIngredient} from '../recipes';
 import {parseWeight} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
 import RecipeIngredients from './RecipeIngredients';
+import FoodEditor from './FoodEditor';
 import {useDraftGuard, useNavigationGuard} from './UnsavedChangesProvider';
 import {useImportDialog} from '../hooks/useImportDialog';
 import './RecipeEditor.css';
 
-export default function RecipeEditor({food,foods,existing,onSave,onClose,copySource}: {
+export default function RecipeEditor({food,foods,existing,onSave,onClose,copySource,onSaveFood}: {
   food: Food;foods: Food[];existing: boolean;onSave: (food: Food) => Promise<void>;onClose: () => void;
   copySource?: string;
+  onSaveFood: (food: Food) => Promise<void>;
 }) {
   const id=useId();
   const [name,setName]=useState(food.name);
@@ -21,6 +23,8 @@ export default function RecipeEditor({food,foods,existing,onSave,onClose,copySou
   const [finishedWeight,setFinishedWeight]=useState(food.recipe?.yieldGrams && !food.recipe.autoWeight ? String(food.recipe.yieldGrams).replace('.',',') : '');
   const [ingredients,setIngredients]=useState<RecipeIngredient[]>(food.recipe?.ingredients ?? []);
   const [instructions,setInstructions]=useState(food.recipe?.instructions ?? '');
+  const [creatingFood,setCreatingFood]=useState<Food | null>(null);
+  const [createdFood,setCreatedFood]=useState<Food>();
   const [weightOpen,setWeightOpen]=useState(Boolean(finishedWeight));
   const [notesOpen,setNotesOpen]=useState(Boolean(instructions));
   const [pending,setPending]=useState(false),[attempted,setAttempted]=useState(false),[busy,setBusy]=useState(false);
@@ -28,7 +32,7 @@ export default function RecipeEditor({food,foods,existing,onSave,onClose,copySou
   const notify=useToast(),confirmNavigation=useNavigationGuard();
   const guard=useDraftGuard('Rezept',{name,servings,finishedWeight,ingredients,instructions},busy,'recipe-editor');
   const close=()=>{if(confirmNavigation(['recipe-editor','recipe-ingredient']))onClose();};
-  const dialog=useImportDialog(close);
+  const dialog=useImportDialog(close,!creatingFood);
   const totals=recipeTotals(ingredients),count=parseWeight(servings);
   const yieldGrams=finishedWeight.trim() ? parseWeight(finishedWeight) : totals.grams;
   const validIngredients=ingredients.length>0 && ingredients.every(validIngredient);
@@ -38,7 +42,7 @@ export default function RecipeEditor({food,foods,existing,onSave,onClose,copySou
   const ingredientError=attempted ? pending ? 'Bitte die ausgewählte Zutat zuerst hinzufügen oder verwerfen.' : !ingredients.length ? 'Bitte mindestens eine Zutat hinzufügen.' : !validIngredients ? 'Bitte die markierten Zutatenmengen prüfen.' : undefined : undefined;
 
   async function submit(event: React.FormEvent<HTMLFormElement>){
-    event.preventDefault();event.stopPropagation();if(saving.current)return;setAttempted(true);
+    event.preventDefault();event.stopPropagation();if(saving.current || creatingFood)return;setAttempted(true);
     if(!name.trim() || !isPositive(count) || !preview || pending){
       notify('Bitte die markierten Angaben prüfen.','error');
       window.requestAnimationFrame(()=>{
@@ -60,14 +64,15 @@ export default function RecipeEditor({food,foods,existing,onSave,onClose,copySou
     }catch(error){notify(germanError(error),'error');}
     finally{saving.current=false;setBusy(false);}
   }
-  return <div ref={dialog} tabIndex={-1} className="overlay" role="dialog" aria-modal="true" aria-labelledby={`${id}-title`}>
+  return <><div ref={dialog} tabIndex={-1} className="overlay" role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} inert={Boolean(creatingFood)} style={creatingFood ? {display:'none'} : undefined}>
     <form ref={form} className="modal recipe-editor editor" noValidate onSubmit={submit} onFocusCapture={event=>{const input=event.target;if(input instanceof HTMLInputElement && input.inputMode==='decimal')input.select();}}>
       <div className="recipe-editor__header"><h2 id={`${id}-title`}>{copySource ? 'Rezept als Kopie bearbeiten' : `Rezept ${existing ? 'bearbeiten' : 'anlegen'}`}</h2><button type="button" className="iconbtn" aria-label="Rezept schließen" disabled={busy} onClick={close}><X size={18}/></button></div>
       <div className="recipe-editor__body">
         {copySource && <p className="hint">Kopie von „{copySource}“. Das Original bleibt erhalten.</p>}
         <section className="recipe-editor__basics"><label>Rezeptname<input data-recipe-name aria-label="Rezeptname" aria-invalid={Boolean(errors.name) || undefined} aria-describedby={errors.name ? `${id}-name-error` : undefined} required placeholder="z. B. Gemüsepfanne" disabled={busy} value={name} onChange={event=>setName(event.target.value)}/>{errors.name && <span className="recipe-field-error" id={`${id}-name-error`}>{errors.name}</span>}</label>
           <label>Portionen<input data-recipe-servings aria-label="Anzahl der Portionen" aria-invalid={Boolean(errors.servings) || undefined} aria-describedby={errors.servings ? `${id}-servings-error` : undefined} type="text" inputMode="decimal" required disabled={busy} value={servings} onChange={event=>setServings(event.target.value)}/>{errors.servings && <span className="recipe-field-error" id={`${id}-servings-error`}>{errors.servings}</span>}</label></section>
-        <RecipeIngredients foods={foods.filter(current=>current.id!==food.id)} ingredients={ingredients} disabled={busy} onChange={setIngredients} onPendingChange={setPending} error={ingredientError}/>
+        <RecipeIngredients foods={foods.filter(current=>current.id!==food.id)} ingredients={ingredients} disabled={busy} onChange={setIngredients} onPendingChange={setPending} error={ingredientError}
+          onCreateFood={name=>setCreatingFood({...emptyFood(),name})} createdFood={createdFood}/>
         {fiberIncomplete(ingredients) && <p className="hint">Ballaststoffe sind nicht für alle Zutaten angegeben. Der Ballaststoffwert des Rezepts ist unvollständig.</p>}
         <details className="recipe-editor__details" open={weightOpen} onToggle={event=>setWeightOpen(event.currentTarget.open)}><summary><span>Fertiges Gesamtgewicht<small>{finishedWeight.trim() ? isPositive(yieldGrams) ? `${fmt(yieldGrams,2)} g` : 'Gewicht prüfen' : `Automatisch${isPositive(totals.grams) ? ` · ${fmt(totals.grams,2)} g` : ''}`}</small></span><ChevronDown size={17} aria-hidden="true"/></summary>
           <label>Fertiges Gesamtgewicht in g <span className="recipe-editor__optional">optional</span><input data-recipe-weight aria-label="Fertiges Gesamtgewicht in g (optional)" aria-invalid={Boolean(errors.weight) || undefined} aria-describedby={`${id}-weight-hint${errors.weight ? ` ${id}-weight-error` : ''}`} type="text" inputMode="decimal" disabled={busy} placeholder={isPositive(totals.grams) ? fmt(totals.grams,2) : 'Summe der Zutatengewichte'} value={finishedWeight} onChange={event=>setFinishedWeight(event.target.value)}/>{errors.weight && <span className="recipe-field-error" id={`${id}-weight-error`}>{errors.weight}</span>}</label>
@@ -83,5 +88,13 @@ export default function RecipeEditor({food,foods,existing,onSave,onClose,copySou
         <button className="primary wide" disabled={busy}><Check size={17}/>{busy ? 'Wird gespeichert…' : copySource ? 'Kopie speichern' : 'Rezept speichern'}</button>
       </div>
     </form>
-  </div>;
+  </div>
+    {creatingFood && <FoodEditor key={creatingFood.id} food={creatingFood} existing={false} saveLabel="Speichern und zum Rezept" description="Dein Rezept bleibt erhalten. Nach dem Speichern wählst du die Menge dieser Zutat."
+      onClose={()=>{
+        setCreatingFood(null);
+        window.requestAnimationFrame(()=>form.current?.querySelector<HTMLButtonElement>('.food-picker__trigger')?.focus());
+      }} onSave={async created=>{
+        await onSaveFood(created);setCreatedFood(created);setCreatingFood(null);
+      }}/>}
+  </>;
 }

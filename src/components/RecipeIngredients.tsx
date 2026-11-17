@@ -11,9 +11,10 @@ import RecipeIngredientCard from './RecipeIngredientCard';
 import {useToast} from './ToastProvider';
 import {useDraftGuard} from './UnsavedChangesProvider';
 
-export default function RecipeIngredients({foods,ingredients,disabled,onChange,onPendingChange,error}: {
+export default function RecipeIngredients({foods,ingredients,disabled,onChange,onPendingChange,error,onCreateFood,createdFood}: {
   foods: Food[];ingredients: RecipeIngredient[];disabled: boolean;onChange: (ingredients: RecipeIngredient[]) => void;
   onPendingChange: (pending: boolean) => void;error?: string;
+  onCreateFood: (name: string) => void;createdFood?: Food;
 }) {
   const [selected,setSelected]=useState<Food>();
   const [amount,setAmount]=useState('');
@@ -24,6 +25,11 @@ export default function RecipeIngredients({foods,ingredients,disabled,onChange,o
   const pending=Boolean(selected || amount || unit!=='g');
   useDraftGuard('Noch nicht hinzugefügte Rezeptzutat',{selected,amount,unit},false,'recipe-ingredient');
   useEffect(()=>{onPendingChange(pending);},[pending,onPendingChange]);
+  useEffect(()=>{
+    if (!createdFood) return;
+    setSelected(createdFood);setUnit('g');setAmount('');setLastAdded('');
+    window.requestAnimationFrame(()=>amountInput.current?.focus());
+  },[createdFood]);
   const quantity=parseWeight(amount),grams=selected ? toGrams(selected,quantity,unit) : NaN;
   const valid=Boolean(selected && isPositive(quantity) && isPositive(grams));
   function clear(){setSelected(undefined);setAmount('');setUnit('g');}
@@ -35,7 +41,7 @@ export default function RecipeIngredients({foods,ingredients,disabled,onChange,o
   }
   return <section className="recipe-ingredients" aria-labelledby="recipe-ingredients-title"><h3 id="recipe-ingredients-title">Zutaten <span className="recipe-ingredients__count">{ingredients.length}</span></h3>
     <div ref={composer} className="recipe-add" data-recipe-composer onKeyDown={event=>{if(event.key==='Enter' && !event.defaultPrevented && event.target===amountInput.current){event.preventDefault();add();}}}>
-      <FoodPicker foods={foods} selected={selected} disabled={disabled} onChange={food=>{if(disabled)return;setSelected(food);setUnit('g');setAmount('');setLastAdded('');window.requestAnimationFrame(()=>amountInput.current?.focus());}}/>
+      <FoodPicker foods={foods} selected={selected} disabled={disabled} onCreate={onCreateFood} onChange={food=>{if(disabled)return;setSelected(food);setUnit('g');setAmount('');setLastAdded('');window.requestAnimationFrame(()=>amountInput.current?.focus());}}/>
       {selected && <><div className="quantity-fields"><label>Menge<input ref={amountInput} type="text" inputMode="decimal" autoComplete="off" aria-label="Menge der neuen Zutat" value={amount} placeholder="z. B. 150" disabled={disabled} onChange={event=>setAmount(event.target.value)}/></label>
         <label>Einheit<select value={unit} aria-label="Einheit der neuen Zutat" disabled={disabled} onChange={event=>{
           const next=event.target.value as Unit,factor=gramsPerUnit(selected,next);if(isPositive(grams) && isPositive(factor))setAmount(String(Number((grams/factor).toPrecision(12))).replace('.',','));setUnit(next);
