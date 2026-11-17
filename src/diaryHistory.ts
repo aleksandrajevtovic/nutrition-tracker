@@ -4,6 +4,12 @@ import {portionOptions, selectPortion} from './foodValues';
 import {validDate} from './weight';
 
 export type RecentFood = {food: Food; amount: number; unit: Unit; grams: number};
+export function scaleRecentAmount(item: RecentFood, factor: number): RecentFood | undefined {
+  if (!isPositive(factor)) return undefined;
+  const amount = item.amount * factor;
+  const grams = toGrams(item.food, amount, item.unit);
+  return isPositive(amount) && isPositive(grams) ? {...item, amount, grams} : undefined;
+}
 const newestFirst = (a: Entry, b: Entry) => b.createdAt.localeCompare(a.createdAt) || b.date.localeCompare(a.date) || b.id.localeCompare(a.id);
 
 export function recentFoods(entries: Entry[], foods: Food[], limit = 6): RecentFood[] {

@@ -1,13 +1,12 @@
 import {announceDataChange, dbPromise, getDataRevision, type Entry} from './db';
 import {duplicateMeal} from './diary';
 import {validDate} from './weight';
+import {entrySignature as signature} from './entrySignature';
 
 export type EntryTransferMode = 'copy' | 'move';
 export type TransferEntry = (source: Entry, date: string, meal: string, mode: EntryTransferMode) => Promise<Entry>;
 export type EntryTransferResult = {before: Entry;after: Entry;mode: EntryTransferMode;revision: number};
 
-const signature = (entry: Entry) => JSON.stringify(entry, (_key,value) => value && typeof value === 'object' && !Array.isArray(value)
-  ? Object.fromEntries(Object.keys(value).sort().map(key=>[key,value[key]])) : value);
 function announce() {
   announceDataChange();
   if(typeof window!=='undefined')window.dispatchEvent(new Event('nutrition-diary-changed'));

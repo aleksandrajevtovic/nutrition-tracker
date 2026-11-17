@@ -4,7 +4,7 @@ import {germanError} from '../german';
 import './Toast.css';
 
 type ToastType = 'success' | 'error';
-type ToastAction = {label: string; onClick: () => void | Promise<void>};
+type ToastAction = {label: string; onClick: () => void | false | Promise<void | false>};
 type Toast = {id: string; message: string; type: ToastType; action?: ToastAction};
 type Notify = (message: string, type: ToastType, action?: ToastAction) => void;
 const ToastContext = createContext<Notify | null>(null);
@@ -31,7 +31,7 @@ function ToastItem({toast, onDismiss}: {toast: Toast; onDismiss: (id: string) =>
   async function runAction() {
     if (!toast.action || running.current) return;
     running.current = true; setBusy(true);
-    try {await toast.action.onClick(); onDismiss(toast.id);}
+    try {if (await toast.action.onClick() !== false) onDismiss(toast.id);}
     catch (error) {notify(germanError(error), 'error');}
     finally {running.current = false; setBusy(false);}
   }

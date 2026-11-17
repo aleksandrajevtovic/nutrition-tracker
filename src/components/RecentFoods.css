@@ -2,8 +2,11 @@
 .recent-foods > summary { display: flex; align-items: center; gap: 7px; min-height: 32px; font-size: 13px; font-weight: 700; color: #315c46; cursor: pointer; }
 .recent-foods > summary::after { content: '−'; margin-left: auto; }
 .recent-foods:not([open]) > summary::after { content: '+'; }
-.recent-foods__list { display: grid; gap: 6px; max-height: 200px; overflow-y: auto; overscroll-behavior: contain; }
-.recent-foods__item { display: flex; align-items: center; gap: 6px; padding: 4px; border-radius: 8px; background: white; }
+.recent-foods__list { display: grid; gap: 6px; max-height: min(360px, 50dvh); overflow-y: auto; overscroll-behavior: contain; }
+.recent-foods__item { display: grid; gap: 6px; padding: 6px; border-radius: 8px; background: white; }
 .recent-foods__select { flex: 1; min-width: 0; min-height: 44px; border: 0; padding: 5px; text-align: left; background: transparent; color: #22332a; }
 .recent-foods__select strong { display: block; font-size: 13px; overflow-wrap: anywhere; }
 .recent-foods__select span { display: block; margin-top: 3px; font-size: 12px; color: #617368; overflow-wrap: anywhere; }
+.recent-foods__amount-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.recent-foods__amount-actions button { min-width: 0; min-height: 44px; padding: 8px; border: 1px solid #dbe4dc; border-radius: 8px; background: #f1f5ef; color: #315c46; font-size: 13px; font-weight: 650; }
+@media (min-width: 640px) { .recent-foods__item { grid-template-columns: minmax(0, 1fr) 150px; align-items: center; } }

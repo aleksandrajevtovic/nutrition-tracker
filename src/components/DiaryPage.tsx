@@ -46,6 +46,34 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
   });
   const view = useDiaryView();
   const confirmNavigation = useNavigationGuard();
+  useEffect(() => {
+    const requestUndo = (event: Event) => {
+      const restored = (event as CustomEvent<Pick<Entry, 'id' | 'date' | 'meal'>>).detail;
+      const switching = restored.date === date && selectedMeal !== null && selectedMeal !== restored.meal;
+      const hiddenEntries = switching ? entries.filter(entry => entry.meal !== restored.meal) : [];
+      const scopes = [`quantity:${restored.id}`, `entry-transfer:${restored.id}`, ...(editor?.entry?.id === restored.id ? ['entry-editor'] : []),
+        ...hiddenEntries.flatMap(entry => [`quantity:${entry.id}`, `entry-transfer:${entry.id}`]),
+        ...(switching && copying !== restored.meal ? ['meal-copy'] : []), ...(switching && savingTemplate !== restored.meal ? ['template-save'] : [])];
+      if (!confirmNavigation(scopes)) event.preventDefault();
+    };
+    const undone = (event: Event) => {
+      const restored = (event as CustomEvent<Pick<Entry, 'id' | 'date' | 'meal'>>).detail;
+      setEditor(current => current?.entry?.id === restored.id ? null : current);
+      setTransferEntryId(current => current === restored.id ? null : current);
+      if (restored.date === date) {
+        if (selectedMeal !== null && selectedMeal !== restored.meal) {
+          setCopying(current => current === restored.meal ? current : null);
+          setSavingTemplate(current => current === restored.meal ? current : null);
+          setTransferEntryId(current => entries.some(entry => entry.id === current && entry.meal !== restored.meal) ? null : current);
+        }
+        setSelectedMeal(current => current === null ? null : restored.meal);
+        expandMeal(restored.meal);
+      }
+    };
+    window.addEventListener('nutrition-entry-edit-undo-request', requestUndo);
+    window.addEventListener('nutrition-entry-edit-undone', undone);
+    return () => {window.removeEventListener('nutrition-entry-edit-undo-request', requestUndo);window.removeEventListener('nutrition-entry-edit-undone', undone);};
+  }, [editor, confirmNavigation, date, selectedMeal, entries, copying, savingTemplate]);
   const changeDate = (value: string) => {
     if (!validDate(value) || value === date || !confirmNavigation()) return;
     setTransferEntryId(null);setEditor(null);setCopying(null);setSavingTemplate(null);onDateChange(value);

@@ -1,8 +1,8 @@
 import {germanError} from '../german';
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {copyMealEntries, listEntries, listFoods, removeEntry, removeFood, saveEntry, saveFood, toggleFoodFavorite, type Entry, type Food} from '../db';
+import {copyMealEntries, listEntries, listFoods, removeEntry, removeFood, saveFood, toggleFoodFavorite, type Entry, type Food} from '../db';
 import {getDataRevision, restoreDeletedEntry, restoreDeletedFood} from '../db';
-import {changeEntryAmount} from '../db';
+import {changeEntryAmountWithUndo, requestEntryEditUndo, saveEntryWithUndo, undoEntryEdit, type EntryEdit} from '../entryEdits';
 import {weightDate} from '../weight';
 import {useToast} from '../components/ToastProvider';
 import {transferEntry as performEntryTransfer, undoEntryTransfer, type TransferEntry} from '../entryTransfer';
@@ -47,6 +47,12 @@ export function useNutritionData(date: string) {
     return () => window.removeEventListener('nutrition-diary-changed', updated);
   }, [ready, refreshEntries, setError]);
 
+  const undoAction = (change?: EntryEdit) => change ? {label: 'Rückgängig', onClick: async () => {
+    if (!requestEntryEditUndo(change.before)) return false;
+    await undoEntryEdit(change);await refreshEntries().catch(error => setError(germanError(error)));
+    notify('Änderung am Eintrag rückgängig gemacht.', 'success');
+  }} : undefined;
+
   return {
     foods, entries, ready, error,
     reload: async () => {await refreshFoods(); await refreshEntries();},
@@ -78,19 +84,19 @@ export function useNutritionData(date: string) {
       } catch (e) {setError(germanError(e));}
     },
     persistEntry: async (entry: Entry, conversions: Partial<Food>) => {
-      const existing = entries.some(e => e.id === entry.id);
       const currentFood = foods.find(f => f.id === entry.foodId);
       if (currentFood && Object.keys(conversions).length) {
         await saveFood({...currentFood, ...conversions}); await refreshFoods();
       }
-      await saveEntry(entry); await refreshEntries();
-      notify(existing ? 'Eintrag erfolgreich bearbeitet.' : 'Eintrag erfolgreich hinzugefügt.', 'success');
+      const result = await saveEntryWithUndo(entry);
+      await refreshEntries().catch(error => setError(germanError(error)));
+      notify(result.change ? 'Eintrag erfolgreich bearbeitet.' : entries.some(value => value.id === entry.id) ? 'Eintrag erfolgreich gespeichert.' : 'Eintrag erfolgreich hinzugefügt.', 'success', undoAction(result.change));
     },
     persistQuantity: async (id: string, amount: number) => {
-      const updated = await changeEntryAmount(id, amount);
-      await refreshEntries();
-      notify('Menge aktualisiert.', 'success');
-      return updated;
+      const result = await changeEntryAmountWithUndo(id, amount);
+      await refreshEntries().catch(error => setError(germanError(error)));
+      notify('Menge aktualisiert.', 'success', undoAction(result.change));
+      return result.entry;
     },
     transferEntry: (async (source, targetDate, targetMeal, mode) => {
       const result=await performEntryTransfer(source,targetDate,targetMeal,mode);
