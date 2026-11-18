@@ -1,4 +1,5 @@
-import {useState} from 'react';
+import {useDraftState} from './DraftRecoveryProvider';
+
 import {Target} from 'lucide-react';
 import {fmt, stats} from '../nutrition';
 import {goalFields, goalProgress} from '../goals';
@@ -24,7 +25,7 @@ export function GoalProgress({current, target, label, unit}: {current: number; t
 
 export default function DailySummary({totals, fiberIncomplete = false}: {totals: ReturnType<typeof stats>; fiberIncomplete?: boolean}) {
   const data = useDailyGoals();
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useDraftState('DailySummary:editing', false);
   const confirmNavigation = useNavigationGuard();
   const editorRef = useScrollReveal<HTMLDivElement>(editing);
   const hasGoals = Object.keys(data.goals).length > 0;

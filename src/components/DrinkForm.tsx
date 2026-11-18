@@ -1,4 +1,5 @@
-import {useId, useState} from 'react';
+import {useDraftState} from './DraftRecoveryProvider';
+import {useId} from 'react';
 import {Check, X} from 'lucide-react';
 import {createDrink, drinkMilliliters, drinkTimeNow, type Drink, type DrinkUnit} from '../hydration';
 import {fmt} from '../nutrition';
@@ -8,10 +9,10 @@ export default function DrinkForm({date, drink, busy, pending, onSave, onCancel}
   date: string; drink?: Drink; busy: boolean; pending: boolean; onSave: (action: () => Drink, onSaved?: () => void) => void; onCancel: () => void;
 }) {
   const id = useId();
-  const [name, setName] = useState(drink?.name ?? 'Wasser');
-  const [amount, setAmount] = useState(drink ? String(drink.ml).replace('.', ',') : '250');
-  const [unit, setUnit] = useState<DrinkUnit>('ml');
-  const [time, setTime] = useState(drink?.time ?? drinkTimeNow());
+  const [name, setName] = useDraftState(`DrinkForm:${date}:name`, drink?.name ?? 'Wasser');
+  const [amount, setAmount] = useDraftState(`DrinkForm:${date}:amount`, drink ? String(drink.ml).replace('.', ',') : '250');
+  const [unit, setUnit] = useDraftState<DrinkUnit>(`DrinkForm:${date}:unit`, 'ml');
+  const [time, setTime] = useDraftState(`DrinkForm:${date}:time`, drink?.time ?? drinkTimeNow());
   const guard = useDraftGuard('Getränk', {name, amount, unit, time}, pending, 'drink-form');
   return <form className="drink-form" onSubmit={event => {event.preventDefault(); onSave(() => createDrink(date, name, amount, unit, time, drink), guard.markSaved);}}>
     <h3 tabIndex={-1}>{drink ? 'Getränk bearbeiten' : 'Getränk eintragen'}</h3>

@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useId, useRef, useState} from 'react';
 import {Check, ChevronDown} from 'lucide-react';
 import type {Food} from '../db';
@@ -24,15 +25,15 @@ export default function FoodEditor({food,existing,onSave,onClose,onSaveAndUse,im
   active?: boolean;onAssignBarcode?: (barcode: string) => void;
 }) {
   const prefix = useId();const notify = useToast();
-  const [reference,setReference] = useState<NutritionReference>(food.nutritionReference ?? defaultReference);
-  const [mode,setMode] = useState(referenceMode(reference));
-  const [draft,setDraft] = useState(() => initialFoodEditorDraft(food,existing,Boolean(importReview)));
-  const [reviewed,setReviewed] = useState(false);
+  const [reference,setReference] = useDraftState<NutritionReference>(`FoodEditor:${food.id}:reference`, food.nutritionReference ?? defaultReference);
+  const [mode,setMode] = useDraftState(`FoodEditor:${food.id}:mode`, referenceMode(reference));
+  const [draft,setDraft] = useDraftState(`FoodEditor:${food.id}:draft`, () => initialFoodEditorDraft(food,existing,Boolean(importReview)));
+  const [reviewed,setReviewed] = useDraftState(`FoodEditor:${food.id}:reviewed`, false);
   const [saving,setSaving] = useState(false);
   const running = useRef(false);
   const [attempted,setAttempted] = useState(false);
-  const [standardOpen,setStandardOpen] = useState(mode === 'portion');
-  const [unitsOpen,setUnitsOpen] = useState(food.pieceGrams !== undefined || food.sliceGrams !== undefined || reference.unit !== 'ml' && food.gramsPerMl !== undefined);
+  const [standardOpen,setStandardOpen] = useDraftState(`FoodEditor:${food.id}:standardOpen`, mode === 'portion');
+  const [unitsOpen,setUnitsOpen] = useDraftState(`FoodEditor:${food.id}:unitsOpen`, food.pieceGrams !== undefined || food.sliceGrams !== undefined || reference.unit !== 'ml' && food.gramsPerMl !== undefined);
   const guard = useDraftGuard('Lebensmittel',{draft,reference,mode,reviewed},saving,'food-editor',importReview ? true : undefined);
   const dialog = useImportDialog(() => {if (guard.confirmLeave()) onClose();}, active);
   const grams = referenceGrams(draft,reference);

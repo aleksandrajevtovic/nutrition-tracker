@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useId, useRef, useState} from 'react';
 import {Check, ChevronDown, FileText, Trash2} from 'lucide-react';
 import {getDataRevision, removeDayNote, restoreDeletedDayNote, saveDayNote} from '../db';
@@ -12,7 +13,7 @@ import './DailyNotes.css';
 
 function NoteEditor({date, note, onDeleted}: {date: string; note?: DailyNote; onDeleted: () => void}) {
   const id = useId();
-  const [values, setValues] = useState(() => note ? {...note} : emptyNoteValues());
+  const [values, setValues] = useDraftState(`DailyNotes:${date}:values`, () => note ? {...note} : emptyNoteValues());
   const [busy, setBusy] = useState(false);
   const running = useRef(false);
   const notify = useToast();
@@ -50,7 +51,7 @@ function NoteEditor({date, note, onDeleted}: {date: string; note?: DailyNote; on
 }
 
 export default function DailyNotes({date}: {date: string}) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useDraftState(`DailyNotes:${date}:expanded`, false);
   const contentRef = useScrollReveal<HTMLDivElement>(expanded);
   const contentId = useId();
   const data = useDayNote(date);

@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {germanError} from '../german';
 import {useMemo, useRef, useState} from 'react';
 import {Check, Minus, Plus, ScanBarcode} from 'lucide-react';
@@ -28,15 +29,16 @@ type Props = {
 
 export default function EntryEditor({foods, date, entry, initialMeal = 'Frühstück', onSave, onClose, onSaveFood}: Props) {
   const notify = useToast();
-  const [selected, setSelected] = useState<Food | undefined>(entry?.foodSnapshot);
-  const [meal, setMeal] = useState(entry?.meal ?? initialMeal);
-  const [amount, setAmount] = useState(String(entry?.amount ?? entry?.grams ?? 1));
-  const [unit, setUnit] = useState<Unit>(entry?.unit ?? (entry ? 'g' : 'portion'));
-  const [conversions, setConversions] = useState<Partial<Food>>({});
-  const [note, setNote] = useState(entry?.note ?? '');
+  const [draftId] = useDraftState('EntryEditor:draftId', () => entry?.id ?? crypto.randomUUID());
+  const [selected, setSelected] = useDraftState<Food | undefined>('EntryEditor:selected', entry?.foodSnapshot);
+  const [meal, setMeal] = useDraftState('EntryEditor:meal', entry?.meal ?? initialMeal);
+  const [amount, setAmount] = useDraftState('EntryEditor:amount', String(entry?.amount ?? entry?.grams ?? 1));
+  const [unit, setUnit] = useDraftState<Unit>('EntryEditor:unit', entry?.unit ?? (entry ? 'g' : 'portion'));
+  const [conversions, setConversions] = useDraftState<Partial<Food>>('EntryEditor:conversions', {});
+  const [note, setNote] = useDraftState('EntryEditor:note', entry?.note ?? '');
   const [saving, setSaving] = useState(false);
-  const [importing,setImporting] = useState(false);
-  const [creatingFood,setCreatingFood] = useState<Food | null>(null);
+  const [importing,setImporting] = useDraftState('EntryEditor:importing', false);
+  const [creatingFood,setCreatingFood] = useDraftState<Food | null>('EntryEditor:creatingFood', null);
   const form = useRef<HTMLFormElement>(null);
   const savingRef = useRef(false);
   const amountInput = useRef<HTMLInputElement>(null);
@@ -62,7 +64,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
     savingRef.current = true; setSaving(true);
     try {
       await onSave({
-        id: entry?.id ?? crypto.randomUUID(), foodId: food.id, date, meal, grams,
+        id: draftId, foodId: food.id, date, meal, grams,
         amount: Number(amount), unit, foodSnapshot: {...food},
         ...(note.trim() ? {note: note.trim()} : {}),
         createdAt: entry?.createdAt ?? new Date().toISOString(),
@@ -76,7 +78,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
     if (savingRef.current || creatingFood) return;
     savingRef.current = true; setSaving(true);
     try {
-      await onSave({id: crypto.randomUUID(), foodId: item.food.id, date, meal, grams: item.grams, amount: item.amount,
+      await onSave({id: draftId, foodId: item.food.id, date, meal, grams: item.grams, amount: item.amount,
         unit: item.unit, foodSnapshot: structuredClone(item.food), createdAt: new Date().toISOString(), ...(note.trim() ? {note: note.trim()} : {})}, {}); guard.markSaved();
     } catch (error) {notify(germanError(error), 'error');}
     finally {savingRef.current = false; setSaving(false);}

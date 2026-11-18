@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useEffect, useRef, useState} from 'react';
 import {Plus, X} from 'lucide-react';
 import type {Food} from '../db';
@@ -16,9 +17,9 @@ export default function RecipeIngredients({foods,ingredients,disabled,onChange,o
   onPendingChange: (pending: boolean) => void;error?: string;
   onCreateFood: (name: string) => void;createdFood?: Food;
 }) {
-  const [selected,setSelected]=useState<Food>();
-  const [amount,setAmount]=useState('');
-  const [unit,setUnit]=useState<Unit>('g');
+  const [selected,setSelected]=useDraftState<Food>('RecipeIngredients:selected');
+  const [amount,setAmount]=useDraftState('RecipeIngredients:amount', '');
+  const [unit,setUnit]=useDraftState<Unit>('RecipeIngredients:unit', 'g');
   const [lastAdded,setLastAdded]=useState('');
   const amountInput=useRef<HTMLInputElement>(null),composer=useRef<HTMLDivElement>(null);
   const notify=useToast();

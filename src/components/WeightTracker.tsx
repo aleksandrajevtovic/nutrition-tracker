@@ -1,4 +1,5 @@
-import {useEffect, useId, useRef, useState} from 'react';
+import {useDraftState} from './DraftRecoveryProvider';
+import {useEffect, useId, useRef} from 'react';
 import {ChevronDown, Pencil, Plus, Scale} from 'lucide-react';
 import {useWeightData} from '../hooks/useWeightData';
 import {fmt, today} from '../nutrition';
@@ -12,9 +13,9 @@ import './WeightTracker.css';
 const delta = (value: number | undefined) => value === undefined ? '—' : `${value > 0 ? '+' : ''}${fmt(value, 3)} kg`;
 
 export default function WeightTracker({date}: {date: string}) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useDraftState('WeightTracker:expanded', false);
   const historyRef = useScrollReveal<HTMLDivElement>(expanded);
-  const [editingDate, setEditingDate] = useState<string | null>(null);
+  const [editingDate, setEditingDate] = useDraftState<string | null>('WeightTracker:editingDate', null);
   const contentId = useId();
   const formId = useId();
   const entryButton = useRef<HTMLButtonElement>(null);
@@ -23,7 +24,8 @@ export default function WeightTracker({date}: {date: string}) {
   const current = data.records.find(record => record.date === date);
   const comparison = weightComparison(data.records, date);
   const editing = editingDate === date;
-  useEffect(() => {setEditingDate(null);}, [date]);
+  const previousDate = useRef(date);
+  useEffect(() => {if (previousDate.current !== date) setEditingDate(null);previousDate.current = date;}, [date]);
   const closeEditor = () => {setEditingDate(null); entryButton.current?.focus({preventScroll: true});};
 
   return <section className="panel weight-tracker" aria-labelledby="weight-heading">

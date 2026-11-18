@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useEffect, useId, useRef, useState} from 'react';
 import {CalendarDays, X} from 'lucide-react';
 import type {MealPlan} from '../planning';
@@ -11,7 +12,7 @@ import './PlanDateForm.css';
 
 export default function PlanDateForm({plan,onClose,onMoved}: {plan: MealPlan;onClose: () => void;onMoved: (date: string) => void}) {
   const id=useId();const notify=useToast();
-  const [date,setDate]=useState(plan.date),[busy,setBusy]=useState(false);
+  const [date,setDate]=useDraftState('PlanDateForm:date', plan.date),[busy,setBusy]=useState(false);
   const running=useRef(false),input=useRef<HTMLInputElement>(null);
   const form=useScrollReveal<HTMLFormElement>(true);
   const guard=useDraftGuard('Anderer Tag für Planung',date,busy,'plan-date');

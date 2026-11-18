@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useEffect, useRef, useState} from 'react';
 import {Check} from 'lucide-react';
 import type {Entry} from '../db';
@@ -13,7 +14,7 @@ export type SaveQuantity = (id: string, amount: number) => Promise<Entry>;
 
 export default function QuickQuantity({entry, onSave}: {entry: Entry; onSave: SaveQuantity}) {
   const current = entry.amount ?? entry.grams;
-  const [value, setValue] = useState(String(current).replace('.', ','));
+  const [value, setValue] = useDraftState(`QuickQuantity:${entry.id}:value`, String(current).replace('.', ','));
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const notify = useToast();
@@ -22,7 +23,11 @@ export default function QuickQuantity({entry, onSave}: {entry: Entry; onSave: Sa
   const unit = entry.unit ?? 'g';
   const grams = toGrams(entry.foodSnapshot, amount, unit);
   const valid = Number.isFinite(amount) && amount > 0 && Number.isFinite(grams) && grams > 0 && Number.isFinite(stats(entry.foodSnapshot, grams).kcal);
-  useEffect(() => {setValue(String(current).replace('.', ','));}, [entry.id, current]);
+  const previous = useRef({id: entry.id, amount: current});
+  useEffect(() => {
+    if (previous.current.id !== entry.id || previous.current.amount !== current) setValue(String(current).replace('.', ','));
+    previous.current = {id: entry.id, amount: current};
+  }, [entry.id, current]);
 
   return <form className="quick-quantity" onSubmit={async event => {
     event.preventDefault();

@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useId, useRef, useState} from 'react';
 import {ArrowRightLeft, ChevronDown, MessageSquare, Pencil, Trash2} from 'lucide-react';
 import type {Entry} from '../db';
@@ -15,8 +16,8 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
   onTransfer: TransferEntry;mealOptions: string[];
   transferring: boolean;onOpenTransfer: (entry: Entry) => boolean;onCloseTransfer: () => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const [quantityEditing, setQuantityEditing] = useState(false);
+  const [expanded, setExpanded] = useDraftState(`DiaryEntry:${entry.id}:expanded`, false);
+  const [quantityEditing, setQuantityEditing] = useDraftState(`DiaryEntry:${entry.id}:quantityEditing`, false);
   const [quantitySession,setQuantitySession]=useState(0);
   const transferButton=useRef<HTMLButtonElement>(null);
   const transferId=useId();

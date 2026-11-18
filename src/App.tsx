@@ -1,4 +1,5 @@
-import {useState} from 'react';
+import {useDraftState} from './components/DraftRecoveryProvider';
+
 import {BarChart3, CalendarDays, CalendarPlus, Package, Settings} from 'lucide-react';
 import type {Food} from './db';
 import {today} from './nutrition';
@@ -17,12 +18,12 @@ import ProductImport from './components/ProductImport';
 type Tab = 'today' | 'week' | 'foods' | 'planning' | 'settings';
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>('today');
-  const [date, setDate] = useState(today);
-  const [editing, setEditing] = useState<Food | null>(null);
-  const [recipeCopySource, setRecipeCopySource] = useState<string>();
+  const [tab, setTab] = useDraftState<Tab>('App:tab', 'today');
+  const [date, setDate] = useDraftState('App:date', today);
+  const [editing, setEditing] = useDraftState<Food | null>('App:editing', null);
+  const [recipeCopySource, setRecipeCopySource] = useDraftState<string>('App:recipeCopySource');
   const editFood = (food: Food) => {setRecipeCopySource(undefined); setEditing(food);};
-  const [importing, setImporting] = useState(false);
+  const [importing, setImporting] = useDraftState('App:importing', false);
   const data = useNutritionData(date);
   const confirmNavigation = useNavigationGuard();
   const navigate = (next: Tab) => {if (next !== tab && confirmNavigation()) setTab(next);};

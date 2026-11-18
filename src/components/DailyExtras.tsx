@@ -1,4 +1,5 @@
-import {useId, useState} from 'react';
+import {useDraftState} from './DraftRecoveryProvider';
+import {useId} from 'react';
 import {ChevronDown} from 'lucide-react';
 import {useScrollReveal} from '../hooks/useScrollReveal';
 import WeightTracker from './WeightTracker';
@@ -7,7 +8,7 @@ import DailyNotes from './DailyNotes';
 import './DailyExtras.css';
 
 export default function DailyExtras({date}: {date: string}) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useDraftState('DailyExtras:expanded', false);
   const id = useId();
   const content = useScrollReveal<HTMLDivElement>(expanded);
   return <section className="diary-extras" aria-label="Weitere Tagesdaten">

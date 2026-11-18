@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useRef, useState} from 'react';
 import {BookmarkPlus, X} from 'lucide-react';
 import {createTemplate} from '../planningDb';
@@ -7,7 +8,7 @@ import {useDraftGuard} from './UnsavedChangesProvider';
 import {useScrollReveal} from '../hooks/useScrollReveal';
 
 export default function TemplateSaveForm({date, meal, onClose}: {date: string; meal: string; onClose: () => void}) {
-  const [name, setName] = useState(`Mein ${meal}`);
+  const [name, setName] = useDraftState('TemplateSaveForm:name', `Mein ${meal}`);
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const notify = useToast();

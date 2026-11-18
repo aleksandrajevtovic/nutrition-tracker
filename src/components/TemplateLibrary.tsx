@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useRef, useState} from 'react';
 import {Bookmark, CalendarPlus, Trash2, X} from 'lucide-react';
 import {applyTemplate, removePlanningRecord, restorePlanningRecord} from '../planningDb';
@@ -11,9 +12,9 @@ import {useDraftGuard, useNavigationGuard} from './UnsavedChangesProvider';
 import {useScrollReveal} from '../hooks/useScrollReveal';
 
 function TemplateApply({template, date, onClose, onOpenDay}: {template: MealTemplate; date: string; onClose: () => void; onOpenDay: (date: string) => void}) {
-  const [target, setTarget] = useState(date);
-  const [meal, setMeal] = useState(template.meal);
-  const [factor, setFactor] = useState('1');
+  const [target, setTarget] = useDraftState(`TemplateLibrary:${template.id}:target`, date);
+  const [meal, setMeal] = useDraftState(`TemplateLibrary:${template.id}:meal`, template.meal);
+  const [factor, setFactor] = useDraftState(`TemplateLibrary:${template.id}:factor`, '1');
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const notify = useToast();
@@ -39,7 +40,7 @@ function TemplateApply({template, date, onClose, onOpenDay}: {template: MealTemp
 }
 
 export default function TemplateLibrary({templates, date, onPlan, onOpenDay}: {templates: MealTemplate[]; date: string; onPlan: (template: MealTemplate) => void; onOpenDay: (date: string) => void}) {
-  const [applying, setApplying] = useState<string | null>(null);
+  const [applying, setApplying] = useDraftState<string | null>('TemplateLibrary:applying', null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const confirmNavigation = useNavigationGuard();
   const notify = useToast();

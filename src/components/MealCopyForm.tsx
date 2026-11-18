@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useId, useRef, useState} from 'react';
 import {Copy, X} from 'lucide-react';
 import {meals} from '../nutrition';
@@ -19,9 +20,9 @@ export default function MealCopyForm({date, meal, entries, onCopy, onClose}: {
   date: string; meal: string; entries: Entry[]; onCopy: CopyMeal; onClose: () => void;
 }) {
   const id = useId();
-  const [targetDate, setTargetDate] = useState(() => nextDate(date));
-  const [targetMeal, setTargetMeal] = useState(meal);
-  const [choices, setChoices] = useState<MealCopyChoice[]>(() => entries.map(source => ({source:structuredClone(source), checked:true, amount:String(source.amount ?? source.grams).replace('.', ',')})));
+  const [targetDate, setTargetDate] = useDraftState('MealCopyForm:targetDate', () => nextDate(date));
+  const [targetMeal, setTargetMeal] = useDraftState('MealCopyForm:targetMeal', meal);
+  const [choices, setChoices] = useDraftState<MealCopyChoice[]>('MealCopyForm:choices', () => entries.map(source => ({source:structuredClone(source), checked:true, amount:String(source.amount ?? source.grams).replace('.', ',')})));
   const selected = choices.filter(choice => choice.checked);
   const valid = selected.length > 0 && selected.every(choice => {try {mealCopyAmount(choice.source, parseWeight(choice.amount));return true;} catch {return false;}});
   const [busy, setBusy] = useState(false);

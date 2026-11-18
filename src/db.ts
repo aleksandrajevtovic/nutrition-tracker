@@ -354,6 +354,7 @@ export async function restoreBackup(data: unknown) {
   await tx.done;
   dataRevision++;
   announceDataChange();
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('nutrition-backup-restored'));
 }
 
 export async function getDayNote(date: string): Promise<DailyNote | undefined> {

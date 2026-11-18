@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {BookOpen, List, Plus, Search} from 'lucide-react';
 import type {Entry, Food} from '../db';
@@ -28,12 +29,12 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
   onSaveFood: (food: Food) => Promise<void>;
   onTransfer: TransferEntry;
 }) {
-  const [editor, setEditor] = useState<{entry: Entry | null; initialMeal?: string; session?: string; focusFood?: boolean} | null>(null);
-  const [copying, setCopying] = useState<string | null>(null);
-  const [savingTemplate, setSavingTemplate] = useState<string | null>(null);
+  const [editor, setEditor] = useDraftState<{entry: Entry | null; initialMeal?: string; session?: string; focusFood?: boolean} | null>('DiaryPage:editor', null);
+  const [copying, setCopying] = useDraftState<string | null>('DiaryPage:copying', null);
+  const [savingTemplate, setSavingTemplate] = useDraftState<string | null>('DiaryPage:savingTemplate', null);
   const [searching, setSearching] = useState(false);
-  const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
-  const [transferEntryId,setTransferEntryId]=useState<string | null>(null);
+  const [selectedMeal, setSelectedMeal] = useDraftState<string | null>('DiaryPage:selectedMeal', null);
+  const [transferEntryId,setTransferEntryId]=useDraftState<string | null>('DiaryPage:transferEntryId', null);
   const [folded,setFolded] = useState({date,meals:new Set<string>()});
   useEffect(() => {setFolded({date,meals:new Set<string>()});},[date]);
   const expandMeal = (meal: string) => setFolded(previous => {

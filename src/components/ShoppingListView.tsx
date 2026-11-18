@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useEffect, useRef, useState} from 'react';
 import {ChevronDown, Plus, ShoppingBasket, Trash2} from 'lucide-react';
 import type {Food} from '../db';
@@ -17,9 +18,10 @@ import './ShoppingListView.css';
 type Selection = {id: string; food: Food; portions: number};
 
 export default function ShoppingListView({foods, shopping}: {foods: Food[]; shopping: ShoppingList}) {
-  const [selected, setSelected] = useState<Food>();
-  const [portions, setPortions] = useState('1');
-  const [selection, setSelection] = useState<Selection[]>([]);
+  const [selected, setSelected] = useDraftState<Food>('ShoppingListView:selected');
+  const [portions, setPortions] = useDraftState('ShoppingListView:portions', '1');
+  const [selection, setSelection] = useDraftState<Selection[]>('ShoppingListView:selection', []);
+  const [selectionOpen, setSelectionOpen] = useDraftState('ShoppingListView:selectionOpen', false);
   const [busy, setBusy] = useState(false);
   const [pendingChecks, setPendingChecks] = useState<Record<string, boolean>>({});
   const running = useRef(false);
@@ -96,7 +98,7 @@ export default function ShoppingListView({foods, shopping}: {foods: Food[]; shop
   }
 
   return <>
-    <details className="panel editor shopping-recipe-selection">
+    <details className="panel editor shopping-recipe-selection" open={selectionOpen} onToggle={event => setSelectionOpen(event.currentTarget.open)}>
       <summary><h2>Einkaufsliste aus Rezepten{(selection.length > 0 || selected) && <small>Auswahl vorhanden</small>}</h2><ChevronDown size={18} aria-hidden="true"/></summary>
       <p className="hint">Rezepte und benötigte Portionen wählen. Gleiche Zutaten werden in Gramm zusammengezählt. Enthaltene Unterrezepte erscheinen als eigene Zutat.</p>
       {foods.some(food => food.recipe) ? <>

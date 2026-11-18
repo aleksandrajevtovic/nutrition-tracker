@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useRef, useState} from 'react';
 import {Check, X} from 'lucide-react';
 import type {Food} from '../db';
@@ -15,14 +16,14 @@ import {portionNameLabel} from '../quantityLabels';
 export default function PlanEditor({foods, templates, date, plan, template, onClose, onSaved}: {
   foods: Food[]; templates: MealTemplate[]; date: string; plan?: MealPlan; template?: MealTemplate; onClose: () => void; onSaved: (date: string) => void;
 }) {
-  const [source, setSource] = useState<'food' | 'template'>(template ? 'template' : 'food');
-  const [chosenTemplate, setChosenTemplate] = useState(template?.id ?? templates[0]?.id ?? '');
-  const [food, setFood] = useState<Food>();
-  const [target, setTarget] = useState(plan?.date ?? date);
-  const [meal, setMeal] = useState(plan?.meal ?? template?.meal ?? 'Mittagessen');
-  const [name, setName] = useState(plan?.name ?? '');
-  const [amount, setAmount] = useState('1');
-  const [unit, setUnit] = useState<Unit>('portion');
+  const [source, setSource] = useDraftState<'food' | 'template'>('PlanEditor:source', template ? 'template' : 'food');
+  const [chosenTemplate, setChosenTemplate] = useDraftState('PlanEditor:chosenTemplate', template?.id ?? templates[0]?.id ?? '');
+  const [food, setFood] = useDraftState<Food>('PlanEditor:food');
+  const [target, setTarget] = useDraftState('PlanEditor:target', plan?.date ?? date);
+  const [meal, setMeal] = useDraftState('PlanEditor:meal', plan?.meal ?? template?.meal ?? 'Mittagessen');
+  const [name, setName] = useDraftState('PlanEditor:name', plan?.name ?? '');
+  const [amount, setAmount] = useDraftState('PlanEditor:amount', '1');
+  const [unit, setUnit] = useDraftState<Unit>('PlanEditor:unit', 'portion');
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const notify = useToast();

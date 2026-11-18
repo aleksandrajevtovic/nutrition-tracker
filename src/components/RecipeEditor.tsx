@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useId, useRef, useState} from 'react';
 import {Check, ChevronDown, X} from 'lucide-react';
 import type {Food} from '../db';
@@ -18,15 +19,15 @@ export default function RecipeEditor({food,foods,existing,onSave,onClose,copySou
   onSaveFood: (food: Food) => Promise<void>;
 }) {
   const id=useId();
-  const [name,setName]=useState(food.name);
-  const [servings,setServings]=useState(String(food.recipe?.servings ?? 1).replace('.',','));
-  const [finishedWeight,setFinishedWeight]=useState(food.recipe?.yieldGrams && !food.recipe.autoWeight ? String(food.recipe.yieldGrams).replace('.',',') : '');
-  const [ingredients,setIngredients]=useState<RecipeIngredient[]>(food.recipe?.ingredients ?? []);
-  const [instructions,setInstructions]=useState(food.recipe?.instructions ?? '');
-  const [creatingFood,setCreatingFood]=useState<Food | null>(null);
+  const [name,setName]=useDraftState(`RecipeEditor:${food.id}:name`, food.name);
+  const [servings,setServings]=useDraftState(`RecipeEditor:${food.id}:servings`, String(food.recipe?.servings ?? 1).replace('.',','));
+  const [finishedWeight,setFinishedWeight]=useDraftState(`RecipeEditor:${food.id}:finishedWeight`, food.recipe?.yieldGrams && !food.recipe.autoWeight ? String(food.recipe.yieldGrams).replace('.',',') : '');
+  const [ingredients,setIngredients]=useDraftState<RecipeIngredient[]>(`RecipeEditor:${food.id}:ingredients`, food.recipe?.ingredients ?? []);
+  const [instructions,setInstructions]=useDraftState(`RecipeEditor:${food.id}:instructions`, food.recipe?.instructions ?? '');
+  const [creatingFood,setCreatingFood]=useDraftState<Food | null>(`RecipeEditor:${food.id}:creatingFood`, null);
   const [createdFood,setCreatedFood]=useState<Food>();
-  const [weightOpen,setWeightOpen]=useState(Boolean(finishedWeight));
-  const [notesOpen,setNotesOpen]=useState(Boolean(instructions));
+  const [weightOpen,setWeightOpen]=useDraftState(`RecipeEditor:${food.id}:weightOpen`, Boolean(finishedWeight));
+  const [notesOpen,setNotesOpen]=useDraftState(`RecipeEditor:${food.id}:notesOpen`, Boolean(instructions));
   const [pending,setPending]=useState(false),[attempted,setAttempted]=useState(false),[busy,setBusy]=useState(false);
   const saving=useRef(false),form=useRef<HTMLFormElement>(null);
   const notify=useToast(),confirmNavigation=useNavigationGuard();

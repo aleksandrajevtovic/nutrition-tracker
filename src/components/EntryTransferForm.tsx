@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useId, useRef, useState} from 'react';
 import {ArrowRightLeft, Copy, X} from 'lucide-react';
 import type {Entry} from '../db';
@@ -16,9 +17,9 @@ export default function EntryTransferForm({entry,mealOptions,onTransfer,onClose}
   entry: Entry;mealOptions: string[];onTransfer: TransferEntry;onClose: () => void;
 }) {
   const id=useId();const notify=useToast();
-  const [mode,setMode]=useState<EntryTransferMode>('copy');
-  const [date,setDate]=useState(()=>nextDate(entry.date));
-  const [meal,setMeal]=useState(entry.meal);
+  const [mode,setMode]=useDraftState<EntryTransferMode>(`EntryTransferForm:${entry.id}:mode`, 'copy');
+  const [date,setDate]=useDraftState(`EntryTransferForm:${entry.id}:date`, ()=>nextDate(entry.date));
+  const [meal,setMeal]=useDraftState(`EntryTransferForm:${entry.id}:meal`, entry.meal);
   const [busy,setBusy]=useState(false);
   const dateTouched=useRef(false),running=useRef(false);
   const guard=useDraftGuard('Eintrag kopieren oder verschieben',{mode,date,meal},busy,`entry-transfer:${entry.id}`);

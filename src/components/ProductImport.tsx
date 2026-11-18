@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {Camera, FileImage, Search, X} from 'lucide-react';
@@ -18,15 +19,15 @@ import './ProductImport.css';
 type Props = {foods: Food[]; onSave: (food: Food) => Promise<void>; onSelect?: (food: Food) => void; onClose: () => void};
 
 function ImportChooser({foods, onSelect, onClose, onReview, active, onAssignBarcode}: Omit<Props, 'onSave'> & {onReview: (product: ImportedProduct, existing?: boolean) => void; active: boolean; onAssignBarcode: (barcode: string) => void}) {
-  const [barcode,setBarcode] = useState('');
+  const [barcode,setBarcode] = useDraftState('ProductImport:barcode', '');
   const [camera,setCamera] = useState(false);
   const [busy,setBusy] = useState<'lookup' | 'photo' | null>(null);
   const [error,setError] = useState('');
   const [notFound,setNotFound] = useState(false);
   const [existing,setExisting] = useState<Food>();
   const [photo,setPhoto] = useState<string>();
-  const [text,setText] = useState('');
-  const [column,setColumn] = useState(0);
+  const [text,setText] = useDraftState('ProductImport:text', '');
+  const [column,setColumn] = useDraftState('ProductImport:column', 0);
   const [progress,setProgress] = useState(0);
   const operation = useRef<AbortController | undefined>(undefined);
   const alive = useRef(true);
@@ -116,8 +117,8 @@ function ImportChooser({foods, onSelect, onClose, onReview, active, onAssignBarc
 export default function ProductImport({foods,onSave,onSelect,onClose}: Props) {
   const trigger = useRef(document.activeElement as HTMLElement | null);
   useEffect(() => () => {if (trigger.current?.isConnected) trigger.current.focus({preventScroll:true});}, []);
-  const [review,setReview] = useState<{product: ImportedProduct;existing: boolean}>();
-  const [assignment,setAssignment] = useState<string>();
+  const [review,setReview] = useDraftState<{product: ImportedProduct;existing: boolean}>('ProductImport:review');
+  const [assignment,setAssignment] = useDraftState<string>('ProductImport:assignment');
   return createPortal(<>{review ? <FoodEditor key={review.product.food.id} food={review.product.food} existing={review.existing} active={!assignment} onAssignBarcode={review.existing ? undefined : setAssignment}
     importReview={review.existing ? undefined : review.product} onClose={onClose}
     onSave={async food => {await onSave(food);onClose();}}

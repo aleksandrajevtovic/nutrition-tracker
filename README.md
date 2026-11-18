@@ -27,7 +27,11 @@ Beim Datums- oder Seitenwechsel und beim Schließen oder Ersetzen eines geänder
 
 Geschützt werden Tagebucheinträge samt Notizen, Lebensmittel, Rezepte einschließlich noch nicht hinzugefügter Zutaten, Tagesnotizen, Getränke, Gewichte, Tagesziele, direkte Mengenänderungen sowie Planungs-, Vorlagen- und Einkaufsformulare. Einklappen fragt nicht nach, wenn das Formular dabei erhalten bleibt. Ein Wechsel der Tagebuchansicht prüft ungespeicherte direkte Mengenänderungen, da dabei deren Formulare ersetzt werden.
 
-Beim Neuladen oder Schließen einer Seite mit offenen Änderungen wird die native Browserwarnung angefordert. Deren Darstellung und Verfügbarkeit hängen vom Browser ab. Entwürfe werden nicht automatisch gespeichert; ausdrücklich bestätigtes Verwerfen entfernt sie. Bei einem Speicherfehler bleibt der Schutz aktiv.
+Beim Neuladen oder Schließen einer Seite mit offenen Änderungen wird weiterhin die native Browserwarnung angefordert. Deren Darstellung und Verfügbarkeit hängen vom Browser ab. Bei einem Speicherfehler bleibt der Schutz aktiv.
+
+Zusätzlich werden geänderte Formulare lokal auf dem Gerät als Entwurf gesichert. Nach einem Neuladen oder erneuten Öffnen bietet die App „Entwurf fortsetzen“ und „Verwerfen“. Fortsetzen öffnet den bisherigen Bereich samt Datum, Mahlzeit, Eingaben und verschachtelten Formularen, ohne die Datenbank zu ändern. Erst der jeweilige Speichern-Button übernimmt die Eingaben. Auch unvollständige Mengen, Notizen, Zutaten, Portionsgrößen und Umrechnungen bleiben erhalten; die Verlassen-Rückfrage gilt nach dem Fortsetzen weiterhin.
+
+Erfolgreiches Speichern oder ausdrücklich bestätigtes Verwerfen entfernt den betroffenen Entwurf. Andere offene Entwürfe bleiben erhalten. Ein Datenimport verwirft alte Entwürfe. Temporäre Fotos und Kamerastreams werden nicht wiederhergestellt; bereits erkannter Text und Produktangaben hingegen schon. Entwürfe liegen getrennt von den gespeicherten Daten im lokalen Browserspeicher und sind nicht Teil der JSON-Sicherung. Ist dieser Speicher gesperrt oder voll, erscheint ein Hinweis; normales Speichern und der bisherige Eingabenschutz bleiben verfügbar. Die gemeinsame Umsetzung liegt in `src/draftRecovery.ts`, `src/components/DraftRecoveryProvider.tsx` und `useDraftState`.
 
 ## Geöffnete Bereiche direkt im Blick
 

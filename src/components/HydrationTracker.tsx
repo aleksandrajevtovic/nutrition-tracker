@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useEffect, useId, useRef, useState} from 'react';
 import {ChevronDown, Droplets, Plus} from 'lucide-react';
 import {getDataRevision, removeDrink, restoreDeletedDrink, saveDrink, undoAddedDrink} from '../db';
@@ -14,9 +15,9 @@ import './HydrationTracker.css';
 
 export default function HydrationTracker({date}: {date: string}) {
   const data = useHydration(date);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useDraftState('HydrationTracker:expanded', false);
   const contentRef = useScrollReveal<HTMLDivElement>(expanded);
-  const [editing, setEditing] = useState<Drink>();
+  const [editing, setEditing] = useDraftState<Drink>('HydrationTracker:editing');
   const [busy, setBusy] = useState(false);
   const running = useRef(false);
   const formRef = useRef<HTMLDivElement>(null);

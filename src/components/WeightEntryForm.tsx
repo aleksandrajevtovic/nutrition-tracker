@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useEffect, useId, useRef, useState} from 'react';
 import {Check, Trash2, X} from 'lucide-react';
 import {fmt, today} from '../nutrition';
@@ -12,7 +13,7 @@ export default function WeightEntryForm({date, record, suggestion, onSave, onRem
   onSave: (date: string, kg: number) => Promise<void>; onRemove: (date: string) => Promise<void>; onClose: () => void;
 }) {
   const initial = record ?? suggestion;
-  const [value, setValue] = useState(initial ? String(initial.kg).replace('.', ',') : '');
+  const [value, setValue] = useDraftState(`WeightEntryForm:${date}:value`, initial ? String(initial.kg).replace('.', ',') : '');
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const input = useRef<HTMLInputElement>(null);

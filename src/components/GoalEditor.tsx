@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useId, useRef, useState} from 'react';
 import {Check, X} from 'lucide-react';
 import {goalFields, parseGoals, type DailyGoals, type GoalKey} from '../goals';
@@ -9,7 +10,7 @@ export default function GoalEditor({goals, onSave, onClose}: {
   goals: DailyGoals; onSave: (goals: DailyGoals) => Promise<void>; onClose: () => void;
 }) {
   const id = useId();
-  const [values, setValues] = useState(() => Object.fromEntries(goalFields.map(({key}) => [key, goals[key] === undefined ? '' : String(goals[key]).replace('.', ',')])) as Record<GoalKey, string>);
+  const [values, setValues] = useDraftState('GoalEditor:values', () => Object.fromEntries(goalFields.map(({key}) => [key, goals[key] === undefined ? '' : String(goals[key]).replace('.', ',')])) as Record<GoalKey, string>);
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const notify = useToast();

@@ -1,3 +1,4 @@
+import {useDraftState} from './DraftRecoveryProvider';
 import {useRef, useState} from 'react';
 import {Check, X} from 'lucide-react';
 import {assignFoodBarcode, getDataRevision, type Food} from '../db';
@@ -9,7 +10,7 @@ import {fmt} from '../nutrition';
 import FoodPicker from './FoodPicker';
 
 export default function BarcodeAssignment({barcode, foods, onLinked, onClose}: {barcode: string; foods: Food[]; onLinked: (food: Food) => void; onClose: () => void}) {
-  const [selected, setSelected] = useState<Food>(), [busy, setBusy] = useState(false);
+  const [selected, setSelected] = useDraftState<Food>('BarcodeAssignment:selected'), [busy, setBusy] = useState(false);
   const revision = useRef(getDataRevision()), running = useRef(false);
   const guard = useDraftGuard('Barcode-Zuordnung', selected?.id, busy, 'barcode-assignment');
   const notify = useToast();

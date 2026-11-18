@@ -1,4 +1,5 @@
-import {useState} from 'react';
+import {useDraftState} from './DraftRecoveryProvider';
+
 import type {Food} from '../db';
 import type {MealPlan, MealTemplate} from '../planning';
 import {usePlanningData} from '../hooks/usePlanningData';
@@ -11,10 +12,10 @@ import './WeeklyPage.css';
 import './PlanningPage.css';
 
 export default function PlanningPage({foods, date, onOpenDay}: {foods: Food[]; date: string; onOpenDay: (date: string) => void}) {
-  const [tab, setTab] = useState<'templates' | 'shopping' | 'week'>('templates');
-  const [editor, setEditor] = useState<{date: string; template?: MealTemplate; plan?: MealPlan} | null>(null);
-  const [plannerDate, setPlannerDate] = useState(date);
-  const [rescheduling,setRescheduling]=useState<MealPlan | null>(null);
+  const [tab, setTab] = useDraftState<'templates' | 'shopping' | 'week'>('PlanningPage:tab', 'templates');
+  const [editor, setEditor] = useDraftState<{date: string; template?: MealTemplate; plan?: MealPlan} | null>('PlanningPage:editor', null);
+  const [plannerDate, setPlannerDate] = useDraftState('PlanningPage:plannerDate', date);
+  const [rescheduling,setRescheduling]=useDraftState<MealPlan | null>('PlanningPage:rescheduling', null);
   const data = usePlanningData();
   const confirmNavigation = useNavigationGuard();
   const changeTab = (next: typeof tab) => {if (next !== tab && confirmNavigation()) {setRescheduling(null);setEditor(null);setTab(next);}};
