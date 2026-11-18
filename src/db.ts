@@ -347,6 +347,18 @@ export async function saveDrink(drink: Drink) {
   if (!validDrink(drink)) throw Error('Ungültige Trinkdaten');
   await (await dbPromise).put('drinks', drink); announceDataChange();
 }
+export async function undoAddedDrink(drink: Drink, revision: number): Promise<void> {
+  if (!validDrink(drink)) throw Error('Ungültige Trinkdaten');
+  const tx = (await dbPromise).transaction('drinks', 'readwrite');
+  try {
+    const current: Drink | undefined = await tx.store.get(drink.id);
+    if (revision !== dataRevision) throw Error('Nach einem Datenimport ist diese Aktion nicht mehr möglich.');
+    if (!current || JSON.stringify(current, Object.keys(current).sort()) !== JSON.stringify(drink, Object.keys(drink).sort())) {
+      throw Error('Dieses Getränk wurde inzwischen geändert oder gelöscht. Die neueren Daten bleiben erhalten.');
+    }
+    await tx.store.delete(drink.id);await tx.done;announceDataChange();
+  } catch (error) {try {tx.abort();} catch {} await tx.done.catch(() => {});throw error;}
+}
 export async function removeDrink(id: string): Promise<Drink | undefined> {
   const tx = (await dbPromise).transaction('drinks', 'readwrite');
   const drink = await tx.store.get(id); await tx.store.delete(id); await tx.done;

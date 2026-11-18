@@ -1,6 +1,6 @@
 import {useEffect, useId, useRef, useState} from 'react';
 import {ChevronDown, Droplets, Plus} from 'lucide-react';
-import {getDataRevision, removeDrink, restoreDeletedDrink, saveDrink} from '../db';
+import {getDataRevision, removeDrink, restoreDeletedDrink, saveDrink, undoAddedDrink} from '../db';
 import {createDrink, drinkTimeNow, type Drink} from '../hydration';
 import {useHydration} from '../hooks/useHydration';
 import {fmt} from '../nutrition';
@@ -23,6 +23,18 @@ export default function HydrationTracker({date}: {date: string}) {
   const contentId = useId();
   const notify = useToast();
   const confirmNavigation = useNavigationGuard();
+  useEffect(() => {
+    const requestUndo = (event: Event) => {
+      if (editing?.id === (event as CustomEvent<string>).detail && !confirmNavigation(['drink-form'])) event.preventDefault();
+    };
+    const undone = (event: Event) => {
+      const id = (event as CustomEvent<string>).detail;
+      setEditing(current => current?.id === id ? undefined : current);
+    };
+    window.addEventListener('nutrition-drink-add-undo-request', requestUndo);
+    window.addEventListener('nutrition-drink-add-undone', undone);
+    return () => {window.removeEventListener('nutrition-drink-add-undo-request', requestUndo);window.removeEventListener('nutrition-drink-add-undone', undone);};
+  }, [editing?.id, confirmNavigation]);
   const total = data.drinks.reduce((sum, drink) => sum + drink.ml, 0);
   const disabled = busy || data.loading || data.failed;
   useEffect(() => {
@@ -39,8 +51,14 @@ export default function HydrationTracker({date}: {date: string}) {
   }
   const save = (make: () => Drink, onSaved?: () => void) => void run(async () => {
     const drink = make(); const updating = editing?.id === drink.id;
+    const revision = getDataRevision();
     await saveDrink(drink); onSaved?.(); if (updating) setEditing(undefined);
-    notify(updating ? 'Getränk aktualisiert.' : 'Getränk hinzugefügt.', 'success');
+    notify(updating ? 'Getränk aktualisiert.' : `${fmt(drink.ml, 3)} ml ${drink.name} hinzugefügt.`, 'success', updating ? undefined : {label: 'Rückgängig', onClick: async () => {
+      if (!window.dispatchEvent(new CustomEvent('nutrition-drink-add-undo-request', {detail: drink.id, cancelable: true}))) return false;
+      await undoAddedDrink(drink, revision);
+      window.dispatchEvent(new CustomEvent('nutrition-drink-add-undone', {detail: drink.id}));
+      notify('Hinzufügen des Getränks rückgängig gemacht.', 'success');
+    }});
   });
 
   return <section className="panel hydration" aria-label="Trinkmenge des Tages">

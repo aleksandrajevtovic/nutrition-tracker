@@ -148,6 +148,8 @@ Datensicherungen ab Version 2 enthalten auch Gewichtsmessungen. Beim Import alte
 
 ## Trinkmenge
 
+Nach dem Hinzufügen eines Getränks bietet die Erfolgsmeldung kurz „Rückgängig“, sowohl für die Wasser-Schnellbuttons als auch für eigene Mengen in ml oder l. Die Meldung nennt Getränk und Menge. Rückgängig entfernt nur genau diesen Eintrag, auch wenn zweimal dieselbe Menge zur selben Uhrzeit hinzugefügt wurde. Andere Getränke und ein neuer Getränkeentwurf bleiben erhalten; Tages- und Wochenwerte aktualisieren sich automatisch. Bereits geänderte oder gelöschte Getränke sowie ein Datenimport verhindern eine veraltete Aktion. Ungespeicherte Bearbeitungen am betroffenen Getränk werden vorher geprüft.
+
 Im Tagebuch zeigt „Trinkmenge“ die Gesamtmenge aller Getränke für das gewählte Datum. Wasser lässt sich direkt mit 150, 250 oder 500 ml ergänzen. Unter „Mehr“ können eigene Getränkenamen (etwa Tee, Kaffee oder Saft), Mengen in ml oder Litern und eine Uhrzeit eingetragen werden. Dezimalpunkt und Dezimalkomma funktionieren; beim Wechsel der Einheit bleibt die bereits eingegebene Menge gleich.
 
 Der Tagesverlauf sortiert die Getränke nach ihrer Uhrzeit und zeigt die bis dahin erfasste Gesamtmenge als Zahl und Balken. Einträge lassen sich bearbeiten oder löschen; „Rückgängig“ stellt einen gelöschten Eintrag wieder her. Die Detailansicht ist standardmäßig eingeklappt. Beim Datumswechsel werden die Getränke des gewählten Tages geladen; die Schnellbuttons bleiben direkt erreichbar.
