@@ -7,6 +7,7 @@ import {weightDate} from '../weight';
 import {useToast} from '../components/ToastProvider';
 import {transferEntry as performEntryTransfer, undoEntryTransfer, type TransferEntry} from '../entryTransfer';
 import type {MealCopySelection} from '../mealCopy';
+import {entryQuantity} from '../quantityLabels';
 
 export function useNutritionData(date: string) {
   const notify = useToast();
@@ -102,7 +103,7 @@ export function useNutritionData(date: string) {
       }
       const result = await saveEntryWithUndo(entry);
       await refreshEntries().catch(error => setError(germanError(error)));
-      notify(result.addition ? 'Eintrag erfolgreich hinzugefügt.' : result.change ? 'Eintrag erfolgreich bearbeitet.' : 'Eintrag erfolgreich gespeichert.', 'success', result.addition ? undoAdditionAction(result.addition) : undoAction(result.change));
+      notify(result.addition ? `${result.entry.foodSnapshot.name} · ${entryQuantity(result.entry)} · ${result.entry.meal} hinzugefügt.` : result.change ? 'Eintrag erfolgreich bearbeitet.' : 'Eintrag erfolgreich gespeichert.', 'success', result.addition ? undoAdditionAction(result.addition) : undoAction(result.change));
     },
     persistQuantity: async (id: string, amount: number) => {
       const result = await changeEntryAmountWithUndo(id, amount);

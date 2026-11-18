@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict';
+﻿import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {chromium} from 'playwright-core';
 const origin='http://127.0.0.1:4178/nutrition-tracker/';
@@ -13,7 +13,7 @@ try {
     const page=await context.newPage(),errors=[];let accept=true,dialogs=0;
     page.on('pageerror',error=>errors.push(error.message));page.on('dialog',dialog=>{dialogs++;return accept?dialog.accept():dialog.dismiss();});await page.clock.setFixedTime(new Date('2026-11-18T12:00:00Z'));
     const tab=name=>page.locator('nav').getByRole('button',{name,exact:true}),form=()=>page.locator('.diary-entry-editor > form');
-    const toast=text=>page.locator('.toast').filter({hasText:text}),added=()=>toast('Eintrag erfolgreich hinzugefügt.'),undo=target=>target.getByRole('button',{name:'Rückgängig',exact:true});
+    const toast=text=>page.locator('.toast').filter({hasText:text}),added=()=>toast(/^ErfolgreichJoghurt · .* hinzugefügt\./),undo=target=>target.getByRole('button',{name:'Rückgängig',exact:true});
     const dismiss=async()=>{while(await page.getByRole('button',{name:'Benachrichtigung schließen'}).count())await page.getByRole('button',{name:'Benachrichtigung schließen'}).first().click();};
     const read=()=>page.evaluate(async()=>{const db=await new Promise(resolve=>{const request=indexedDB.open('nutrition-tracker');request.onsuccess=()=>resolve(request.result);});try{return await new Promise(resolve=>{const request=db.transaction('entries').objectStore('entries').getAll();request.onsuccess=()=>resolve(request.result);});}finally{db.close();}});
     const food={id:'yogurt',name:'Joghurt',brand:'',kcal:60,protein:4,carbs:5,sugar:4,fat:2,fiber:null,portionName:'1 Becher',portionGrams:150,createdAt:'2026-11-18T00:00:00Z'};
@@ -26,8 +26,8 @@ try {
       await form().getByLabel('Mahlzeit',{exact:true}).selectOption(meal);await form().locator('.food-picker__trigger').click();await form().getByRole('option',{name:'Joghurt',exact:true}).click();await form().getByLabel('Einheit',{exact:true}).selectOption('portion');await form().getByLabel('Menge',{exact:true}).fill('2');await form().getByLabel('Notiz zum Eintrag (optional)',{exact:true}).fill('Neue Notiz');
     };
     // Keep-open flow: undo must leave the next draft and its chosen meal untouched.
-    await prepare();await form().getByRole('button',{name:'Speichern und weiteres hinzufügen',exact:true}).click();await undo(added()).waitFor();
-    assert.equal((await read()).length,3);await form().getByLabel('Notiz zum Eintrag (optional)',{exact:true}).fill('Nächster Entwurf');const beforeDialogs=dialogs;
+    await prepare();await form().getByLabel('Einheit',{exact:true}).selectOption('g');await form().getByLabel('Menge',{exact:true}).fill('150');await form().getByRole('button',{name:'Speichern und weiteres hinzufügen',exact:true}).click();await undo(added()).waitFor();
+    assert.equal(await added().locator('p').textContent(),'Joghurt · 150 g · Frühstück hinzugefügt.');assert.equal((await read()).length,3);await form().getByLabel('Notiz zum Eintrag (optional)',{exact:true}).fill('Nächster Entwurf');const beforeDialogs=dialogs;
     await undo(added()).click();await toast('Hinzufügen des Eintrags rückgängig gemacht.').waitFor();assert.equal(dialogs,beforeDialogs);assert.equal(await form().getByLabel('Notiz zum Eintrag (optional)',{exact:true}).inputValue(),'Nächster Entwurf');assert.equal(await form().getByLabel('Mahlzeit',{exact:true}).inputValue(),'Frühstück');assert.deepEqual((await read()).sort((a,b)=>a.id.localeCompare(b.id)),[original,other]);await dismiss();
     // Two identical additions: remove only the second, including via recent-food quick actions.
     await prepare('Abendessen');await form().getByRole('button',{name:'Zum Tag hinzufügen',exact:true}).click();await undo(added()).waitFor();const first=(await read()).find(entry=>![original.id,other.id].includes(entry.id));await dismiss();
@@ -52,3 +52,5 @@ try {
     console.log(`PASS ${viewport.width}x${viewport.height}: new-entry undo, exact duplicate/recent target, keep-open and other-day drafts, dirty-edit/template protection, stale change refusal, edit undo regression, unchanged history/no overflow${viewport.width===320?', failed deletion retry':''}`);await context.close();
   }
 } finally {await browser?.close();server.kill();}
+
+
