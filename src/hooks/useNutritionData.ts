@@ -6,6 +6,7 @@ import {changeEntryAmountWithUndo, requestEntryEditUndo, saveEntryWithUndo, undo
 import {weightDate} from '../weight';
 import {useToast} from '../components/ToastProvider';
 import {transferEntry as performEntryTransfer, undoEntryTransfer, type TransferEntry} from '../entryTransfer';
+import type {MealCopySelection} from '../mealCopy';
 
 export function useNutritionData(date: string) {
   const notify = useToast();
@@ -61,9 +62,9 @@ export function useNutritionData(date: string) {
       await refreshFoods();
       notify(food.favorite ? 'Zu Favoriten hinzugefügt.' : 'Aus Favoriten entfernt.', 'success');
     },
-    copyMeal: async (sourceDate: string, sourceMeal: string, targetDate: string, targetMeal: string) => {
-      const copied = await copyMealEntries(sourceDate, sourceMeal, targetDate, targetMeal);
-      await refreshEntries();
+    copyMeal: async (sourceDate: string, sourceMeal: string, targetDate: string, targetMeal: string, selection?: MealCopySelection[]) => {
+      const copied = await copyMealEntries(sourceDate, sourceMeal, targetDate, targetMeal, selection);
+      await refreshEntries().catch(error => setError(germanError(error)));
       notify(`${copied.length} ${copied.length === 1 ? 'Eintrag' : 'Einträge'} nach „${targetMeal}“ am ${weightDate(targetDate)} kopiert.`, 'success');
     },
     persistFood: async (food: Food) => {

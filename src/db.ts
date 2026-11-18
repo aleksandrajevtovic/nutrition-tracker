@@ -12,6 +12,7 @@ import {withEntryAmount} from './entryQuantity';
 import {backupDrinks, validDrink, type Drink} from './hydration';
 import {barcodeKey} from './barcode';
 import {backupCompletedDays} from './completedDays';
+import {selectedMealEntries, type MealCopySelection} from './mealCopy';
 
 export type Food = {
   id: string;
@@ -141,15 +142,18 @@ export async function changeEntryAmount(id: string, amount: number): Promise<Ent
   announceDataChange();
   return updated;
 }
-export async function copyMealEntries(sourceDate: string, sourceMeal: string, targetDate: string, targetMeal: string): Promise<Entry[]> {
+export async function copyMealEntries(sourceDate: string, sourceMeal: string, targetDate: string, targetMeal: string, selection?: MealCopySelection[]): Promise<Entry[]> {
   const db = await dbPromise;
   const tx = db.transaction('entries', 'readwrite');
-  const source: Entry[] = await tx.store.index('by-date').getAll(sourceDate);
-  const copies = duplicateMeal(source.filter(entry => entry.meal === sourceMeal), targetDate, targetMeal);
-  for (const entry of copies) await tx.store.add(entry);
-  await tx.done;
-  announceDataChange();
-  return copies;
+  try {
+    const source: Entry[] = await tx.store.index('by-date').getAll(sourceDate);
+    const mealEntries = source.filter(entry => entry.meal === sourceMeal);
+    const copies = duplicateMeal(selection === undefined ? mealEntries : selectedMealEntries(mealEntries, selection), targetDate, targetMeal);
+    for (const entry of copies) await tx.store.add(entry);
+    await tx.done;
+    announceDataChange();
+    return copies;
+  } catch (error) {try {tx.abort();} catch {} await tx.done.catch(() => {});throw error;}
 }
 export async function removeEntry(id: string): Promise<Entry | undefined> {
   return deleteRecord('entries', id);

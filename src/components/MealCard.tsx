@@ -27,7 +27,7 @@ export default function MealCard({meal,date,entries,compact,collapsed,copying,sa
       {compact && <button type="button" hidden={collapsed} className="iconbtn" title="Als Vorlage speichern" aria-label={`${meal} als Vorlage speichern`} aria-expanded={savingTemplate && !collapsed} onClick={() => {onExpand();if(!collapsed || !savingTemplate)onToggleTemplate();}}><BookmarkPlus size={17}/></button>}
     </div></div>
     <div id={`${id}-content`} className="meal__content" hidden={collapsed}>
-      {copying && <MealCopyForm key={`${date}-${meal}`} date={date} meal={meal} count={entries.length} onCopy={onCopy} onClose={onCloseCopy}/>}
+      {copying && <MealCopyForm key={`${date}-${meal}`} date={date} meal={meal} entries={entries} onCopy={onCopy} onClose={onCloseCopy}/>}
       {entries.map(entry => <DiaryEntry key={`${date}-${entry.id}`} entry={entry} compact={compact} onEdit={onEdit} onDelete={onDelete} onQuantityChange={onQuantityChange} onTransfer={onTransfer} mealOptions={mealOptions} transferring={transferEntryId===entry.id} onOpenTransfer={onOpenTransfer} onCloseTransfer={onCloseTransfer}/>)}
       {!compact && <div className="meal__footer"><button type="button" className="secondary" aria-label={`${meal} als Vorlage speichern`} aria-expanded={savingTemplate} onClick={onToggleTemplate}><BookmarkPlus size={16}/>Als Vorlage speichern</button></div>}
       {savingTemplate && <TemplateSaveForm key={`${date}-${meal}`} date={date} meal={meal} onClose={onCloseTemplate}/>}
