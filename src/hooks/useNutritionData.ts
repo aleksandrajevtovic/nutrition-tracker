@@ -47,6 +47,11 @@ export function useNutritionData(date: string) {
     window.addEventListener('nutrition-diary-changed', updated);
     return () => window.removeEventListener('nutrition-diary-changed', updated);
   }, [ready, refreshEntries, setError]);
+  useEffect(() => {
+    const updated = () => {void refreshFoods().catch(error => setError(germanError(error)));};
+    window.addEventListener('nutrition-foods-changed', updated);
+    return () => window.removeEventListener('nutrition-foods-changed', updated);
+  }, [refreshFoods, setError]);
 
   const undoAction = (change?: EntryEdit) => change ? {label: 'Rückgängig', onClick: async () => {
     if (!requestEntryEditUndo(change.before)) return false;

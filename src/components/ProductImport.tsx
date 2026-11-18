@@ -12,11 +12,12 @@ import {useDraftGuard} from './UnsavedChangesProvider';
 import {useImportDialog} from '../hooks/useImportDialog';
 import BarcodeCamera from './BarcodeCamera';
 import FoodEditor from './FoodEditor';
+import BarcodeAssignment from './BarcodeAssignment';
 import './ProductImport.css';
 
 type Props = {foods: Food[]; onSave: (food: Food) => Promise<void>; onSelect?: (food: Food) => void; onClose: () => void};
 
-function ImportChooser({foods, onSelect, onClose, onReview}: Omit<Props, 'onSave'> & {onReview: (product: ImportedProduct, existing?: boolean) => void}) {
+function ImportChooser({foods, onSelect, onClose, onReview, active, onAssignBarcode}: Omit<Props, 'onSave'> & {onReview: (product: ImportedProduct, existing?: boolean) => void; active: boolean; onAssignBarcode: (barcode: string) => void}) {
   const [barcode,setBarcode] = useState('');
   const [camera,setCamera] = useState(false);
   const [busy,setBusy] = useState<'lookup' | 'photo' | null>(null);
@@ -32,7 +33,7 @@ function ImportChooser({foods, onSelect, onClose, onReview}: Omit<Props, 'onSave
   const notify = useToast();
   const guard = useDraftGuard('Produktimport', {barcode,text,photo}, false, 'product-import');
   const close = () => {if (guard.confirmLeave()) onClose();};
-  const dialog = useImportDialog(close);
+  const dialog = useImportDialog(close, active);
   useEffect(() => {alive.current=true;return () => {alive.current=false;operation.current?.abort();};}, []);
   useEffect(() => () => {if(photo) URL.revokeObjectURL(photo);}, [photo]);
   const fail = (message: string) => {setError(message);notify(message,'error');};
@@ -82,7 +83,7 @@ function ImportChooser({foods, onSelect, onClose, onReview}: Omit<Props, 'onSave
     review({food,missing:nutrientKeys.filter(key => !Number.isFinite(food[key])),warnings:parsed.warnings});
   }
 
-  return <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="product-import-title" ref={dialog} tabIndex={-1}>
+  return <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="product-import-title" ref={dialog} tabIndex={-1} inert={!active} style={active ? undefined : {display:'none'}}>
     <div className="modal editor product-import"><div className="section-head"><h2 id="product-import-title">Produkt importieren</h2><button type="button" className="iconbtn" aria-label="Produktimport schließen" onClick={close}><X size={18}/></button></div>
       <p className="hint">Barcode scannen oder eingeben. Gefundene Daten kannst du vor dem Speichern anpassen.</p>
       <button type="button" className="secondary wide" disabled={Boolean(busy) || camera} onClick={() => {setError('');setCamera(true);}}><Camera size={18}/>Barcode mit Kamera scannen</button>
@@ -91,6 +92,7 @@ function ImportChooser({foods, onSelect, onClose, onReview}: Omit<Props, 'onSave
         <label>Barcode (EAN / UPC)<input autoComplete="off" inputMode="numeric" value={barcode} disabled={Boolean(busy)} placeholder="z. B. 13 Ziffern unter dem Barcode" onChange={event => {setBarcode(event.target.value);setError('');setExisting(undefined);setNotFound(false);}}/></label>
         <button className="primary wide" disabled={Boolean(busy) || !barcode.trim()}><Search size={17}/>{busy==='lookup' ? 'Produkt wird gesucht…' : 'Produkt suchen'}</button>
       </form>
+      {validBarcode(cleanBarcode(barcode)) && !foods.some(food => food.barcode && barcodeKey(food.barcode) === barcodeKey(barcode)) && <button type="button" className="secondary wide" onClick={() => {operation.current?.abort();setBusy(null);setCamera(false);onAssignBarcode(cleanBarcode(barcode));}}>Vorhandenes Lebensmittel zuordnen</button>}
       {busy && <div role="status"><p className="hint">{busy==='photo' ? `Foto wird gelesen… ${progress} %` : 'Produktdaten werden geladen…'}</p><button type="button" className="secondary" onClick={() => {operation.current?.abort();setBusy(null);}}>Abbrechen</button></div>}
       {error && <p className="product-import__error" role="alert">{error}</p>}
       {existing && <section className="product-import__result" aria-label="Gespeichertes Produkt"><h3>{existing.name}</h3><p className="hint">Bereits gespeichert. Deine eigenen Werte und Korrekturen werden verwendet.</p>
@@ -112,10 +114,15 @@ function ImportChooser({foods, onSelect, onClose, onReview}: Omit<Props, 'onSave
 }
 
 export default function ProductImport({foods,onSave,onSelect,onClose}: Props) {
+  const trigger = useRef(document.activeElement as HTMLElement | null);
+  useEffect(() => () => {if (trigger.current?.isConnected) trigger.current.focus({preventScroll:true});}, []);
   const [review,setReview] = useState<{product: ImportedProduct;existing: boolean}>();
-  return createPortal(review ? <FoodEditor key={review.product.food.id} food={review.product.food} existing={review.existing}
+  const [assignment,setAssignment] = useState<string>();
+  return createPortal(<>{review ? <FoodEditor key={review.product.food.id} food={review.product.food} existing={review.existing} active={!assignment} onAssignBarcode={review.existing ? undefined : setAssignment}
     importReview={review.existing ? undefined : review.product} onClose={onClose}
     onSave={async food => {await onSave(food);onClose();}}
     onSaveAndUse={onSelect ? async food => {await onSave(food);onSelect(food);onClose();} : undefined}/>
-    : <ImportChooser foods={foods} onSelect={onSelect} onClose={onClose} onReview={(product,existing=false) => setReview({product,existing})}/>, document.body);
+    : <ImportChooser foods={foods} onSelect={onSelect} onClose={onClose} onReview={(product,existing=false) => setReview({product,existing})} active={!assignment} onAssignBarcode={setAssignment}/>}
+    {assignment && <BarcodeAssignment barcode={assignment} foods={foods} onClose={() => setAssignment(undefined)} onLinked={food => {onSelect?.(food);onClose();}}/>}
+  </>, document.body);
 }

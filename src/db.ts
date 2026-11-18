@@ -10,7 +10,7 @@ import {backupWorkspace, emptyShoppingList, type WorkspaceBackup} from './planni
 import {backupNotes, validNote, type DailyNote} from './notes';
 import {withEntryAmount} from './entryQuantity';
 import {backupDrinks, validDrink, type Drink} from './hydration';
-import {barcodeKey} from './barcode';
+import {barcodeKey, cleanBarcode, validBarcode} from './barcode';
 import {backupCompletedDays} from './completedDays';
 import {selectedMealEntries, type MealCopySelection} from './mealCopy';
 
@@ -110,6 +110,24 @@ export async function saveFood(food: Food) {
 }
 export async function removeFood(id: string): Promise<Food | undefined> {
   return deleteRecord('foods', id);
+}
+export async function assignFoodBarcode(id: string, rawBarcode: string, revision = getDataRevision()): Promise<Food> {
+  const barcode = cleanBarcode(rawBarcode);
+  if (!validBarcode(barcode)) throw Error('Bitte einen gültigen EAN-/UPC-Barcode mit 8, 12, 13 oder 14 Ziffern eingeben.');
+  const tx = (await dbPromise).transaction('foods', 'readwrite');
+  try {
+    const current: Food | undefined = await tx.store.get(id);
+    if (revision !== getDataRevision()) throw Error('Die Daten wurden inzwischen importiert. Bitte die Barcode-Zuordnung erneut öffnen.');
+    if (!current) throw Error('Dieses Lebensmittel ist nicht mehr vorhanden.');
+    if (current.barcode && barcodeKey(current.barcode) !== barcodeKey(barcode)) throw Error('Dieses Lebensmittel hat bereits einen anderen Barcode. Bitte ein Lebensmittel ohne Barcode wählen.');
+    const foods: Food[] = await tx.store.getAll();
+    if (foods.some(food => food.id !== id && food.barcode && barcodeKey(food.barcode) === barcodeKey(barcode))) throw Error('Dieser Barcode gehört bereits zu einem gespeicherten Lebensmittel. Bitte das vorhandene Produkt bearbeiten.');
+    const linked = {...current, barcode};
+    if (!validFood(linked) || linked.recipe && !validRecipeFood(linked)) throw Error('Ungültige Produktdaten');
+    await tx.store.put(linked);await tx.done;announceDataChange();
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('nutrition-foods-changed'));
+    return linked;
+  } catch (error) {try {tx.abort();} catch {} await tx.done.catch(() => {});throw error;}
 }
 export async function toggleFoodFavorite(id: string): Promise<Food> {
   const tx = (await dbPromise).transaction('foods', 'readwrite');

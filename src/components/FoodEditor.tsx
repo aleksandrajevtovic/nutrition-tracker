@@ -5,7 +5,7 @@ import {germanError} from '../german';
 import {fmt, isPositive, validFood} from '../nutrition';
 import {defaultReference, initialFoodEditorDraft, referenceGrams, scaleNutrients, type NutritionReference} from '../foodValues';
 import {foodEditorErrors} from '../foodEditorValidation';
-import {cleanBarcode} from '../barcode';
+import {cleanBarcode, validBarcode} from '../barcode';
 import {nutrientLabels, type ImportedProduct} from '../productImport';
 import {useImportDialog} from '../hooks/useImportDialog';
 import {useToast} from './ToastProvider';
@@ -17,10 +17,11 @@ import './FoodEditor.css';
 
 const referenceMode = (reference: NutritionReference) => reference.unit === 'portion' ? 'portion' : reference.unit === 'ml' ? '100ml' : reference.amount === 100 ? '100g' : 'custom';
 
-export default function FoodEditor({food,existing,onSave,onClose,onSaveAndUse,importReview,saveLabel,description}: {
+export default function FoodEditor({food,existing,onSave,onClose,onSaveAndUse,importReview,saveLabel,description,active = true,onAssignBarcode}: {
   food: Food;existing: boolean;onSave: (food: Food) => Promise<void>;onClose: () => void;
   onSaveAndUse?: (food: Food) => Promise<void>;importReview?: ImportedProduct;
   saveLabel?: string;description?: string;
+  active?: boolean;onAssignBarcode?: (barcode: string) => void;
 }) {
   const prefix = useId();const notify = useToast();
   const [reference,setReference] = useState<NutritionReference>(food.nutritionReference ?? defaultReference);
@@ -33,7 +34,7 @@ export default function FoodEditor({food,existing,onSave,onClose,onSaveAndUse,im
   const [standardOpen,setStandardOpen] = useState(mode === 'portion');
   const [unitsOpen,setUnitsOpen] = useState(food.pieceGrams !== undefined || food.sliceGrams !== undefined || reference.unit !== 'ml' && food.gramsPerMl !== undefined);
   const guard = useDraftGuard('Lebensmittel',{draft,reference,mode,reviewed},saving,'food-editor',importReview ? true : undefined);
-  const dialog = useImportDialog(() => {if (guard.confirmLeave()) onClose();});
+  const dialog = useImportDialog(() => {if (guard.confirmLeave()) onClose();}, active);
   const grams = referenceGrams(draft,reference);
   const normalized = scaleNutrients(draft,100/grams);
   const errors = attempted ? foodEditorErrors(draft,reference,Boolean(importReview),reviewed) : {};
@@ -47,7 +48,7 @@ export default function FoodEditor({food,existing,onSave,onClose,onSaveAndUse,im
   }
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();event.stopPropagation();if (running.current) return;
+    event.preventDefault();event.stopPropagation();if (running.current || !active) return;
     const form = event.currentTarget;
     const nextErrors = foodEditorErrors(draft,reference,Boolean(importReview),reviewed);
     setAttempted(true);
@@ -68,13 +69,14 @@ export default function FoodEditor({food,existing,onSave,onClose,onSaveAndUse,im
     try {await save(result);guard.markSaved();}catch(error){notify(germanError(error),'error');}finally{running.current=false;setSaving(false);}
   }
 
-  return <div ref={dialog} tabIndex={-1} className="overlay" role="dialog" aria-modal="true" aria-labelledby={`${prefix}-title`}>
+  return <div ref={dialog} tabIndex={-1} className="overlay" role="dialog" aria-modal="true" aria-labelledby={`${prefix}-title`} inert={!active} style={active ? undefined : {display:'none'}}>
     <form className="modal food-editor editor" noValidate onSubmit={submit} onFocusCapture={event => {
       const input = event.target;
       if (input instanceof HTMLInputElement && input.type === 'number') input.select();
     }}>
       <div className="food-editor__header"><h2 id={`${prefix}-title`}>Lebensmittel {existing ? 'bearbeiten' : 'anlegen'}</h2><button type="button" className="iconbtn" aria-label="Schließen" disabled={saving} onClick={() => {if(guard.confirmLeave())onClose();}}>×</button></div>
       <div className="food-editor__body">
+        {onAssignBarcode && <div className="food-editor__link-existing"><p className="hint">Dieses Produkt ist schon in deiner Lebensmittelliste?</p><button type="button" className="secondary wide" disabled={saving || !validBarcode(cleanBarcode(draft.barcode ?? ''))} onClick={() => onAssignBarcode(cleanBarcode(draft.barcode ?? ''))}>Vorhandenes Lebensmittel zuordnen</button></div>}
         {description && <p className="hint">{description}</p>}
         <section className="food-editor__section food-editor__product" aria-labelledby={`${prefix}-product-title`}><h3 id={`${prefix}-product-title`}>Produkt</h3>
           <div className="food-editor__product-fields"><label>Name<input {...foodFieldProps('name',errors,prefix)} aria-label="Name" autoComplete="off" required placeholder="z. B. Naturjoghurt" disabled={saving} value={draft.name} onChange={event => setDraft({...draft,name:event.target.value})}/><FoodFieldError field="name" errors={errors} prefix={prefix}/></label>

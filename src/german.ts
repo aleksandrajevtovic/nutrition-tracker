@@ -28,6 +28,8 @@ const appErrors = new Set([
   'Dieser Eintrag wurde inzwischen geändert. Bitte die Aktion erneut öffnen.',
   'Bitte ein anderes Zieldatum oder eine andere Mahlzeit wählen.',
   'Dieser Barcode gehört bereits zu einem gespeicherten Lebensmittel. Bitte das vorhandene Produkt bearbeiten.',
+  'Dieses Lebensmittel hat bereits einen anderen Barcode. Bitte ein Lebensmittel ohne Barcode wählen.',
+  'Die Daten wurden inzwischen importiert. Bitte die Barcode-Zuordnung erneut öffnen.',
   'Bitte einen gültigen EAN-/UPC-Barcode mit 8, 12, 13 oder 14 Ziffern eingeben.',
   'Du bist offline. Gespeicherte Produkte sind verfügbar; für neue Produktdaten ist Internet nötig.',
   'Zu viele Produktabfragen. Bitte warte einen Moment und versuche es erneut.',
