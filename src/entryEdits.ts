@@ -4,8 +4,9 @@ import {withEntryAmount} from './entryQuantity';
 import {entrySignature} from './entrySignature';
 
 export type EntryEdit = {before: Entry; after: Entry; revision: number};
+export type EntryAddition = {entry: Entry; revision: number};
 
-async function persist(id: string, update: (current: Entry | undefined) => Entry): Promise<{entry: Entry; change?: EntryEdit}> {
+async function persist(id: string, update: (current: Entry | undefined) => Entry): Promise<{entry: Entry; change?: EntryEdit; addition?: EntryAddition}> {
   const revision = getDataRevision();
   const tx = (await dbPromise).transaction('entries', 'readwrite');
   try {
@@ -15,7 +16,8 @@ async function persist(id: string, update: (current: Entry | undefined) => Entry
     if (after.id !== id || !validEntryNote(after.note)) throw Error('Ungültiger Tagebucheintrag');
     await tx.store.put(after);await tx.done;announceDataChange();
     return {entry: after, change: before && entrySignature(before) !== entrySignature(after)
-      ? {before: structuredClone(before), after: structuredClone(after), revision} : undefined};
+      ? {before: structuredClone(before), after: structuredClone(after), revision} : undefined,
+      addition: before ? undefined : {entry: structuredClone(after), revision}};
   } catch (error) {await tx.done.catch(() => {});throw error;}
 }
 
@@ -27,6 +29,25 @@ export const changeEntryAmountWithUndo = (id: string, amount: number) => persist
 
 export function requestEntryEditUndo(entry: Pick<Entry, 'id' | 'date' | 'meal'>): boolean {
   return window.dispatchEvent(new CustomEvent('nutrition-entry-edit-undo-request', {detail: entry, cancelable: true}));
+}
+
+export function requestEntryAdditionUndo(entry: Pick<Entry, 'id' | 'date' | 'meal'>): boolean {
+  return window.dispatchEvent(new CustomEvent('nutrition-entry-add-undo-request', {detail: entry, cancelable: true}));
+}
+
+export async function undoEntryAddition(addition: EntryAddition): Promise<void> {
+  const tx = (await dbPromise).transaction('entries', 'readwrite');
+  try {
+    const current: Entry | undefined = await tx.store.get(addition.entry.id);
+    if (addition.revision !== getDataRevision()) throw Error('Nach einem Datenimport ist diese Wiederherstellung nicht mehr möglich.');
+    if (!current || entrySignature(current) !== entrySignature(addition.entry)) throw Error('Es gibt bereits einen neueren Datensatz. Er wurde nicht überschrieben.');
+    await tx.store.delete(addition.entry.id);await tx.done;
+    announceDataChange();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('nutrition-diary-changed'));
+      window.dispatchEvent(new CustomEvent('nutrition-entry-add-undone', {detail: addition.entry}));
+    }
+  } catch (error) {await tx.done.catch(() => {});throw error;}
 }
 
 export async function undoEntryEdit(change: EntryEdit): Promise<void> {

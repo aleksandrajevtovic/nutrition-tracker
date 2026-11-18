@@ -2,7 +2,7 @@ import {germanError} from '../german';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import {copyMealEntries, listEntries, listFoods, removeEntry, removeFood, saveFood, toggleFoodFavorite, type Entry, type Food} from '../db';
 import {getDataRevision, restoreDeletedEntry, restoreDeletedFood} from '../db';
-import {changeEntryAmountWithUndo, requestEntryEditUndo, saveEntryWithUndo, undoEntryEdit, type EntryEdit} from '../entryEdits';
+import {changeEntryAmountWithUndo, requestEntryEditUndo, requestEntryAdditionUndo, saveEntryWithUndo, undoEntryEdit, undoEntryAddition, type EntryEdit, type EntryAddition} from '../entryEdits';
 import {weightDate} from '../weight';
 import {useToast} from '../components/ToastProvider';
 import {transferEntry as performEntryTransfer, undoEntryTransfer, type TransferEntry} from '../entryTransfer';
@@ -59,6 +59,12 @@ export function useNutritionData(date: string) {
     notify('Änderung am Eintrag rückgängig gemacht.', 'success');
   }} : undefined;
 
+  const undoAdditionAction = (addition: EntryAddition) => ({label: 'Rückgängig', onClick: async () => {
+    if (!requestEntryAdditionUndo(addition.entry)) return false;
+    await undoEntryAddition(addition);await refreshEntries().catch(error => setError(germanError(error)));
+    notify('Hinzufügen des Eintrags rückgängig gemacht.', 'success');
+  }});
+
   return {
     foods, entries, ready, error,
     reload: async () => {await refreshFoods(); await refreshEntries();},
@@ -96,7 +102,7 @@ export function useNutritionData(date: string) {
       }
       const result = await saveEntryWithUndo(entry);
       await refreshEntries().catch(error => setError(germanError(error)));
-      notify(result.change ? 'Eintrag erfolgreich bearbeitet.' : entries.some(value => value.id === entry.id) ? 'Eintrag erfolgreich gespeichert.' : 'Eintrag erfolgreich hinzugefügt.', 'success', undoAction(result.change));
+      notify(result.addition ? 'Eintrag erfolgreich hinzugefügt.' : result.change ? 'Eintrag erfolgreich bearbeitet.' : 'Eintrag erfolgreich gespeichert.', 'success', result.addition ? undoAdditionAction(result.addition) : undoAction(result.change));
     },
     persistQuantity: async (id: string, amount: number) => {
       const result = await changeEntryAmountWithUndo(id, amount);
