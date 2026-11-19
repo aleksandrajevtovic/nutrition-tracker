@@ -7,12 +7,14 @@ export const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 };
 export const fmt = (value: number, digits = 1) => value.toLocaleString('de-DE', {maximumFractionDigits: digits});
+export const nutrientAmount = (food: Food, grams: number, key: 'kcal' | 'protein' | 'carbs' | 'sugar' | 'fat' | 'fiber') => ((key === 'fiber' ? food.entryFiber ?? food.fiber : food[key]) ?? 0) * (food.directNutrition ? 1 : grams / 100);
 export const stats = (food: Food, grams: number) => ({
-  kcal: food.kcal * grams / 100, protein: food.protein * grams / 100,
+  kcal: nutrientAmount(food, grams, 'kcal'), protein: nutrientAmount(food, grams, 'protein'),
   // Unknown fibre contributes no known amount; callers must show incomplete totals.
-  carbs: food.carbs * grams / 100, fat: food.fat * grams / 100, fiber: (food.fiber ?? 0) * grams / 100,
+  carbs: nutrientAmount(food, grams, 'carbs'), fat: nutrientAmount(food, grams, 'fat'), fiber: nutrientAmount(food, grams, 'fiber'),
 });
-export const fiberIncomplete = (items: {foodSnapshot: Food}[]) => items.some(item => item.foodSnapshot.fiber === null);
+export const missingNutrients = (items: {foodSnapshot: Food}[]): string[] => [...new Set(items.flatMap(item => item.foodSnapshot.directNutrition?.missing ?? []))];
+export const fiberIncomplete = (items: {foodSnapshot: Food}[]) => items.some(item => item.foodSnapshot.fiber === null && item.foodSnapshot.entryFiber === undefined);
 export const emptyFood = (): Food => ({
   id: crypto.randomUUID(), name: '', brand: '', kcal: 0, protein: 0, carbs: 0,
   fat: 0, fiber: 0, sugar: 0, portionName: '1 Portion', portionGrams: 100,
@@ -38,6 +40,7 @@ export function gramsPerUnit(food: Food, unit: Unit): number | undefined {
   }
 }
 export function toGrams(food: Food, amount: number, unit: Unit): number {
+  if (food.directNutrition) return unit === 'portion' ? amount * food.portionGrams : NaN;
   const factor = gramsPerUnit(food, unit);
   return factor !== undefined && factor > 0 ? amount * factor : NaN;
 }
@@ -45,7 +48,14 @@ export const isPositive = (value: number | undefined): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0;
 
 export function validFood(food: Food): boolean {
-  return Boolean(food.name.trim() && food.portionName.trim()) && isPositive(food.portionGrams)
+  return Boolean(food.name.trim() && food.portionName.trim()) && (isPositive(food.portionGrams) || Boolean(food.directNutrition && food.portionGrams === 0))
+    && (food.entryFiber === undefined || (!food.directNutrition && typeof food.entryFiber === 'number' && Number.isFinite(food.entryFiber) && food.entryFiber >= 0))
+    && (food.directNutrition === undefined || Boolean(food.directNutrition && !food.recipe && !food.barcode
+      && isPositive(food.directNutrition.amount) && typeof food.directNutrition.unitLabel === 'string' && food.directNutrition.unitLabel.trim()
+      && food.directNutrition.unitLabel === food.portionName
+      && typeof food.directNutrition.estimated === 'boolean' && Array.isArray(food.directNutrition.missing)
+      && new Set(food.directNutrition.missing).size === food.directNutrition.missing.length
+      && food.directNutrition.missing.every(key => ['protein','carbs','sugar','fat','fiber'].includes(key) && (food[key] === 0 || key === 'fiber' && food.fiber === null))))
     && (food.barcode === undefined || validBarcode(food.barcode))
     && (food.source === undefined || (food.source?.type === 'openfoodfacts' && typeof food.source.importedAt === 'string' && Number.isFinite(Date.parse(food.source.importedAt))))
     && (food.portions === undefined || (Array.isArray(food.portions)

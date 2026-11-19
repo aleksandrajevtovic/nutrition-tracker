@@ -2,13 +2,14 @@ import {useDraftState} from './DraftRecoveryProvider';
 import {useId, useRef, useState} from 'react';
 import {ArrowRightLeft, ChevronDown, MessageSquare, Pencil, Trash2} from 'lucide-react';
 import type {Entry} from '../db';
-import {fmt, stats} from '../nutrition';
+import {fmt, stats, nutrientAmount} from '../nutrition';
 import {entryQuantity} from '../quantityLabels';
 import QuickQuantity, {type SaveQuantity} from './QuickQuantity';
 import {useNavigationGuard} from './UnsavedChangesProvider';
 import {useScrollReveal} from '../hooks/useScrollReveal';
 import './DiaryEntry.css';
 import EntryTransferForm from './EntryTransferForm';
+import {nutrientMissing} from '../nutrientCoverage';
 import type {TransferEntry} from '../entryTransfer';
 
 export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantityChange, onTransfer, mealOptions, transferring, onOpenTransfer, onCloseTransfer}: {
@@ -26,6 +27,8 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
   const detailsId = useId();
   const values = stats(entry.foodSnapshot, entry.grams);
   const quantity = entryQuantity(entry);
+  const estimated = entry.foodSnapshot.directNutrition?.estimated ? <small className="entry-estimate">Geschätzte Werte</small> : null;
+  const missing = entry.foodSnapshot.directNutrition?.missing ?? [];
   const closeTransfer=()=>{onCloseTransfer();transferButton.current?.focus({preventScroll:true});};
   const transfer=<div id={transferId} className="diary-entry__transfer" hidden={!transferring}>{transferring && <EntryTransferForm entry={entry} mealOptions={mealOptions} onTransfer={onTransfer} onClose={closeTransfer}/>}</div>;
   const actions = <div className="actions">
@@ -39,15 +42,16 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
   </div>;
 
   if (!compact) return <div ref={entryRef} className="entry diary-entry--full"><div className="diary-entry__main"><strong>{entry.foodSnapshot.name}</strong>
+    {estimated}
     <button type="button" disabled={transferring} className="diary-entry__quantity-toggle" aria-label={`Menge für ${entry.foodSnapshot.name} ändern`} aria-expanded={quantityEditing} aria-controls={detailsId} onClick={() => {if (!quantityEditing || confirmNavigation([`quantity:${entry.id}`])) setQuantityEditing(value => !value);}}>
-      <small>{quantity} · {Math.round(values.kcal)} kcal · Eiweiß {fmt(values.protein)} g</small><span><Pencil size={11} aria-hidden="true"/>Menge ändern</span></button>
+      <small>{quantity} · {Math.round(values.kcal)} kcal{missing.includes('protein') ? '' : ` · Eiweiß ${fmt(values.protein)} g`}</small><span><Pencil size={11} aria-hidden="true"/>Menge ändern</span></button>
     <div id={detailsId} hidden={!quantityEditing}>{quantityEditing && <QuickQuantity key={quantitySession} entry={entry} onSave={onQuantityChange}/>}</div>
     {entry.note?.trim() && <p className="diary-entry__note"><span>Notiz</span>{entry.note}</p>}</div>{actions}{transfer}</div>;
 
   return <div ref={entryRef} className="entry diary-entry--compact">
     <button type="button" className="diary-entry__toggle" aria-label={`${entry.foodSnapshot.name}: Details ${expanded ? 'einklappen' : 'aufklappen'}`}
       aria-expanded={expanded} aria-controls={detailsId} onClick={() => setExpanded(value => !value)}>
-      <span className="diary-entry__name" title={entry.foodSnapshot.name}>{entry.foodSnapshot.name}</span>
+      <span className="diary-entry__name" title={entry.foodSnapshot.name}>{entry.foodSnapshot.name}{estimated}</span>
       <span className="diary-entry__calories">{Math.round(values.kcal)} <span>kcal</span></span>
       {entry.note?.trim() && <MessageSquare size={14} role="img" aria-label="Notiz vorhanden" className="diary-entry__note-icon"/>}
       <ChevronDown size={16} aria-hidden="true"/>
@@ -59,9 +63,9 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
       <div hidden={transferring}><QuickQuantity key={quantitySession} entry={entry} onSave={onQuantityChange}/></div>
       <dl className="diary-entry__nutrients">
         {[
-          ['Eiweiß', values.protein], ['Kohlenhydrate', values.carbs], ['Fett', values.fat],
-          ['Ballaststoffe', values.fiber], ['Zucker', entry.foodSnapshot.sugar * entry.grams / 100],
-        ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{label === 'Ballaststoffe' && entry.foodSnapshot.fiber === null ? 'Nicht angegeben' : `${fmt(Number(value))} g`}</dd></div>)}
+          ['Eiweiß', values.protein, 'protein'], ['Kohlenhydrate', values.carbs, 'carbs'], ['Fett', values.fat, 'fat'],
+          ['Ballaststoffe', values.fiber, 'fiber'], ['Zucker', nutrientAmount(entry.foodSnapshot, entry.grams, 'sugar'), 'sugar'],
+        ].map(([label, value, key]) => <div key={label}><dt>{label}</dt><dd>{nutrientMissing(entry.foodSnapshot, key as 'protein' | 'carbs' | 'fat' | 'fiber' | 'sugar') ? 'Nicht angegeben' : `${fmt(Number(value))} g`}</dd></div>)}
       </dl>
       {entry.note?.trim() && <p className="diary-entry__note"><span>Notiz</span>{entry.note}</p>}
       {actions}

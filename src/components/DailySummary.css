@@ -16,6 +16,18 @@
 .daily-summary .goal-progress__remaining { display: block; margin-top: 6px; color: #d8e8dc; }
 .daily-summary__notice { font-size: 12px; color: #d8e8dc; }
 .daily-summary__notice button { min-height: 44px; background: none; border: 0; color: white; text-decoration: underline; }
+.daily-summary__missing {margin-top: 12px;font-size: 12px;color: #d8e8dc;}
+.daily-summary__missing summary {display: flex;align-items: center;gap: 7px;width: fit-content;max-width: 100%;min-height: 44px;cursor: pointer;border-radius: 5px;list-style: none;}
+.daily-summary__missing summary::-webkit-details-marker {display: none;}
+.daily-summary__missing summary:hover {text-decoration: underline;}
+.daily-summary__missing svg {flex-shrink: 0;}
+.daily-summary__missing p {margin: 4px 0 8px;line-height: 1.5;}
+.daily-summary__missing ul {margin: 0;padding: 0;list-style: none;line-height: 1.6;overflow-wrap: anywhere;}
+.daily-summary__missing li {display: flex;flex-wrap: wrap;align-items: center;gap: 8px 12px;padding: 10px 0;border-top: 1px solid #ffffff25;}
+.daily-summary__missing li > div {flex: 1 1 240px;min-width: 0;}
+.daily-summary__missing li p {margin: 0 0 3px;}
+.daily-summary__missing li button {min-height: 44px;flex-shrink: 0;padding: 8px 12px;border: 1px solid #ffffff50;border-radius: 8px;background: #ffffff10;color: white;font: inherit;}
+.daily-summary__missing li button:hover {background: #ffffff25;}
 .goal-editor { margin-top: 22px; padding: 16px; border-radius: 12px; background: white; color: #22332a; }
 .goal-editor__heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .goal-editor__heading h3 { min-width: 0; }

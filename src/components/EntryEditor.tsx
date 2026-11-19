@@ -15,6 +15,8 @@ import LastAmountSuggestion from './LastAmountSuggestion';
 import ProductImport from './ProductImport';
 import {portionNameLabel, portionQuantity} from '../quantityLabels';
 import './EntryEditor.css';
+import DirectNutritionFields from './DirectNutritionFields';
+import {buildDirectEntry, initialDirectDraft, directDraftErrors} from '../directNutrition';
 import {emptyFood, fmt, isPositive, meals, stats, toGrams, unitLabels, units, validFood, type Unit} from '../nutrition';
 
 type Props = {
@@ -22,15 +24,19 @@ type Props = {
   date: string;
   entry: Entry | null;
   initialMeal?: string;
+  initialMode?: 'food' | 'direct';
   onSave: (entry: Entry, conversions: Partial<Food>, keepOpen?: boolean) => Promise<void>;
   onClose: () => void;
   onSaveFood: (food: Food) => Promise<void>;
 };
 
-export default function EntryEditor({foods, date, entry, initialMeal = 'Frühstück', onSave, onClose, onSaveFood}: Props) {
+export default function EntryEditor({foods, date, entry, initialMeal = 'Frühstück', initialMode = 'food', onSave, onClose, onSaveFood}: Props) {
   const notify = useToast();
   const [draftId] = useDraftState('EntryEditor:draftId', () => entry?.id ?? crypto.randomUUID());
-  const [selected, setSelected] = useDraftState<Food | undefined>('EntryEditor:selected', entry?.foodSnapshot);
+  const [mode, setMode] = useDraftState<'food' | 'direct'>('EntryEditor:mode', entry?.foodSnapshot.directNutrition ? 'direct' : initialMode);
+  const [direct, setDirect] = useDraftState('EntryEditor:direct', () => initialDirectDraft(entry));
+  const [attempted, setAttempted] = useState(false);
+  const [selected, setSelected] = useDraftState<Food | undefined>('EntryEditor:selected', entry?.foodSnapshot.directNutrition ? undefined : entry?.foodSnapshot);
   const [meal, setMeal] = useDraftState('EntryEditor:meal', entry?.meal ?? initialMeal);
   const [amount, setAmount] = useDraftState('EntryEditor:amount', String(entry?.amount ?? entry?.grams ?? 1));
   const [unit, setUnit] = useDraftState<Unit>('EntryEditor:unit', entry?.unit ?? (entry ? 'g' : 'portion'));
@@ -46,10 +52,10 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
   const lastAmount = useMemo(() => !entry && selected && !history.loading && !history.failed
     ? lastUsedAmount(history.entries, foods.find(food => food.id === selected.id) ?? selected) : undefined,
   [entry, selected, foods, history.entries, history.loading, history.failed]);
-  const guard = useDraftGuard('Tagebucheintrag', {selected, meal, amount, unit, conversions, note}, saving, 'entry-editor');
+  const guard = useDraftGuard('Tagebucheintrag', {selected, meal, amount, unit, conversions, note, mode, direct}, saving, 'entry-editor');
   const food = selected ? {...selected, ...conversions} : undefined;
   const grams = food ? toGrams(food, Number(amount), unit) : NaN;
-  const valid = Boolean(food && validFood(food) && isPositive(Number(amount)) && isPositive(grams));
+  const valid = mode === 'direct' ? !Object.keys(directDraftErrors(direct)).length : Boolean(food && !food.directNutrition && validFood(food) && isPositive(Number(amount)) && isPositive(grams));
   const preview = food && valid ? stats(food, grams) : null;
   const conversionKey = unit === 'ml' || unit === 'l' ? 'gramsPerMl'
     : unit === 'piece' ? 'pieceGrams' : unit === 'slice' ? 'sliceGrams' : null;
@@ -59,11 +65,18 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!food || !valid || savingRef.current || creatingFood) return;
+    if (savingRef.current || creatingFood) return;
+    if (mode === 'direct') {setAttempted(true);if (!valid) {
+      notify('Bitte die markierten Angaben prüfen.', 'error');
+      window.requestAnimationFrame(() => {const field = form.current?.querySelector<HTMLElement>('[aria-invalid="true"]');field?.focus({preventScroll:true});field?.scrollIntoView({block:'center',behavior:'instant'});});
+      return;
+    }}
+    else if (!food || !valid) return;
     const keepOpen = !entry && (event.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'continue';
     savingRef.current = true; setSaving(true);
     try {
-      await onSave({
+      if (mode === 'direct') await onSave(buildDirectEntry(direct, {id:draftId, date, meal, note, original:entry}), {}, keepOpen);
+      else if (food) await onSave({
         id: draftId, foodId: food.id, date, meal, grams,
         amount: Number(amount), unit, foodSnapshot: {...food},
         ...(note.trim() ? {note: note.trim()} : {}),
@@ -84,7 +97,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
     finally {savingRef.current = false; setSaving(false);}
   }
 
-  return <><form ref={form} className="panel editor" onSubmit={submit} inert={Boolean(creatingFood)}>
+  return <><form ref={form} className="panel editor" onSubmit={submit} noValidate={mode === 'direct'} inert={Boolean(creatingFood)}>
     <div className="section-head">
       <h3 tabIndex={-1}>{entry ? 'Eintrag bearbeiten' : 'Lebensmittel eintragen'}</h3>
       <button type="button" className="iconbtn" aria-label="Schließen" disabled={saving} onClick={() => {if (guard.confirmLeave()) onClose();}}>×</button>
@@ -92,6 +105,11 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
     <label>Mahlzeit<select aria-label="Mahlzeit" value={meal} disabled={saving} onChange={e => setMeal(e.target.value)}>
       {Array.from(new Set([...meals, meal])).map(m => <option key={m}>{m}</option>)}
     </select></label>
+    <div className="entry-editor__modes" role="group" aria-label="Art des Tagebucheintrags">
+      <button type="button" aria-pressed={mode === 'food'} disabled={saving} onClick={() => setMode('food')}>Lebensmittel auswählen</button>
+      <button type="button" aria-pressed={mode === 'direct'} disabled={saving} onClick={() => setMode('direct')}>Nährwerte direkt eingeben</button>
+    </div>
+    {mode === 'direct' ? <DirectNutritionFields draft={direct} onChange={setDirect} busy={saving} attempted={attempted}/> : <>
     {!entry && <RecentFoods foods={foods} history={history} busy={saving} onSelect={item => {setSelected(item.food); setAmount(String(item.amount)); setUnit(item.unit); setConversions({});}} onAdd={item => void addRecent(item)}/>}
     {!entry && <button type="button" className="secondary wide" disabled={saving} onClick={() => setImporting(true)}><ScanBarcode size={17}/>Produkt scannen</button>}
     {importing && <ProductImport foods={foods} onSave={onSaveFood} onClose={() => setImporting(false)} onSelect={food => {setSelected(food);setConversions({});setAmount('1');setUnit(food.nutritionReference?.unit === 'ml' ? 'ml' : 'portion');if (food.nutritionReference?.unit === 'ml') setAmount('100');}}/>}
@@ -136,9 +154,15 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
       </div>
       {preview && <div className="preview"><b>{Math.round(preview.kcal)} kcal</b><span>Eiweiß {fmt(preview.protein)} g · KH {fmt(preview.carbs)} g · F {fmt(preview.fat)} g</span></div>}
     </>}
+    {entry?.foodSnapshot.fiber === null && selected?.id === entry.foodId && <>
+      <label>Ballaststoffe / 100 g<input data-entry-nutrient="fiber" aria-label="Ballaststoffe / 100 g" type="number" min="0" step="any" disabled={saving} value={selected.entryFiber ?? selected.fiber ?? ''}
+        onChange={event => setSelected({...selected, entryFiber:event.target.value === '' ? undefined : Number(event.target.value)})}/></label>
+      <p className="hint">Diese Ergänzung gilt nur für diesen Tagebucheintrag. Die Lebensmittel-Datenbank bleibt unverändert.</p>
+    </>}
+    </>}
     <label>Notiz zum Eintrag (optional)<textarea aria-label="Notiz zum Eintrag (optional)" rows={3} value={note} disabled={saving} onChange={event => setNote(event.target.value)} placeholder="z. B. mit Kräutern zubereitet oder nach dem Training"/></label>
-    <div className="entry-editor__save-actions"><button className="primary wide" value="close" disabled={!valid || saving}><Check size={17}/>{saving ? 'Wird gespeichert…' : entry ? 'Änderungen speichern' : 'Zum Tag hinzufügen'}</button>
-      {!entry && <button type="submit" className="secondary wide" value="continue" disabled={!valid || saving}><Plus size={17}/>Speichern und weiteres hinzufügen</button>}</div>
+    <div className="entry-editor__save-actions"><button className="primary wide" value="close" disabled={mode === 'food' && !valid || saving}><Check size={17}/>{saving ? 'Wird gespeichert…' : entry ? 'Änderungen speichern' : 'Zum Tag hinzufügen'}</button>
+      {!entry && <button type="submit" className="secondary wide" value="continue" disabled={mode === 'food' && !valid || saving}><Plus size={17}/>Speichern und weiteres hinzufügen</button>}</div>
   </form>
     {creatingFood && <FoodEditor key={creatingFood.id} food={creatingFood} existing={false} saveLabel="Speichern und zum Eintrag" description="Dein Tagebucheintrag bleibt erhalten. Nach dem Speichern gibst du die Menge ein."
       onClose={() => {

@@ -15,6 +15,7 @@ export function validIngredient(value: unknown): value is RecipeIngredient {
   if (!value || typeof value !== 'object') return false;
   const ingredient = value as RecipeIngredient;
   const food = ingredient.foodSnapshot;
+  if (food?.directNutrition || food?.entryFiber !== undefined) return false;
   if (typeof ingredient.id !== 'string' || !ingredient.id || !isPositive(ingredient.amount)
     || !isPositive(ingredient.grams) || !units.includes(ingredient.unit)
     || !food || typeof food.id !== 'string' || typeof food.name !== 'string' || typeof food.brand !== 'string'

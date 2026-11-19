@@ -22,10 +22,11 @@ export default function MealCard({meal,date,entries,compact,collapsed,copying,sa
     <div className="meal__heading"><div className="meal__identity"><h3 id={`${id}-title`} aria-label={meal}>
       <button type="button" className="meal__toggle" aria-label={`${meal} ${collapsed ? 'aufklappen' : 'einklappen'}`} aria-expanded={!collapsed} aria-controls={`${id}-content`} onClick={onToggle}><span>{meal}</span><ChevronDown size={17} aria-hidden="true"/></button>
     </h3><button type="button" className="iconbtn meal__add" title={`Lebensmittel zu ${meal} hinzufügen`} aria-label={`Lebensmittel zu ${meal} hinzufügen`} onClick={onAdd}><Plus size={17} aria-hidden="true"/></button></div>
-    <div className="meal__tools"><b className="meal__calories">{Math.round(entries.reduce((sum,entry) => sum+stats(entry.foodSnapshot,entry.grams).kcal,0))} <small>kcal</small></b>
+    <b className="meal__calories">{Math.round(entries.reduce((sum,entry) => sum+stats(entry.foodSnapshot,entry.grams).kcal,0))} <small>kcal</small></b>
+    {!collapsed && <div className="meal__tools">
       <button type="button" hidden={collapsed} className="iconbtn" title="Mahlzeit kopieren" aria-label={`${meal} kopieren`} aria-expanded={copying && !collapsed} onClick={() => {onExpand();if(!collapsed || !copying)onToggleCopy();}}><Copy size={17}/></button>
       {compact && <button type="button" hidden={collapsed} className="iconbtn" title="Als Vorlage speichern" aria-label={`${meal} als Vorlage speichern`} aria-expanded={savingTemplate && !collapsed} onClick={() => {onExpand();if(!collapsed || !savingTemplate)onToggleTemplate();}}><BookmarkPlus size={17}/></button>}
-    </div></div>
+    </div>}</div>
     <div id={`${id}-content`} className="meal__content" hidden={collapsed}>
       {copying && <MealCopyForm key={`${date}-${meal}`} date={date} meal={meal} entries={entries} onCopy={onCopy} onClose={onCloseCopy}/>}
       {entries.map(entry => <DiaryEntry key={`${date}-${entry.id}`} entry={entry} compact={compact} onEdit={onEdit} onDelete={onDelete} onQuantityChange={onQuantityChange} onTransfer={onTransfer} mealOptions={mealOptions} transferring={transferEntryId===entry.id} onOpenTransfer={onOpenTransfer} onCloseTransfer={onCloseTransfer}/>)}

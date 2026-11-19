@@ -5,7 +5,7 @@ import {logPlan, removePlanningRecord, restorePlanningRecord, shoppingFromPlanWe
 import {mealTotals, type MealPlan, type ShoppingList} from '../planning';
 import {calendarWeek, shiftDate, weekDay} from '../week';
 import {fmt, today} from '../nutrition';
-import {portionQuantity} from '../quantityLabels';
+import {portionQuantity, entryQuantity} from '../quantityLabels';
 import {validDate, weightDate} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
@@ -65,7 +65,7 @@ export default function MealPlanner({plans, date, shopping, onCreate, onEdit, on
               const revision = getDataRevision(); const removed = await removePlanningRecord('plans', plan.id);
               if (removed) notify('Planung gelöscht. Tagebucheinträge bleiben erhalten.', 'success', {label: 'Rückgängig', onClick: async () => {await restorePlanningRecord('plans', removed, revision); notify('Planung wiederhergestellt.', 'success');}});
             });}}><Trash2 size={16}/></button></div></div>
-        <ul className="planning-items">{plan.items.map((item, index) => <li key={index}><span>{item.foodSnapshot.name}</span><small>{item.unit === 'portion' && item.amount !== undefined ? portionQuantity(item.amount,item.foodSnapshot.portionName,item.grams,2) : `${fmt(item.grams,2)} g`}</small></li>)}</ul>
+        <ul className="planning-items">{plan.items.map((item, index) => <li key={index}><span>{item.foodSnapshot.name}</span><small>{item.foodSnapshot.directNutrition ? entryQuantity(item,2) : item.unit === 'portion' && item.amount !== undefined ? portionQuantity(item.amount,item.foodSnapshot.portionName,item.grams,2) : `${fmt(item.grams,2)} g`}</small></li>)}</ul>
         {plan.status==='planned' && <><button type="button" className="secondary planner-meal__date-button" disabled={busy} aria-label={`${plan.name}: Anderer Tag`} aria-expanded={rescheduling?.id===plan.id && rescheduling.date===plan.date} onClick={()=>{
           if(rescheduling?.id===plan.id){if(confirmNavigation(['plan-date']))onCloseReschedule();}else onReschedule(plan);
         }}><CalendarDays size={16}/>Anderer Tag</button>

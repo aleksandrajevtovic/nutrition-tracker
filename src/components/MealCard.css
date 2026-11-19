@@ -38,7 +38,7 @@
 }
 
 .meal__calories small { font-size: 12px; font-weight: 500; }
-.meal__identity { display: flex; flex: 1; align-items: center; gap: 4px; min-width: 120px; }
+.meal__identity { display: flex; flex: 1 0 auto; align-items: center; gap: 4px; min-width: 0; max-width: 100%; }
 .meal__identity h3 { margin: 0; }
 .meal__toggle { display: flex; align-items: center; justify-content: space-between; gap: 7px; width: 100%; min-height: 44px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: inherit; font: inherit; font-weight: inherit; text-align: left; }
 .meal__toggle span { min-width: 0; overflow-wrap: anywhere; }
@@ -47,7 +47,7 @@
 .meal__add.iconbtn { background: transparent; color: #315c46; }
 .meal__add:hover { color: #1f4430; }
 .meal--collapsed .meal__heading { border-bottom: 0; border-radius: 14px; }
-.meal__tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.meal__tools { display: flex; flex: 0 0 auto; max-width: 100%; margin-left: auto; align-items: center; flex-wrap: wrap; gap: 8px; }
 .meal__tools .iconbtn { background: transparent; border: 1px solid #d8e4d5; }
 .meal__footer { padding: 0 16px 14px; }
 .meal__footer .secondary { width: 100%; font-size: 12px; background: #f5f8f2; }

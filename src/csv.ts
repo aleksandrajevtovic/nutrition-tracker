@@ -1,5 +1,5 @@
 import type {Entry} from './db';
-import {stats} from './nutrition';
+import {stats, nutrientAmount, missingNutrients, fiberIncomplete} from './nutrition';
 import {validDate, type WeightRecord} from './weight';
 import type {Drink} from './hydration';
 import {calendarWeek} from './week';
@@ -10,7 +10,7 @@ export const weeklyCsvHeaders = ['Wochenbeginn', 'Wochenende', 'Ausgewertet ab',
   'Ø Kalorien (kcal)', 'Ø Eiweiß (g)', 'Ø Kohlenhydrate (g)', 'Ø Fett (g)', 'Ø Ballaststoffe (g)', 'Ø Zucker (g)',
   'Gewichtsmessungen', 'Ø Gewicht (kg)', 'Tage mit Getränken', 'Trinkmenge gesamt (ml)', 'Ø Trinkmenge (ml je erfasstem Tag)'];
 const nutrients = ['kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar'] as const;
-type CsvDay = {count: number; kcal: number; protein: number; carbs: number; fat: number; fiber: number; sugar: number; fiberIncomplete?: boolean; weight?: number; drinkMl?: number};
+type CsvDay = {count: number; kcal: number; protein: number; carbs: number; fat: number; fiber: number; sugar: number; fiberIncomplete?: boolean; missing?: string[]; weight?: number; drinkMl?: number};
 
 function collectDays(entries: Entry[], weights: WeightRecord[], range: CsvRange, drinks: Drink[]) {
   if ((range.from && !validDate(range.from)) || (range.to && !validDate(range.to)) || (range.from && range.to && range.from > range.to)) {
@@ -30,9 +30,10 @@ function collectDays(entries: Entry[], weights: WeightRecord[], range: CsvRange,
     const current = day(entry.date);
     const values = stats(entry.foodSnapshot, entry.grams);
     current.count++;
-    if (entry.foodSnapshot.fiber === null) current.fiberIncomplete = true;
+    if (fiberIncomplete([entry])) current.fiberIncomplete = true;
+    current.missing = [...new Set([...(current.missing ?? []), ...missingNutrients([entry])])];
     for (const key of Object.keys(values) as (keyof typeof values)[]) current[key] += values[key];
-    current.sugar += entry.foodSnapshot.sugar / 100 * entry.grams;
+    current.sugar += nutrientAmount(entry.foodSnapshot, entry.grams, 'sugar');
   }
   for (const weight of weights) if (includes(weight.date)) day(weight.date).weight = weight.kg;
   for (const drink of drinks) if (includes(drink.date)) {
@@ -53,7 +54,7 @@ function csvDocument(headers: string[], rows: string[][]) {
 
 export function dailyCsv(entries: Entry[], weights: WeightRecord[], range: CsvRange = {}, drinks: Drink[] = []) {
   const rows = [...collectDays(entries, weights, range, drinks)].sort(([a], [b]) => a.localeCompare(b)).map(([date, values]) => [
-    date, String(values.count), ...nutrients.map(key => values.count && !(key === 'fiber' && values.fiberIncomplete) ? number(values[key]) : ''),
+    date, String(values.count), ...nutrients.map(key => values.count && !values.missing?.includes(key) && !(key === 'fiber' && values.fiberIncomplete) ? number(values[key]) : ''),
     values.weight === undefined ? '' : number(values.weight), values.drinkMl === undefined ? '' : number(values.drinkMl),
   ]);
   return csvDocument(csvHeaders, rows);
@@ -73,7 +74,7 @@ export function weeklyCsv(entries: Entry[], weights: WeightRecord[], range: CsvR
     const hydrated = days.filter(day => day.drinkMl !== undefined);
     const drinkTotal = hydrated.reduce((sum, day) => sum + day.drinkMl!, 0);
     return [start, end, range.from && range.from > start ? range.from : start, range.to && range.to < end ? range.to : end,
-      String(recorded.length), ...nutrients.map(key => recorded.length && !(key === 'fiber' && recorded.some(day => day.fiberIncomplete)) ? number(recorded.reduce((sum, day) => sum + day[key], 0) / recorded.length) : ''),
+      String(recorded.length), ...nutrients.map(key => recorded.length && !recorded.some(day => day.missing?.includes(key)) && !(key === 'fiber' && recorded.some(day => day.fiberIncomplete)) ? number(recorded.reduce((sum, day) => sum + day[key], 0) / recorded.length) : ''),
       String(measured.length), measured.length ? number(measured.reduce((sum, day) => sum + day.weight!, 0) / measured.length) : '',
       String(hydrated.length), hydrated.length ? number(drinkTotal) : '', hydrated.length ? number(drinkTotal / hydrated.length) : ''];
   });

@@ -3,11 +3,13 @@ import {isPositive, stats, toGrams, units, validFood, type Unit} from './nutriti
 import {validRecipeFood} from './recipes';
 import {validDate} from './weight';
 import {validEntryNote} from './diary';
+import {validDirectItem} from './directNutrition';
+import {withEntryAmount} from './entryQuantity';
 
 export type MealItem = {foodId: string; grams: number; amount?: number; unit?: Unit; note?: string; foodSnapshot: Food};
 export type MealTemplate = {id: string; name: string; meal: string; items: MealItem[]; createdAt: string};
 export type MealPlan = {id: string; name: string; date: string; meal: string; items: MealItem[]; createdAt: string; status: 'planned' | 'logged'; entryIds: string[]};
-export type ShoppingItem = {id: string; foodId: string; name: string; brand: string; grams: number; checked: boolean};
+export type ShoppingItem = {id: string; foodId: string; name: string; brand: string; grams: number; checked: boolean; quantity?: {amount: number; unitLabel: string}};
 export type ShoppingList = {items: ShoppingItem[]; updatedAt: string | null};
 export type WorkspaceBackup = {templates: MealTemplate[]; plans: MealPlan[]; shoppingList: ShoppingList};
 export const emptyShoppingList = (): ShoppingList => ({items: [], updatedAt: null});
@@ -19,6 +21,7 @@ export function validMealItem(value: unknown): value is MealItem {
   if (!value || typeof value !== 'object') return false;
   const item = value as MealItem;
   const food = item.foodSnapshot;
+  if (food?.directNutrition) return text(item.foodId) && food.id === item.foodId && timestamp(food.createdAt) && validEntryNote(item.note) && validDirectItem(item);
   if (!text(item.foodId) || !isPositive(item.grams) || !food || !text(food.id) || !text(food.name)
     || typeof food.brand !== 'string' || typeof food.portionName !== 'string' || !timestamp(food.createdAt)
     || food.id !== item.foodId || !validFood(food) || (food.recipe !== undefined && !validRecipeFood(food))
@@ -43,7 +46,8 @@ export function validShopping(value: unknown): value is ShoppingList {
   const list = value as ShoppingList;
   return Boolean(list && Array.isArray(list.items) && (list.updatedAt === null || timestamp(list.updatedAt))
     && list.items.every(item => item && text(item.id) && text(item.foodId) && item.id === item.foodId && text(item.name)
-      && typeof item.brand === 'string' && isPositive(item.grams) && typeof item.checked === 'boolean') && unique(list.items));
+      && typeof item.brand === 'string' && (isPositive(item.grams) || (item.grams === 0 && item.quantity)) && typeof item.checked === 'boolean'
+      && (item.quantity === undefined || (item.quantity && isPositive(item.quantity.amount) && text(item.quantity.unitLabel)))) && unique(list.items));
 }
 export function backupWorkspace(value: {version?: unknown; templates?: unknown; plans?: unknown; shoppingList?: unknown}): WorkspaceBackup | undefined {
   if (value.version !== 4 && value.version !== 5 && value.version !== 6) return undefined;
@@ -62,7 +66,7 @@ export function itemFromFood(food: Food, amount: number, unit: Unit): MealItem {
 }
 export function scaleItems(items: MealItem[], factor: number): MealItem[] {
   if (!isPositive(factor) || !items.length || !items.every(validMealItem)) throw Error('Bitte eine gültige Vorlage und einen positiven Faktor wählen.');
-  const scaled = items.map(item => ({...structuredClone(item), grams: item.grams * factor,
+  const scaled = items.map(item => item.foodSnapshot.directNutrition ? withEntryAmount(structuredClone(item), item.amount! * factor) : ({...structuredClone(item), grams: item.grams * factor,
     ...(item.amount !== undefined ? {amount: item.amount * factor} : {})}));
   if (!scaled.every(validMealItem)) throw Error('Ungültige Planungsmenge');
   return scaled;
@@ -89,6 +93,16 @@ export function shoppingFromMeals(items: MealItem[]): ShoppingItem[] {
     else result.set(food.id, {id: food.id, foodId: food.id, name: food.name, brand: food.brand, grams, checked: false});
   };
   for (const item of items) {
+    if (item.foodSnapshot.directNutrition) {
+      const food = item.foodSnapshot, direct = food.directNutrition!, existing = result.get(food.id);
+      if (existing) {
+        if (existing.quantity?.unitLabel !== direct.unitLabel) throw Error('Ungültige Einkaufsmenge');
+        existing.grams = existing.grams === 0 || item.grams === 0 ? 0 : existing.grams + item.grams;
+        existing.quantity.amount += direct.amount;
+      }
+      else result.set(food.id, {id:food.id, foodId:food.id, name:food.name, brand:'', grams:item.grams, checked:false, quantity:{amount:direct.amount, unitLabel:direct.unitLabel}});
+      continue;
+    }
     const recipe = item.foodSnapshot.recipe;
     if (recipe) {
       for (const ingredient of recipe.ingredients) add(ingredient.foodSnapshot, ingredient.grams * item.grams / recipe.yieldGrams);
@@ -102,7 +116,9 @@ export function mergeShopping(current: ShoppingItem[], additions: ShoppingItem[]
   const result = new Map(current.map(item => [item.id, {...item}]));
   for (const item of additions) {
     const previous = result.get(item.id);
-    result.set(item.id, {...item, grams: item.grams + (previous?.grams ?? 0), checked: false});
+    if (previous && (previous.quantity?.unitLabel !== item.quantity?.unitLabel)) throw Error('Ungültige Einkaufsmenge');
+    result.set(item.id, {...item, grams: item.quantity && previous && (item.grams === 0 || previous.grams === 0) ? 0 : item.grams + (previous?.grams ?? 0), checked: false,
+      ...(item.quantity ? {quantity:{...item.quantity, amount:item.quantity.amount + (previous?.quantity?.amount ?? 0)}} : {})});
   }
   const items = [...result.values()].sort((a, b) => a.name.localeCompare(b.name, 'de'));
   if (!validShopping({items, updatedAt: null})) throw Error('Ungültige Einkaufsmenge');

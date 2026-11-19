@@ -15,7 +15,8 @@ const translations: Record<string, string> = {
 const translate = (text: string) => translations[text] ?? text;
 
 export function germanFood(food: Food): Food {
-  return {...food, name: translate(food.name), brand: translate(food.brand), portionName: translate(food.portionName)};
+  return {...food, name: translate(food.name), brand: translate(food.brand), portionName: translate(food.portionName),
+    ...(food.directNutrition ? {directNutrition:{...food.directNutrition,unitLabel:translate(food.directNutrition.unitLabel)}} : {})};
 }
 export function germanEntry(entry: Entry): Entry {
   return {...entry, meal: translate(entry.meal), foodSnapshot: germanFood(entry.foodSnapshot)};

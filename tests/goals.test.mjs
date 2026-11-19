@@ -50,6 +50,13 @@ test('legacy backups do not replace targets; current backups explicitly include 
   assert.throws(() => backupGoals({version: 3}), /Tagesziele/);
 });
 
+test('partial goal progress represents a lower bound and never claims a safe remaining amount', () => {
+  for (const [current, text] of [[0,'Mindestens 0 g erfasst'],[50,'Mindestens 50 g erfasst'],[100,'Ziel mindestens erreicht'],[125,'Mindestens 25 g über dem Ziel']]) {
+    const html = renderToStaticMarkup(createElement(GoalProgress, {current, target:100, label:'Eiweiß', unit:'g', incomplete:true}));
+    assert.ok(html.includes(text));assert.ok(html.includes('Weitere Angaben fehlen.'));assert.ok(!html.includes('Noch '));
+  }
+});
+
 test('goal storage upgrades the existing database and preserves old backup compatibility', async t => {
   const db = await loadTypeScript(new URL('../src/db.ts', import.meta.url));
   await t.test('upgrading leaves measurements intact and starts with no targets', async () => {

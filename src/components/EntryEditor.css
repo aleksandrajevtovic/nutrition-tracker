@@ -1,4 +1,21 @@
 .editor textarea { display: block; width: 100%; min-width: 0; min-height: 80px; margin-top: 6px; padding: 11px 12px; border: 1px solid #dbe4dc; border-radius: 10px; background: white; color: #22332a; font: inherit; font-size: 16px; font-weight: 400; line-height: 1.5; resize: vertical; outline-color: #7ca58a; }
+.entry-editor__modes {display: grid;grid-template-columns: repeat(2,minmax(0,1fr));gap: 4px;padding: 4px;border: 1px solid #dbe4dc;border-radius: 12px;background: #f1f5ef;margin: 16px 0;}
+.entry-editor__modes button {min-height: 44px;border: 0;border-radius: 8px;padding: 10px 8px;background: transparent;color: #315c46;font: inherit;font-size: 13px;font-weight: 600;}
+.entry-editor__modes button[aria-pressed="true"] {background: #315c46;color: white;}
+.direct-nutrition {display: grid;gap: 14px;min-width: 0;}
+.editor .direct-nutrition label {margin: 0;}
+.direct-nutrition .hint {margin: 0;}
+.direct-nutrition .quantity-fields {display: grid;grid-template-columns: repeat(2,minmax(0,1fr));gap: 12px;}
+.direct-nutrition input {min-width: 0;max-width: 100%;}
+.direct-nutrition__optional {min-width: 0;margin: 0;padding: 14px;border: 1px solid #dbe4dc;border-radius: 12px;}
+.direct-nutrition__optional legend {font-size: 14px;font-weight: 600;padding: 0 5px;}
+.direct-nutrition__optional legend small {font-weight: 400;color: #64776a;}
+.editor .direct-nutrition__estimated {display: flex;gap: 10px;align-items: flex-start;min-height: 44px;}
+.editor .direct-nutrition__estimated input {width: 20px;min-width: 20px;height: 20px;min-height: 20px;flex-shrink: 0;margin: 2px 0 0;padding: 0;accent-color: #315c46;}
+.direct-nutrition__estimated small {display: block;margin-top: 5px;font-weight: 400;line-height: 1.5;}
+.direct-nutrition__error {display: block;margin-top: 5px;color: #9e3328;font-size: 13px;}
+.entry-estimate {display: inline-block;padding: 3px 7px;border-radius: 6px;background: #f7f1df;color: #735b22;font-size: 11px;font-weight: 500;}
+.diary-entry__name .entry-estimate {display: block;width: max-content;max-width: 100%;margin-top: 3px;}
 .entry-editor__save-actions { display: grid; gap: 8px; margin-top: 16px; }
 .entry-editor__save-actions .wide { margin-top: 0; }
 .entry-editor__last-amount { display: inline-flex; align-items: center; gap: 7px; min-height: 44px; max-width: 100%; padding: 9px 12px; border: 1px solid #dbe4dc; border-radius: 10px; background: #f1f5ef; color: #315c46; font-size: 12px; text-align: left; }

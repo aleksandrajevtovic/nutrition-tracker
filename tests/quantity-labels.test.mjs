@@ -23,6 +23,15 @@ test('historical entry quantities use recorded grams and snapshot labels without
   assert.equal(entryQuantity({...entry,foodSnapshot:{...snapshot,portionName:'Klein'},grams:160}),'2 × Klein · 160 g');
 });
 
+test('weight-named portions display their physical quantity once while mismatched historical weights keep their meaning',()=>{
+  assert.equal(portionQuantity(1,'100 g',100),'100 g');
+  assert.equal(portionQuantity(2,'100 g',200),'200 g');
+  assert.equal(portionQuantity(0.5,'100 g',50),'50 g');
+  assert.equal(portionQuantity(2,'0,5 kg',1000),'1.000 g');
+  assert.equal(portionQuantity(1,'100 g',120),'1 × 100 g · 120 g');
+  assert.equal(portionQuantity(1,'100 g roh',100),'1 × 100 g roh · 100 g');
+});
+
 test('legacy grams and configured nonportion units retain their existing display',()=>{
   const base={foodSnapshot:{portionName:'1 Becher'},grams:300};
   assert.equal(entryQuantity(base),'300 g');assert.equal(entryQuantity({...base,amount:300,unit:'g'}),'300 g');

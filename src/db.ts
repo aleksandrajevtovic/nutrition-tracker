@@ -13,6 +13,7 @@ import {backupDrinks, validDrink, type Drink} from './hydration';
 import {barcodeKey, cleanBarcode, validBarcode} from './barcode';
 import {backupCompletedDays} from './completedDays';
 import {selectedMealEntries, type MealCopySelection} from './mealCopy';
+import {validDirectItem} from './directNutrition';
 
 export type Food = {
   id: string;
@@ -26,6 +27,8 @@ export type Food = {
   fat: number;
   // null means not declared; numeric zero is an explicitly known zero.
   fiber: number | null;
+  // Per-100-g fibre supplied for this diary snapshot only; recipe data stays intact.
+  entryFiber?: number;
   sugar: number;
   portionName: string;
   portionGrams: number;
@@ -36,6 +39,8 @@ export type Food = {
   sliceGrams?: number;
   favorite?: boolean;
   recipe?: Recipe;
+  // Diary-only snapshot: nutrients are totals for amount, not values per 100 g.
+  directNutrition?: {amount: number; unitLabel: string; estimated: boolean; missing: ('protein' | 'carbs' | 'sugar' | 'fat' | 'fiber')[]};
   createdAt: string;
 };
 
@@ -44,6 +49,7 @@ export type Entry = {
   foodId: string;
   date: string;
   meal: string;
+  // Direct entries use 0 only when their physical weight is unknown.
   grams: number;
   // Optional so existing gram-only diary entries and backups remain compatible.
   amount?: number;
@@ -96,7 +102,7 @@ export async function listFoods(): Promise<Food[]> {
   return (await (await dbPromise).getAll('foods')).sort((a: Food, b: Food) => a.name.localeCompare(b.name));
 }
 export async function saveFood(food: Food) {
-  if (!validFood(food)) throw Error('Ungültige Produktdaten');
+  if (food.directNutrition || food.entryFiber !== undefined || !validFood(food)) throw Error('Ungültige Produktdaten');
   if (food.recipe !== undefined && !validRecipeFood(food)) throw Error('Ungültige Rezeptdaten');
   const tx = (await dbPromise).transaction('foods', 'readwrite');
   if (food.barcode) {
@@ -146,6 +152,8 @@ export async function listDiaryHistory(): Promise<Entry[]> {
   return (await dbPromise).getAll('entries');
 }
 export async function saveEntry(entry: Entry) {
+  if (entry.foodSnapshot.entryFiber !== undefined && !validFood(entry.foodSnapshot)) throw Error('Ungültige Tagebucheinträge');
+  if (entry.foodSnapshot.directNutrition && !validDirectItem(entry)) throw Error('Ungültige Tagebucheinträge');
   if (!validEntryNote(entry.note)) throw Error('Ungültige Eintragsnotiz');
   await (await dbPromise).put('entries', entry);
   announceDataChange();
@@ -302,7 +310,7 @@ export async function restoreBackup(data: unknown) {
   const completedDays = backupCompletedDays(backup as {completedDays?: unknown});
   const barcodes = new Set<string>();
   for (const food of backup.foods) {
-    if (!isFood(food)) throw Error('Ungültige Produktdaten');
+    if (!isFood(food) || food.directNutrition || food.entryFiber !== undefined) throw Error('Ungültige Produktdaten');
     if (food.barcode) {
       const key = barcodeKey(food.barcode);
       if (barcodes.has(key)) throw Error('Dieser Barcode gehört bereits zu einem gespeicherten Lebensmittel. Bitte das vorhandene Produkt bearbeiten.');
@@ -317,12 +325,17 @@ export async function restoreBackup(data: unknown) {
       throw Error('Ungültige Tagebucheinträge');
     }
     if (entry.unit !== undefined || entry.amount !== undefined) {
+      if (entry.foodSnapshot.directNutrition) {
+        if (!validDirectItem(entry)) throw Error('Ungültige Mengenangabe');
+        continue;
+      }
       if (!units.includes(entry.unit as Unit) || !isPositive(entry.amount)) throw Error('Ungültige Mengeneinheit');
       const converted = toGrams(entry.foodSnapshot, entry.amount, entry.unit!);
       if (!isPositive(converted) || Math.abs(converted - entry.grams) > Math.max(1e-8, entry.grams * 1e-9)) {
         throw Error('Ungültige Mengenangabe');
       }
     }
+    if (entry.foodSnapshot.directNutrition) throw Error('Ungültige Mengenangabe');
   }
   // Validate everything before replacing local data, then restore all stores atomically.
   const db = await dbPromise;

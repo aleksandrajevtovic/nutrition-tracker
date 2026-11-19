@@ -39,6 +39,18 @@ Beim Öffnen von Tageszielen, Tagesnotizen, Getränke- und Gewichtsbereichen, Ei
 
 ## Mengen und Einheiten
 
+### Nährwerte direkt ins Tagebuch eingeben
+
+Im Eintragsformular lässt sich zwischen „Lebensmittel auswählen“ und „Nährwerte direkt eingeben“ wechseln. Für den Schnelleintrag genügen Bezeichnung, Menge, Einheit und Kalorien. Eiweiß, Kohlenhydrate, Zucker, Fett, Ballaststoffe und das Gewicht der gesamten Menge sind optional. Die Werte gelten für die gesamte angegebene Menge, beispielsweise eine Brezel oder zwei Stück zusammen; es ist keine Umrechnung auf 100 g nötig. Ein Lebensmittel wird dabei nicht in der Produktliste angelegt. „Geschätzte Werte“ kennzeichnet den Eintrag im Tagebuch und in Suchtreffern.
+
+Die Einheit wird über ein Dropdown gewählt: Stück (Vorauswahl), Portion, Scheibe, Becher, Teller, Schüssel oder Glas. „Eigene Einheit …“ öffnet ein separates Textfeld, etwa für Handvoll oder Packung. Bereits gespeicherte eigene Einheiten und Entwürfe bleiben erhalten.
+
+Reine Gewichtsgrößen wie „100 g“ werden nur einmal angezeigt: „100 g“ statt „1 × 100 g · 100 g“, bei zwei Portionen „200 g“. Abweichende historische Gewichte und benannte Größen bleiben erkennbar.
+
+Im aufgeklappten Hinweis „Einige Nährwerte fehlen“ öffnet „Angaben ergänzen“ den jeweiligen Tagebucheintrag und fokussiert das erste fehlende Feld. Mahlzeit und Menge unterscheiden auch gleichnamige Einträge. Ungespeicherte Änderungen werden vor dem Wechsel geprüft. Bei normalen Lebensmitteln lassen sich fehlende Ballaststoffe pro 100 g für den einzelnen Eintrag ergänzen; Produktdaten, andere Einträge und gespeicherte Rezepte bleiben unverändert. Die Ergänzung bleibt bei Mengenänderungen, Kopieren, JSON-Sicherungen und Rückgängig erhalten.
+
+Mengenänderungen und das Skalieren beim Kopieren oder über Vorlagen rechnen die direkt eingegebenen Nährwerte proportional um. Ein unbekanntes Gewicht wird weder durch ein Standardgewicht ersetzt noch als „0 g“ angezeigt. In Einkaufslisten bleiben Stück- oder Portionsmengen erhalten. Die Tagesbilanz zeigt bei fehlenden Angaben die bekannte Summe mit „≥“, etwa „≥ 1,1 g“. Fehlen alle Angaben zu einem Nährwert, erscheint „—“. Ein bekannter Nullwert bleibt auch bei weiteren fehlenden Angaben als „≥ 0 g“ sichtbar. „Einige Nährwerte fehlen“ erklärt dies beim Aufklappen und nennt die betroffenen Lebensmittel. Zielbalken zeigen nur den bekannten Anteil und behaupten bei fehlenden Angaben keine sichere Restmenge. Die Wochenübersicht markiert fehlende Angaben weiterhin als unvollständig; im CSV-Export bleiben die betreffenden Felder leer. Bearbeiten, Notizen, Rückgängig, Entwurfswiederherstellung und JSON-Sicherungen unterstützen Schnelleinträge. „Speichern und weiteres hinzufügen“ behält für den nächsten Eintrag auch den gewählten Eingabemodus bei.
+
 - Im Tagebuch Menge und Einheit wählen: g, mg, kg, ml, l, Portion, Stück oder Scheibe. Dezimalmengen sind möglich.
 - Für Stück und Scheibe das Gewicht pro Einheit festlegen; für ml und l die Dichte in g/ml. Diese Werte können direkt beim Eintragen oder im Produkteditor gespeichert werden.
 - Eigene Einheiten wie Esslöffel oder Becher über den Portionsnamen und das Portionsgewicht definieren.

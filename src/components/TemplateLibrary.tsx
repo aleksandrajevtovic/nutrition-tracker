@@ -5,6 +5,7 @@ import {applyTemplate, removePlanningRecord, restorePlanningRecord} from '../pla
 import {getDataRevision} from '../db';
 import {mealTotals, type MealTemplate} from '../planning';
 import {fmt, meals} from '../nutrition';
+import {entryQuantity} from '../quantityLabels';
 import {parseWeight} from '../weight';
 import {germanError} from '../german';
 import {useToast} from './ToastProvider';
@@ -60,7 +61,7 @@ export default function TemplateLibrary({templates, date, onPlan, onOpenDay}: {t
       : <div className="planning-card-grid">{templates.map(template => <article className="panel template-card" key={template.id}>
         <div className="planning-card-heading"><div><h2>{template.name}</h2><p className="hint">{template.meal} · {template.items.length} Einträge · {Math.round(mealTotals(template.items).kcal)} kcal</p></div>
           <button type="button" className="iconbtn" disabled={deleting !== null} aria-label={`${template.name} als Vorlage löschen`} onClick={() => void remove(template)}><Trash2 size={17}/></button></div>
-        <ul className="planning-items">{template.items.map((item, index) => <li key={index}><span>{item.foodSnapshot.name}</span><small>{fmt(item.grams, 2)} g</small></li>)}</ul>
+        <ul className="planning-items">{template.items.map((item, index) => <li key={index}><span>{item.foodSnapshot.name}</span><small>{item.foodSnapshot.directNutrition ? entryQuantity(item) : `${fmt(item.grams, 2)} g`}</small></li>)}</ul>
         <div className="planning-actions"><button type="button" className="primary" aria-expanded={applying === template.id} onClick={() => {if (confirmNavigation(['template-apply'])) setApplying(applying === template.id ? null : template.id);}}>Eintragen</button>
           <button type="button" className="secondary" onClick={() => {if (confirmNavigation(['template-apply'])) onPlan(template);}}><CalendarPlus size={17}/>Planen</button></div>
         {applying === template.id && <TemplateApply template={template} date={date} onOpenDay={onOpenDay} onClose={() => setApplying(null)}/>}

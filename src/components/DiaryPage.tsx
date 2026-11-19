@@ -2,7 +2,7 @@ import {useDraftState} from './DraftRecoveryProvider';
 import {useEffect, useMemo, useRef, useState} from 'react';
 import {BookOpen, List, Plus, Search} from 'lucide-react';
 import type {Entry, Food} from '../db';
-import {fiberIncomplete, meals, stats} from '../nutrition';
+import {meals, stats} from '../nutrition';
 import EntryEditor from './EntryEditor';
 import DailySummary from './DailySummary';
 import DiaryDateNavigation from './DiaryDateNavigation';
@@ -19,6 +19,8 @@ import {useNavigationGuard} from './UnsavedChangesProvider';
 import {scrollToRevealed} from '../hooks/useScrollReveal';
 import './MealCard.css';
 import type {TransferEntry} from '../entryTransfer';
+import {goalFields, type GoalKey} from '../goals';
+import {nutrientMissing} from '../nutrientCoverage';
 
 export default function DiaryPage({date, foods, entries, onDateChange, onSave, onDelete, onCopy, onQuantityChange, onSaveFood, onTransfer}: {
   date: string; foods: Food[]; entries: Entry[]; onDateChange: (date: string) => void;
@@ -29,7 +31,7 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
   onSaveFood: (food: Food) => Promise<void>;
   onTransfer: TransferEntry;
 }) {
-  const [editor, setEditor] = useDraftState<{entry: Entry | null; initialMeal?: string; session?: string; focusFood?: boolean} | null>('DiaryPage:editor', null);
+  const [editor, setEditor] = useDraftState<{entry: Entry | null; initialMeal?: string; initialMode?: 'food' | 'direct'; session?: string; focusFood?: boolean; focusNutrient?: GoalKey | 'sugar'} | null>('DiaryPage:editor', null);
   const [copying, setCopying] = useDraftState<string | null>('DiaryPage:copying', null);
   const [savingTemplate, setSavingTemplate] = useDraftState<string | null>('DiaryPage:savingTemplate', null);
   const [searching, setSearching] = useState(false);
@@ -102,9 +104,9 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
     if (!validDate(value) || value === date || !confirmNavigation()) return;
     setTransferEntryId(null);setEditor(null);setCopying(null);setSavingTemplate(null);onDateChange(value);
   };
-  const openEditor = (entry: Entry | null) => {
-    if (editor && editor.entry?.id === entry?.id) {setEditor({...editor, entry}); return;}
-    if (confirmNavigation(['entry-editor','entry-transfer:', ...(entry ? [`quantity:${entry.id}`] : [])])) {setTransferEntryId(null);if(entry)expandMeal(entry.meal);setEditor({entry});}
+  const openEditor = (entry: Entry | null, focusNutrient?: GoalKey | 'sugar') => {
+    if (editor && editor.entry?.id === entry?.id) {setEditor({...editor, entry, focusNutrient}); return;}
+    if (confirmNavigation(['entry-editor','entry-transfer:', ...(entry ? [`quantity:${entry.id}`] : [])])) {setTransferEntryId(null);if(entry)expandMeal(entry.meal);setEditor({entry, focusNutrient});}
   };
   const addToMeal = (meal: string) => {
     if (confirmNavigation(['entry-editor','entry-transfer:'])) {setTransferEntryId(null);setEditor({entry: null, initialMeal: meal, session: crypto.randomUUID()});}
@@ -126,8 +128,9 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
   };
   useEffect(() => {
     if (!editor || !editorRef.current) return;
-    const target = editor.focusFood ? editorRef.current.querySelector<HTMLElement>('.food-picker__trigger') : editorRef.current.querySelector<HTMLElement>('h3');
-    scrollToRevealed(editor.focusFood ? target : editorRef.current);
+    const nutrient = editor.focusNutrient ? editorRef.current.querySelector<HTMLElement>(`[data-entry-nutrient="${editor.focusNutrient}"]`) : null;
+    const target = nutrient ?? (editor.focusFood ? editorRef.current.querySelector<HTMLElement>('.food-picker__trigger, .direct-nutrition input') : editorRef.current.querySelector<HTMLElement>('h3'));
+    scrollToRevealed(nutrient || editor.focusFood ? target : editorRef.current);
     target?.focus({preventScroll: true});
   }, [editor]);
   const totals = useMemo(() => entries.reduce((sum, entry) => {
@@ -143,7 +146,10 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
     <div className="heading"><div><span className="eyebrow">TAGESÜBERSICHT</span><h1>Mein Ernährungstagebuch</h1></div>
       <DiaryDateNavigation date={date} onChange={changeDate}/></div>
     <MealFilter entries={entries} selected={selectedMeal} onSelect={selectMeal}/>
-    <DailySummary totals={totals} fiberIncomplete={fiberIncomplete(entries)}/>
+    <DailySummary totals={totals} entries={entries} onCompleteEntry={entry => {
+      const key = [...goalFields.map(field => field.key), 'sugar' as const].find(key => nutrientMissing(entry.foodSnapshot, key));
+      openEditor(entry, key);
+    }}/>
     <DiaryDayCompletion key={date} date={date}/>
     <DailyExtras date={date}/>
     <div ref={mealsRef}>
@@ -152,12 +158,12 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
       <button ref={searchButtonRef} type="button" className="diary-view-toggle" aria-expanded={searching} onClick={() => setSearching(value => !value)}><Search size={17} aria-hidden="true"/>Tagebuchsuche</button></div>
       <button className="primary" onClick={() => openEditor(null)}><Plus size={17}/> Lebensmittel hinzufügen</button></div>
     {searching && <DiarySearch onClose={() => {setSearching(false); searchButtonRef.current?.focus();}} onOpen={entry => {if (!confirmNavigation(entry.date === date ? ['entry-editor', 'meal-copy', 'template-save', 'quantity:','entry-transfer:'] : undefined)) return;setTransferEntryId(null); setSearching(false); setCopying(null); setSavingTemplate(null); setSelectedMeal(entry.meal);expandMeal(entry.meal); onDateChange(entry.date); setEditor({entry});}}/>}
-    {editor && <div ref={editorRef} className="diary-entry-editor"><EntryEditor key={editor.entry?.id ?? editor.session ?? 'new'} foods={foods} date={date} entry={editor.entry} initialMeal={editor.initialMeal ?? selectedMeal ?? undefined} onSaveFood={onSaveFood}
+    {editor && <div ref={editorRef} className="diary-entry-editor"><EntryEditor key={editor.entry?.id ?? editor.session ?? 'new'} foods={foods} date={date} entry={editor.entry} initialMeal={editor.initialMeal ?? selectedMeal ?? undefined} initialMode={editor.initialMode} onSaveFood={onSaveFood}
       onClose={() => setEditor(null)} onSave={async (entry, conversions, keepOpen = false) => {
         await onSave(entry, conversions);
         expandMeal(entry.meal);
         if (selectedMeal !== null) setSelectedMeal(entry.meal);
-        setEditor(keepOpen ? {entry:null,initialMeal:entry.meal,session:crypto.randomUUID(),focusFood:true} : null);
+        setEditor(keepOpen ? {entry:null,initialMeal:entry.meal,initialMode:entry.foodSnapshot.directNutrition ? 'direct' : 'food',session:crypto.randomUUID(),focusFood:true} : null);
       }}/></div>}
     <div className={view.compact ? 'diary-meals diary-meals--compact' : 'diary-meals'}>
     {visibleEntries.length === 0 ? <div className="empty"><BookOpen size={30}/><strong>{selectedMeal ? `Noch keine Einträge für ${selectedMeal}` : 'Noch keine Einträge'}</strong><p>{selectedMeal ? 'Füge ein Lebensmittel für diese Mahlzeit hinzu.' : 'Füge dein erstes Lebensmittel für diesen Tag hinzu.'}</p>

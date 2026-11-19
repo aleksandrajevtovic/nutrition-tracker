@@ -2,6 +2,8 @@ import {announceDataChange, dbPromise, getDataRevision, type Entry} from './db';
 import {validEntryNote} from './diary';
 import {withEntryAmount} from './entryQuantity';
 import {entrySignature} from './entrySignature';
+import {validDirectItem} from './directNutrition';
+import {validFood} from './nutrition';
 
 export type EntryEdit = {before: Entry; after: Entry; revision: number};
 export type EntryAddition = {entry: Entry; revision: number};
@@ -14,6 +16,8 @@ async function persist(id: string, update: (current: Entry | undefined) => Entry
     if (revision !== getDataRevision()) throw Error('Die Daten wurden inzwischen importiert. Bitte den Eintrag erneut öffnen.');
     const after = update(before);
     if (after.id !== id || !validEntryNote(after.note)) throw Error('Ungültiger Tagebucheintrag');
+    if (after.foodSnapshot.directNutrition && !validDirectItem(after)) throw Error('Ungültige Tagebucheinträge');
+    if (after.foodSnapshot.entryFiber !== undefined && !validFood(after.foodSnapshot)) throw Error('Ungültige Tagebucheinträge');
     await tx.store.put(after);await tx.done;announceDataChange();
     return {entry: after, change: before && entrySignature(before) !== entrySignature(after)
       ? {before: structuredClone(before), after: structuredClone(after), revision} : undefined,
