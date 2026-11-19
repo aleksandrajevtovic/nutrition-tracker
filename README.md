@@ -45,6 +45,8 @@ Im Eintragsformular lässt sich zwischen „Lebensmittel auswählen“ und „N�
 
 Die Einheit wird über ein Dropdown gewählt: Stück (Vorauswahl), Portion, Scheibe, Becher, Teller, Schüssel oder Glas. „Eigene Einheit …“ öffnet ein separates Textfeld, etwa für Handvoll oder Packung. Bereits gespeicherte eigene Einheiten und Entwürfe bleiben erhalten.
 
+„Weitere Nährwerte ergänzen“ ist bei neuen Schnelleinträgen zunächst eingeklappt. Beim Bearbeiten öffnet sich der Bereich automatisch, wenn optionale Nährwerte vorliegen – auch bei ausdrücklich eingetragenen Nullwerten. Einklappen erhält die Eingaben; die Anzahl ausgefüllter Angaben bleibt sichtbar. Entwürfe merken sich den Öffnungszustand. „Angaben ergänzen“ und eine Feldvalidierung öffnen den Bereich bei Bedarf vor dem Fokussieren.
+
 Reine Gewichtsgrößen wie „100 g“ werden nur einmal angezeigt: „100 g“ statt „1 × 100 g · 100 g“, bei zwei Portionen „200 g“. Abweichende historische Gewichte und benannte Größen bleiben erkennbar.
 
 Im aufgeklappten Hinweis „Einige Nährwerte fehlen“ öffnet „Angaben ergänzen“ den jeweiligen Tagebucheintrag und fokussiert das erste fehlende Feld. Mahlzeit und Menge unterscheiden auch gleichnamige Einträge. Ungespeicherte Änderungen werden vor dem Wechsel geprüft. Bei normalen Lebensmitteln lassen sich fehlende Ballaststoffe pro 100 g für den einzelnen Eintrag ergänzen; Produktdaten, andere Einträge und gespeicherte Rezepte bleiben unverändert. Die Ergänzung bleibt bei Mengenänderungen, Kopieren, JSON-Sicherungen und Rückgängig erhalten.
@@ -111,6 +113,8 @@ Die Auswahl bleibt beim Wechsel zu „Alle“ und beim Umschalten der Tagebuchan
 Gewicht, Trinkmenge und Tagesnotizen liegen im standardmäßig geschlossenen Bereich „Weitere Tagesdaten“. Einklappen erhält die Formulare und ihre Entwürfe. Der Schutz ungespeicherter Eingaben bleibt aktiv. Beim Filtern fragt die App vor dem Verwerfen offener Formulare oder dem Ausblenden geänderter Mengen nach; weiterhin sichtbare Mengenentwürfe bleiben erhalten.
 
 ## Kompakter Tagebuchmodus
+
+Eintragsaktionen sind in beiden Tagebuchansichten über „…“ erreichbar: Bearbeiten, Kopieren/Verschieben und Löschen. Mengen lassen sich weiterhin direkt ändern. Das Menü unterstützt Pfeiltasten, Pos1/Ende und Escape, schließt beim Antippen außerhalb und bleibt innerhalb des sichtbaren Bildschirms. Rückgängig und der Schutz ungespeicherter Eingaben bleiben erhalten.
 
 Über „Kompakt“ neben „Mahlzeiten“ lässt sich die Tagebuchansicht umschalten. Ohne gespeicherte Auswahl startet das Tagebuch kompakt; eine bereits gewählte Ansicht bleibt erhalten. In der kompakten Ansicht zeigt jede Zeile Lebensmittelname und Kalorien. Ein Klick oder die Eingabe-/Leertaste auf der Zeile klappt den vollständigen Namen, Marke, Menge, Nährwerte, eine vorhandene Eintragsnotiz sowie Bearbeiten und Löschen auf. Mehrere Einträge können gleichzeitig geöffnet bleiben. Beim Wechsel des Datums starten die Details wieder eingeklappt.
 

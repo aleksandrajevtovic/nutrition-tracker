@@ -1,6 +1,6 @@
 import {useDraftState} from './DraftRecoveryProvider';
 import {useId, useRef, useState} from 'react';
-import {ArrowRightLeft, ChevronDown, MessageSquare, Pencil, Trash2} from 'lucide-react';
+import {ChevronDown, MessageSquare, Pencil} from 'lucide-react';
 import type {Entry} from '../db';
 import {fmt, stats, nutrientAmount} from '../nutrition';
 import {entryQuantity} from '../quantityLabels';
@@ -11,6 +11,7 @@ import './DiaryEntry.css';
 import EntryTransferForm from './EntryTransferForm';
 import {nutrientMissing} from '../nutrientCoverage';
 import type {TransferEntry} from '../entryTransfer';
+import EntryActions from './EntryActions';
 
 export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantityChange, onTransfer, mealOptions, transferring, onOpenTransfer, onCloseTransfer}: {
   entry: Entry; compact: boolean; onEdit: (entry: Entry) => void; onDelete: (id: string) => Promise<void>; onQuantityChange: SaveQuantity;
@@ -31,15 +32,11 @@ export default function DiaryEntry({entry, compact, onEdit, onDelete, onQuantity
   const missing = entry.foodSnapshot.directNutrition?.missing ?? [];
   const closeTransfer=()=>{onCloseTransfer();transferButton.current?.focus({preventScroll:true});};
   const transfer=<div id={transferId} className="diary-entry__transfer" hidden={!transferring}>{transferring && <EntryTransferForm entry={entry} mealOptions={mealOptions} onTransfer={onTransfer} onClose={closeTransfer}/>}</div>;
-  const actions = <div className="actions">
-    <button type="button" disabled={transferring} title="Bearbeiten" aria-label={`${entry.foodSnapshot.name} bearbeiten`} onClick={() => onEdit(entry)}><Pencil size={16}/></button>
-    <button ref={transferButton} type="button" title="Kopieren oder verschieben" aria-label={`${entry.foodSnapshot.name} kopieren oder verschieben`} aria-expanded={transferring} aria-controls={transferId} onClick={()=>{
+  const actions = <EntryActions name={entry.foodSnapshot.name} buttonRef={transferButton} transferring={transferring} visible={!compact || expanded} onEdit={() => onEdit(entry)} onTransfer={()=>{
       if(transferring){if(confirmNavigation([`entry-transfer:${entry.id}`]))closeTransfer();return;}
       if(!onOpenTransfer(entry))return;
       setQuantityEditing(false);setQuantitySession(value=>value+1);
-    }}><ArrowRightLeft size={16}/></button>
-    <button type="button" disabled={transferring} title="Löschen" aria-label={`${entry.foodSnapshot.name} löschen`} onClick={() => {if (confirmNavigation([`quantity:${entry.id}`])) void onDelete(entry.id);}}><Trash2 size={16}/></button>
-  </div>;
+    }} onDelete={() => {if (confirmNavigation([`quantity:${entry.id}`])) void onDelete(entry.id);}}/>;
 
   if (!compact) return <div ref={entryRef} className="entry diary-entry--full"><div className="diary-entry__main"><strong>{entry.foodSnapshot.name}</strong>
     {estimated}

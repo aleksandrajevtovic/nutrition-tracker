@@ -129,6 +129,8 @@ export default function DiaryPage({date, foods, entries, onDateChange, onSave, o
   useEffect(() => {
     if (!editor || !editorRef.current) return;
     const nutrient = editor.focusNutrient ? editorRef.current.querySelector<HTMLElement>(`[data-entry-nutrient="${editor.focusNutrient}"]`) : null;
+    const details = nutrient?.closest('details');
+    if (details) details.open = true;
     const target = nutrient ?? (editor.focusFood ? editorRef.current.querySelector<HTMLElement>('.food-picker__trigger, .direct-nutrition input') : editorRef.current.querySelector<HTMLElement>('h3'));
     scrollToRevealed(nutrient || editor.focusFood ? target : editorRef.current);
     target?.focus({preventScroll: true});

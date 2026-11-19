@@ -68,7 +68,7 @@ export default function EntryEditor({foods, date, entry, initialMeal = 'Frühst�
     if (savingRef.current || creatingFood) return;
     if (mode === 'direct') {setAttempted(true);if (!valid) {
       notify('Bitte die markierten Angaben prüfen.', 'error');
-      window.requestAnimationFrame(() => {const field = form.current?.querySelector<HTMLElement>('[aria-invalid="true"]');field?.focus({preventScroll:true});field?.scrollIntoView({block:'center',behavior:'instant'});});
+      window.requestAnimationFrame(() => {const field = form.current?.querySelector<HTMLElement>('[aria-invalid="true"]');const details = field?.closest('details');if(details)details.open=true;field?.focus({preventScroll:true});field?.scrollIntoView({block:'center',behavior:'instant'});});
       return;
     }}
     else if (!food || !valid) return;
